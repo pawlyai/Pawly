@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: pawly_postgres
+    environment:
+      POSTGRES_USER: pawly
+      POSTGRES_PASSWORD: pawly_pass
+      POSTGRES_DB: pawly
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pawly -d pawly"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pawly_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    container_name: pawly_app
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://pawly:pawly_pass@postgres:5432/pawly
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python -m src.main
+
+  worker:
+    build: .
+    container_name: pawly_worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://pawly:pawly_pass@postgres:5432/pawly
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python -m arq src.jobs.worker.WorkerSettings
+
+volumes:
+  postgres_data:
+  redis_data:

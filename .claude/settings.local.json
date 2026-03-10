@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:/Users/Yuting/AppData/Local/Programs/Python/Python313/python.exe -m ensurepip)",
+      "Bash(C:/Users/Yuting/AppData/Local/Programs/Python/Python313/python.exe -m pip --version)"
+    ]
+  }
+}
