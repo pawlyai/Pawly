@@ -78,7 +78,7 @@ _TOPIC_MAP: dict[tuple[str, ...], list[str]] = {
     ],
 }
 
-# Map DB MessageRole → Claude API role string
+# Map DB MessageRole → Gemini API role string
 _ROLE_MAP: dict[str, str] = {"user": "user", "bot": "assistant"}
 
 

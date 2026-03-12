@@ -1,39 +1,42 @@
 """
-Anthropic SDK wrapper — ClaudeClient.
+Google Gen AI wrapper - GeminiClient.
 
-chat()    → main conversation (Sonnet), 30s timeout, 3-attempt exponential backoff
-extract() → structured extraction (Haiku), 10s timeout, 3-attempt exponential backoff
+chat()    -> main conversation (Gemini Flash)
+extract() -> structured extraction (Gemini Flash)
 
 Both return {"text": str, "input_tokens": int, "output_tokens": int}.
 
-Singleton: get_claude_client()
+Singleton: get_gemini_client()
 """
 
 import asyncio
-import logging
 from typing import Any
 
-import anthropic
-
 from src.config import settings
-from src.utils.logger import get_logger
-
-logger = get_logger(__name__)
-
-# Anthropic error types that warrant a retry
-_RETRYABLE = (
-    anthropic.RateLimitError,
-    anthropic.InternalServerError,
-    anthropic.APITimeoutError,
-    anthropic.APIConnectionError,
-)
 
 
-class ClaudeClient:
+class GeminiClient:
     def __init__(self, api_key: str) -> None:
-        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        try:
+            from google import genai
+            from google.genai import types
+            self._sdk_mode = "genai"
+            self._types = types
+            self._client = genai.Client(api_key=api_key)
+            return
+        except ImportError:
+            pass
 
-    # ── Internal ──────────────────────────────────────────────────────────────
+        try:
+            import google.generativeai as legacy_genai
+            self._sdk_mode = "legacy"
+            self._legacy = legacy_genai
+            self._legacy.configure(api_key=api_key)
+            return
+        except ImportError as exc:
+            raise RuntimeError(
+                "No Gemini SDK found. Install `google-genai` (preferred) or `google-generativeai`."
+            ) from exc
 
     async def _call(
         self,
@@ -42,50 +45,171 @@ class ClaudeClient:
         messages: list[dict[str, Any]],
         max_tokens: int,
         temperature: float,
-        timeout: float,
     ) -> dict[str, Any]:
-        """Call the API with exponential-backoff retry (3 attempts)."""
-        kwargs: dict[str, Any] = {
-            "model": model,
-            "max_tokens": max_tokens,
-            "messages": messages,
-            "timeout": timeout,
-        }
+        """Call Gemini synchronously via asyncio.to_thread."""
+        if self._sdk_mode == "genai":
+            contents = self._build_contents(messages)
+            response = await asyncio.to_thread(
+                self._sync_call_genai,
+                model,
+                system_prompt,
+                contents,
+                max_tokens,
+                temperature,
+            )
+            return self._format_response_genai(response)
+
+        payload = self._build_legacy_messages(system_prompt, messages)
+        response = await asyncio.to_thread(
+            self._sync_call_legacy,
+            model,
+            payload,
+            max_tokens,
+            temperature,
+        )
+        return self._format_response_legacy(response)
+
+    def _build_contents(self, messages: list[dict[str, Any]]) -> list[Any]:
+        contents: list[Any] = []
+        for msg in messages:
+            role = "user" if msg.get("role") == "user" else "model"
+            contents.append(
+                self._types.Content(
+                    role=role,
+                    parts=[self._types.Part.from_text(text=str(msg.get("content", "")))],
+                )
+            )
+        return contents
+
+    def _build_legacy_messages(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+    ) -> list[dict[str, str]]:
+        formatted: list[dict[str, str]] = []
         if system_prompt:
-            kwargs["system"] = system_prompt
-        # temperature is not a top-level param for Claude messages API,
-        # but is supported via the `temperature` arg in newer SDK versions.
-        # Keep it for future use.
+            formatted.append({"author": "system", "content": system_prompt})
+        for msg in messages:
+            author = "user" if msg.get("role") == "user" else "assistant"
+            formatted.append({"author": author, "content": str(msg.get("content", ""))})
+        return formatted
 
-        last_exc: Exception = RuntimeError("No attempts made")
-        for attempt in range(3):
-            try:
-                response = await self.client.messages.create(**kwargs)
-                text = response.content[0].text  # type: ignore[union-attr]
-                return {
-                    "text": text,
-                    "input_tokens": response.usage.input_tokens,
-                    "output_tokens": response.usage.output_tokens,
-                }
-            except _RETRYABLE as exc:
-                last_exc = exc
-                if attempt < 2:
-                    wait = 2 ** attempt  # 1s, 2s
-                    logger.warning(
-                        "llm call retrying",
-                        model=model,
-                        attempt=attempt + 1,
-                        error=str(exc),
-                        wait_s=wait,
-                    )
-                    await asyncio.sleep(wait)
-            except anthropic.APIStatusError as exc:
-                # 4xx errors other than rate-limit are not retryable
-                raise
+    def _sync_call_genai(
+        self,
+        model: str,
+        system_prompt: str,
+        contents: list[Any],
+        max_tokens: int,
+        temperature: float,
+    ) -> Any:
+        config = self._types.GenerateContentConfig(
+            system_instruction=system_prompt or None,
+            max_output_tokens=max_tokens,
+            temperature=temperature,
+        )
+        return self._client.models.generate_content(
+            model=model,
+            contents=contents,
+            config=config,
+        )
 
-        raise last_exc
+    def _sync_call_legacy(
+        self,
+        model: str,
+        messages: list[dict[str, str]],
+        max_tokens: int,
+        temperature: float,
+    ) -> Any:
+        system_prompt = ""
+        history: list[dict[str, Any]] = []
+        for message in messages:
+            author = message.get("author", "user")
+            content = message.get("content", "")
+            if author == "system":
+                system_prompt = f"{system_prompt}\n{content}".strip()
+                continue
+            role = "user" if author == "user" else "model"
+            history.append({"role": role, "parts": [content]})
 
-    # ── Public ────────────────────────────────────────────────────────────────
+        generation_config = self._legacy.types.GenerationConfig(
+            max_output_tokens=max_tokens,
+            temperature=temperature,
+        )
+        model_client = self._legacy.GenerativeModel(
+            model_name=model,
+            system_instruction=system_prompt or None,
+        )
+        return model_client.generate_content(
+            contents=history,
+            generation_config=generation_config,
+        )
+
+    def _format_response_genai(self, response: Any) -> dict[str, Any]:
+        text = self._extract_text(response)
+        usage = getattr(response, "usage_metadata", None)
+        input_tokens = self._extract_token_count(
+            usage,
+            ("prompt_token_count", "input_tokens", "prompt_tokens"),
+        )
+        output_tokens = self._extract_token_count(
+            usage,
+            ("candidates_token_count", "output_tokens", "completion_tokens"),
+        )
+        return {
+            "text": text,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }
+
+    def _format_response_legacy(self, response: Any) -> dict[str, Any]:
+        text = getattr(response, "text", "") or ""
+        usage = getattr(response, "usage_metadata", None) or getattr(response, "usage", None)
+        input_tokens = self._extract_token_count(
+            usage,
+            ("prompt_token_count", "prompt_tokens", "input_tokens"),
+        )
+        output_tokens = self._extract_token_count(
+            usage,
+            ("candidates_token_count", "completion_tokens", "output_tokens", "completion_token_count"),
+        )
+        return {
+            "text": text,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }
+
+    def _extract_text(self, response: Any) -> str:
+        text = getattr(response, "text", None)
+        if isinstance(text, str) and text.strip():
+            return text
+
+        candidates = getattr(response, "candidates", None) or []
+        if not candidates:
+            return ""
+
+        content = getattr(candidates[0], "content", None)
+        parts = getattr(content, "parts", None) or []
+        chunks: list[str] = []
+        for part in parts:
+            part_text = getattr(part, "text", None)
+            if isinstance(part_text, str):
+                chunks.append(part_text)
+        return "\n".join(chunks).strip()
+
+    def _extract_token_count(self, usage: Any, names: tuple[str, ...]) -> int:
+        if usage is None:
+            return 0
+        if isinstance(usage, dict):
+            for name in names:
+                count = usage.get(name)
+                if isinstance(count, int):
+                    return count
+            return 0
+        for name in names:
+            count = getattr(usage, name, None)
+            if isinstance(count, int):
+                return count
+        return 0
 
     async def chat(
         self,
@@ -96,7 +220,7 @@ class ClaudeClient:
         temperature: float = 0.7,
     ) -> dict[str, Any]:
         """
-        Main conversation call (Sonnet by default).
+        Main conversation call (Gemini Flash by default).
         Returns {"text": str, "input_tokens": int, "output_tokens": int}.
         """
         return await self._call(
@@ -105,7 +229,6 @@ class ClaudeClient:
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            timeout=30.0,
         )
 
     async def extract(
@@ -114,7 +237,7 @@ class ClaudeClient:
         messages: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """
-        Cheap structured extraction call (Haiku).
+        Structured extraction call (Gemini Flash).
         Returns {"text": str, "input_tokens": int, "output_tokens": int}.
         """
         return await self._call(
@@ -123,17 +246,14 @@ class ClaudeClient:
             messages=messages,
             max_tokens=1024,
             temperature=0.2,
-            timeout=10.0,
         )
 
 
-# ── Singleton ─────────────────────────────────────────────────────────────────
-
-_client: ClaudeClient | None = None
+_client: GeminiClient | None = None
 
 
-def get_claude_client() -> ClaudeClient:
+def get_gemini_client() -> GeminiClient:
     global _client
     if _client is None:
-        _client = ClaudeClient(api_key=settings.anthropic_api_key)
+        _client = GeminiClient(api_key=settings.google_api_key)
     return _client

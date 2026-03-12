@@ -278,7 +278,7 @@ async def handle_message(
 
     # 4. Send reply (split if > 4000 chars)
     for chunk in split_message(result.response_text, max_length=4000):
-        await message.answer(chunk)
+        await message.answer(chunk, parse_mode=None)
 
     # 5. Store bot reply as raw message
     bot_raw = await store_raw_message(

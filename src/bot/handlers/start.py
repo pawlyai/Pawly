@@ -90,7 +90,7 @@ async def cmd_start(
         marketing_context=marketing_context,
     )
 
-    await message.answer(opening.response_text)
+    await message.answer(opening.response_text, parse_mode=None)
     logger.info(
         "start handled",
         telegram_id=user.telegram_id,

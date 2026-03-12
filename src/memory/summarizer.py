@@ -19,7 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from src.db.engine import get_session_factory
 from src.db.models import DailySummary, Pet, RawMessage, WeeklySummary
-from src.llm.client import get_claude_client
+from src.llm.client import get_gemini_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -106,7 +106,7 @@ async def generate_daily_summary(
     target_date: date,
 ) -> Optional[dict]:
     """
-    Load the day's raw messages for *pet_id* + *user_id*, call Claude Haiku to
+    Load the day's raw messages for *pet_id* + *user_id*, call Gemini Flash 2.0 to
     compress them, then upsert the result into DailySummary.
 
     Returns the summary dict, or None if skipped (too few messages).
@@ -162,7 +162,7 @@ async def generate_daily_summary(
         messages=convo,
     )
 
-    client = get_claude_client()
+    client = get_gemini_client()
     try:
         raw = await client.extract(
             system_prompt=filled,
@@ -203,7 +203,7 @@ async def generate_weekly_summary(
     week_start: date,
 ) -> Optional[dict]:
     """
-    Load the past 7 DailySummary rows for *pet_id*, call Claude Haiku to
+    Load the past 7 DailySummary rows for *pet_id*, call Gemini Flash 2.0 to
     aggregate them, then upsert into WeeklySummary.
 
     Returns the summary dict, or None if no daily data exists.
@@ -245,7 +245,7 @@ async def generate_weekly_summary(
         summaries=summaries_block,
     )
 
-    client = get_claude_client()
+    client = get_gemini_client()
     try:
         raw = await client.extract(
             system_prompt=filled,
@@ -308,3 +308,4 @@ def _strip_fences(text: str) -> str:
         if text.startswith("json"):
             text = text[4:]
     return text.strip()
+

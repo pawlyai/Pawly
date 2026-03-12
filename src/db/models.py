@@ -143,6 +143,16 @@ class Severity(str, enum.Enum):
     CRITICAL = "critical"
 
 
+def enum_type(enum_cls: type[enum.Enum], name: str) -> SAEnum:
+    """Persist enum values (e.g. 'new_free') instead of enum member names."""
+    return SAEnum(
+        enum_cls,
+        name=name,
+        values_callable=lambda members: [member.value for member in members],
+        validate_strings=True,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Declarative base
 # ---------------------------------------------------------------------------
@@ -166,7 +176,7 @@ class User(Base):
     timezone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     country: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     subscription_tier: Mapped[SubscriptionTier] = mapped_column(
-        SAEnum(SubscriptionTier, name="subscriptiontier"),
+        enum_type(SubscriptionTier, "subscriptiontier"),
         default=SubscriptionTier.NEW_FREE,
         nullable=False,
     )
@@ -183,18 +193,18 @@ class Pet(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    species: Mapped[Species] = mapped_column(SAEnum(Species, name="species"), nullable=False)
+    species: Mapped[Species] = mapped_column(enum_type(Species, "species"), nullable=False)
     breed: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     birth_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     age_in_months: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     gender: Mapped[Gender] = mapped_column(
-        SAEnum(Gender, name="gender"), default=Gender.UNKNOWN, nullable=False
+        enum_type(Gender, "gender"), default=Gender.UNKNOWN, nullable=False
     )
     neutered_status: Mapped[NeuteredStatus] = mapped_column(
-        SAEnum(NeuteredStatus, name="neuteredstatus"), default=NeuteredStatus.UNKNOWN, nullable=False
+        enum_type(NeuteredStatus, "neuteredstatus"), default=NeuteredStatus.UNKNOWN, nullable=False
     )
     weight_latest: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    stage: Mapped[Optional[LifeStage]] = mapped_column(SAEnum(LifeStage, name="lifestage"), nullable=True)
+    stage: Mapped[Optional[LifeStage]] = mapped_column(enum_type(LifeStage, "lifestage"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now(), nullable=True)
@@ -212,7 +222,7 @@ class RawMessage(Base):
     pet_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     dialogue_id: Mapped[str] = mapped_column(String, nullable=False)
     session_id: Mapped[str] = mapped_column(String, nullable=False)
-    role: Mapped[MessageRole] = mapped_column(SAEnum(MessageRole, name="messagerole"), nullable=False)
+    role: Mapped[MessageRole] = mapped_column(enum_type(MessageRole, "messagerole"), nullable=False)
     raw_content: Mapped[str] = mapped_column(Text, nullable=False)
     media_urls: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     telegram_msg_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -231,12 +241,12 @@ class PetMemory(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     pet_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("pets.id"), nullable=False, index=True)
-    memory_type: Mapped[MemoryType] = mapped_column(SAEnum(MemoryType, name="memorytype"), nullable=False)
-    memory_term: Mapped[MemoryTerm] = mapped_column(SAEnum(MemoryTerm, name="memoryterm"), nullable=False)
+    memory_type: Mapped[MemoryType] = mapped_column(enum_type(MemoryType, "memorytype"), nullable=False)
+    memory_term: Mapped[MemoryTerm] = mapped_column(enum_type(MemoryTerm, "memoryterm"), nullable=False)
     field: Mapped[str] = mapped_column(String, nullable=False, index=True)
     value: Mapped[dict] = mapped_column(JSON, nullable=False)
     confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    source: Mapped[MemorySource] = mapped_column(SAEnum(MemorySource, name="memorysource"), nullable=False)
+    source: Mapped[MemorySource] = mapped_column(enum_type(MemorySource, "memorysource"), nullable=False)
     source_message_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     observed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
@@ -256,10 +266,10 @@ class PendingMemoryChange(Base):
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     source_quote: Mapped[str] = mapped_column(Text, nullable=False)
     source_message_id: Mapped[str] = mapped_column(String, nullable=False)
-    memory_type: Mapped[MemoryType] = mapped_column(SAEnum(MemoryType, name="memorytype"), nullable=False)
-    memory_term: Mapped[MemoryTerm] = mapped_column(SAEnum(MemoryTerm, name="memoryterm"), nullable=False)
+    memory_type: Mapped[MemoryType] = mapped_column(enum_type(MemoryType, "memorytype"), nullable=False)
+    memory_term: Mapped[MemoryTerm] = mapped_column(enum_type(MemoryTerm, "memoryterm"), nullable=False)
     validation_status: Mapped[PendingStatus] = mapped_column(
-        SAEnum(PendingStatus, name="pendingstatus"), nullable=False
+        enum_type(PendingStatus, "pendingstatus"), nullable=False
     )
     validation_reason: Mapped[str] = mapped_column(String, nullable=False)
     conflict_with_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -277,7 +287,7 @@ class PetMemoryChangeLog(Base):
     field_changed: Mapped[str] = mapped_column(String, nullable=False)
     old_value: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     new_value: Mapped[dict] = mapped_column(JSON, nullable=False)
-    reason: Mapped[ChangeReason] = mapped_column(SAEnum(ChangeReason, name="changereason"), nullable=False)
+    reason: Mapped[ChangeReason] = mapped_column(enum_type(ChangeReason, "changereason"), nullable=False)
     related_message_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
@@ -316,15 +326,15 @@ class Message(Base):
     dialogue_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("dialogues.id"), nullable=False
     )
-    role: Mapped[MessageRole] = mapped_column(SAEnum(MessageRole, name="messagerole"), nullable=False)
+    role: Mapped[MessageRole] = mapped_column(enum_type(MessageRole, "messagerole"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     message_type: Mapped[MessageType] = mapped_column(
-        SAEnum(MessageType, name="messagetype"), default=MessageType.TEXT, nullable=False
+        enum_type(MessageType, "messagetype"), default=MessageType.TEXT, nullable=False
     )
     intent: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     symptom_tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    risk_level: Mapped[Optional[RiskLevel]] = mapped_column(SAEnum(RiskLevel, name="risklevel"), nullable=True)
-    sentiment_user: Mapped[Optional[Sentiment]] = mapped_column(SAEnum(Sentiment, name="sentiment"), nullable=True)
+    risk_level: Mapped[Optional[RiskLevel]] = mapped_column(enum_type(RiskLevel, "risklevel"), nullable=True)
+    sentiment_user: Mapped[Optional[Sentiment]] = mapped_column(enum_type(Sentiment, "sentiment"), nullable=True)
     entry_source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_risk_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     risk_trigger_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -341,13 +351,13 @@ class TriageRecord(Base):
     pet_id: Mapped[str] = mapped_column(String, nullable=False)
     message_id: Mapped[str] = mapped_column(String, nullable=False)
     llm_classification: Mapped[TriageLevel] = mapped_column(
-        SAEnum(TriageLevel, name="triagelevel"), nullable=False
+        enum_type(TriageLevel, "triagelevel"), nullable=False
     )
     rule_classification: Mapped[Optional[TriageLevel]] = mapped_column(
-        SAEnum(TriageLevel, name="triagelevel"), nullable=True
+        enum_type(TriageLevel, "triagelevel"), nullable=True
     )
     final_classification: Mapped[TriageLevel] = mapped_column(
-        SAEnum(TriageLevel, name="triagelevel"), nullable=False
+        enum_type(TriageLevel, "triagelevel"), nullable=False
     )
     symptoms: Mapped[dict] = mapped_column(JSON, nullable=False)
     visit_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -360,7 +370,7 @@ class Episode(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     pet_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("pets.id"), nullable=False)
     symptom_type: Mapped[str] = mapped_column(String, nullable=False)
-    severity: Mapped[Severity] = mapped_column(SAEnum(Severity, name="severity"), nullable=False)
+    severity: Mapped[Severity] = mapped_column(enum_type(Severity, "severity"), nullable=False)
     start_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     end_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     is_ongoing: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

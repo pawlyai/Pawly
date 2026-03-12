@@ -57,7 +57,7 @@ async def run() -> None:
 
     # Test LLM response (requires valid API key)
     print("\n--- LLM Response Test ---")
-    if settings.anthropic_api_key and settings.anthropic_api_key != "your-anthropic-api-key-here":
+    if settings.google_api_key and settings.google_api_key != "your-google-cloud-api-key-here":
         async with factory() as db:
             result = await db.execute(select(User).where(User.telegram_id == "test_001"))
             user = result.scalar_one_or_none()
@@ -75,7 +75,7 @@ async def run() -> None:
         print(f"Triage : {result.triage_result}")
         print(f"Bot reply:\n{result.response_text}")
     else:
-        print("Skipping LLM test — ANTHROPIC_API_KEY not configured.")
+        print("Skipping LLM test — GOOGLE_API_KEY not configured.")
 
     await close_redis()
     await close_engine()

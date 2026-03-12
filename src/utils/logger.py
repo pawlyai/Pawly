@@ -3,13 +3,16 @@ Structured logging via structlog.
 """
 
 import logging
-import sys
 
 import structlog
 
 
 def configure_logging(log_level: str = "info") -> None:
     level = getattr(logging, log_level.upper(), logging.INFO)
+    logging.basicConfig(
+        format="%(message)s",
+        level=level,
+    )
 
     structlog.configure(
         processors=[
@@ -21,7 +24,7 @@ def configure_logging(log_level: str = "info") -> None:
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level),
         context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
+        logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 

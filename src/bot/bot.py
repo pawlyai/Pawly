@@ -13,6 +13,7 @@ start_bot(bot, dp):
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 
@@ -29,8 +30,14 @@ logger = get_logger(__name__)
 
 async def create_bot() -> tuple[Bot, Dispatcher]:
     """Create and wire up the Bot and Dispatcher."""
+    session = (
+        AiohttpSession(proxy=settings.telegram_proxy_url)
+        if settings.telegram_proxy_url
+        else None
+    )
     bot = Bot(
         token=settings.telegram_bot_token,
+        session=session,
         default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN),
     )
 

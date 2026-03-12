@@ -1,7 +1,7 @@
 """
 Async LLM-based memory extraction.
 
-Extracts structured pet facts from a conversation turn using Claude Haiku.
+Extracts structured pet facts from a conversation turn using Gemini Flash 2.0.
 
 Public API:
     MemoryProposal   — dataclass returned by extract_memories()
@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from src.db.models import MemoryTerm, MemoryType, Pet, PetMemory
-from src.llm.client import get_claude_client
+from src.llm.client import get_gemini_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -140,7 +140,7 @@ async def extract_memories(
         messages=_format_messages(raw_messages),
     )
 
-    client = get_claude_client()
+    client = get_gemini_client()
     try:
         raw = await client.extract(
             system_prompt=filled_prompt,
@@ -183,3 +183,4 @@ async def extract_memories(
             logger.warning("skipping malformed extraction item", error=str(exc), item=item)
 
     return proposals
+

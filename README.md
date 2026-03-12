@@ -1,6 +1,6 @@
 # Pawly
 
-Telegram AI pet care assistant. Send a message about your pet → Claude responds with health advice and tracks symptoms over time.
+Telegram AI pet care assistant. Send a message about your pet → Gemini Flash 2.0 responds with health advice and tracks symptoms over time.
 
 ## Stack
 
@@ -11,14 +11,14 @@ Telegram AI pet care assistant. Send a message about your pet → Claude respond
 | Database | PostgreSQL 16, SQLAlchemy 2.0 async, Alembic |
 | Cache / Session | Redis 7 |
 | Background jobs | ARQ |
-| LLM | Anthropic Claude (Sonnet for chat, Haiku for extraction) |
+| LLM | Google Gemini Flash 2.0 (chat + extraction) |
 
 ## Setup
 
 ```bash
 # 1. Copy and fill in credentials
 cp .env.example .env
-# edit .env: set TELEGRAM_BOT_TOKEN and ANTHROPIC_API_KEY
+# edit .env: set TELEGRAM_BOT_TOKEN and GOOGLE_API_KEY
 
 # 2. Start postgres + redis
 docker compose up -d postgres redis
@@ -52,7 +52,7 @@ orchestrator.generate_response()
      │
      ├── load_pet_context()   ← reads PetMemory (read-only)
      ├── build_system_prompt()
-     ├── Claude API call
+     ├── Gemini API call
      └── triage (rules engine + LLM inference)
      │
      ▼
@@ -92,18 +92,22 @@ Runs postgres, redis, app (bot + API on port 8000), and worker.
 | `DATABASE_URL` | ✓ | — | `postgresql+asyncpg://...` |
 | `REDIS_URL` | ✓ | `redis://localhost:6379` | Redis DSN |
 | `TELEGRAM_BOT_TOKEN` | ✓ | — | From @BotFather |
-| `ANTHROPIC_API_KEY` | ✓ | — | Anthropic API key |
+| `GOOGLE_API_KEY` | ✓ | — | Google Cloud API key for Gemini |
 | `NODE_ENV` | | `development` | `development` or `production` |
 | `PORT` | | `8000` | uvicorn port |
-| `MAIN_MODEL` | | `claude-sonnet-4-20250514` | Chat model |
-| `EXTRACTION_MODEL` | | `claude-haiku-4-5-20251001` | Extraction model |
+| `MAIN_MODEL` | | `gemini-2.0-flash` | Chat model |
+| `EXTRACTION_MODEL` | | `gemini-2.0-flash` | Extraction model |
 | `WEBHOOK_HOST` | prod only | — | e.g. `api.pawly.app` |
-| `MAX_TURNS_IN_CONTEXT` | | `5` | Recent turns sent to Claude |
+| `MAX_TURNS_IN_CONTEXT` | | `5` | Recent turns sent to Gemini |
 | `MAX_MESSAGES_PER_MINUTE` | | `30` | Per-user rate limit |
 
 ## Running Tests
 
 ```bash
-# End-to-end flow test (requires seed data and ANTHROPIC_API_KEY)
+# Memory module unit tests (no Telegram/worker required)
+python -m pytest tests/memory -q
+
+# End-to-end flow test (requires seed data and GOOGLE_API_KEY)
 python scripts/test_flow.py
 ```
+

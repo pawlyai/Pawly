@@ -22,7 +22,7 @@ from src.db.models import (
     TriageRecord,
     User,
 )
-from src.llm.client import get_claude_client
+from src.llm.client import get_gemini_client
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.system import build_system_prompt
 from src.memory.reader import load_pet_context, load_related_memories
@@ -97,7 +97,7 @@ async def generate_opening(
 
     user_prompt = " ".join(parts)
 
-    client = get_claude_client()
+    client = get_gemini_client()
     try:
         raw = await client.chat(
             system_prompt=system,
@@ -138,7 +138,7 @@ async def generate_response(
         1. Load context  (memory tiers, recent turns, daily summary, pending)
         2. Build system prompt  (with memory_context + pending_confirmation)
         3. Build messages array  (recent_turns + current user message)
-        4. Call Claude
+    4. Call Gemini
         5. Post-process triage  (rule engine + LLM-inferred → resolved, RED re-call)
         6. Detect intent, sentiment, symptom tags
     """
@@ -200,8 +200,8 @@ async def generate_response(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL CLAUDE ────────────────────────────────────────────────────────
-    client = get_claude_client()
+    # ── 4. CALL GEMINI ────────────────────────────────────────────────────────
+    client = get_gemini_client()
     try:
         raw = await client.chat(system_prompt=system, messages=messages)
         response_text = raw["text"]
@@ -220,7 +220,7 @@ async def generate_response(
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
     # Safety override: if rules say RED but LLM response didn't reflect urgency,
-    # re-call Claude with an explicit override prompt so the user gets the right advice.
+    # re-call Gemini with an explicit override prompt so the user gets the right advice.
     if resolved.overridden and resolved.final_classification == TriageLevel.RED:
         override_system = (
             system
