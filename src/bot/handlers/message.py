@@ -499,7 +499,7 @@ async def handle_message(
         return
 
     # Waiting for button selection — ignore free text
-    if wizard_step in ("species", "neutered"):
+    if wizard_step in ("species", "gender", "neutered"):
         return
 
     # Resolve active pet from message text if multiple pets exist.

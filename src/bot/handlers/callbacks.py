@@ -26,12 +26,15 @@ def _build_form_text(data: dict) -> str:
     name = data.get("name") or "—"
     species_val = data.get("species")
     age = data.get("age") or "—"
+    gender_val = data.get("gender")
     neutered_val = data.get("neutered")
 
     species_map = {"cat": "Cat", "dog": "Dog", "other": "Other"}
+    gender_map = {"male": "Male", "female": "Female", "unknown": "Not sure"}
     neutered_map = {"yes": "Yes", "no": "No", "unknown": "Not sure"}
 
     species = species_map.get(species_val, "—") if species_val else "—"
+    gender = gender_map.get(gender_val, "—") if gender_val else "—"
     neutered = neutered_map.get(neutered_val, "—") if neutered_val else "—"
 
     return (
@@ -40,6 +43,7 @@ def _build_form_text(data: dict) -> str:
         f"PET'S NAME\n{name}\n\n"
         f"SPECIES\n{species}\n\n"
         f"AGE (years)\n{age}\n\n"
+        f"GENDER\n{gender}\n\n"
         f"SPAYED / NEUTERED\n{neutered}"
     )
 
@@ -49,12 +53,19 @@ def _build_form_keyboard(data: dict) -> InlineKeyboardMarkup:
     name = data.get("name")
     species = data.get("species")
     age = data.get("age")
+    gender = data.get("gender")
     neutered = data.get("neutered")
 
     def sp_btn(val: str, label: str) -> InlineKeyboardButton:
         tick = "✅ " if species == val else ""
         return InlineKeyboardButton(
             text=f"{tick}{label}", callback_data=f"pet_profile_species:{val}"
+        )
+
+    def gd_btn(val: str, label: str) -> InlineKeyboardButton:
+        tick = "✅ " if gender == val else ""
+        return InlineKeyboardButton(
+            text=f"{tick}{label}", callback_data=f"pet_profile_gender:{val}"
         )
 
     def nt_btn(val: str, label: str) -> InlineKeyboardButton:
@@ -80,6 +91,8 @@ def _build_form_keyboard(data: dict) -> InlineKeyboardMarkup:
                 callback_data="pet_profile_set_age",
             )
         ],
+        # Gender picker
+        [gd_btn("male", "♂ Male"), gd_btn("female", "♀ Female")],
         # Neutered picker
         [
             nt_btn("yes", "Spayed/Neutered"),
@@ -127,6 +140,10 @@ async def _create_pet_in_db(user_id: uuid.UUID, data: dict) -> Pet | None:
     species_map = {"cat": Species.CAT, "dog": Species.DOG}
     species = species_map.get(str(species_raw).lower(), Species.OTHER)
 
+    gender_raw = str(data.get("gender", "unknown")).lower()
+    gender_map = {"male": Gender.MALE, "female": Gender.FEMALE}
+    gender = gender_map.get(gender_raw, Gender.UNKNOWN)
+
     neutered_raw = str(data.get("neutered", "unknown")).lower()
     neutered_map = {"yes": NeuteredStatus.YES, "no": NeuteredStatus.NO}
     neutered = neutered_map.get(neutered_raw, NeuteredStatus.UNKNOWN)
@@ -157,7 +174,7 @@ async def _create_pet_in_db(user_id: uuid.UUID, data: dict) -> Pet | None:
             name=str(name).strip(),
             species=species,
             age_in_months=age_in_months,
-            gender=Gender.UNKNOWN,
+            gender=gender,
             neutered_status=neutered,
             is_active=True,
         )
@@ -227,6 +244,16 @@ async def handle_callback(
         species_val = data.split(":", 1)[1]
         profile = session.get("profile_wizard_data") or {}
         profile["species"] = species_val
+        session["profile_wizard_data"] = profile
+        await callback.answer("Got it.")
+        await _try_edit_form(callback, profile)
+        return
+
+    # ── Pet profile: set gender ────────────────────────────────────────────────
+    if data.startswith("pet_profile_gender:"):
+        gender_val = data.split(":", 1)[1]
+        profile = session.get("profile_wizard_data") or {}
+        profile["gender"] = gender_val
         session["profile_wizard_data"] = profile
         await callback.answer("Got it.")
         await _try_edit_form(callback, profile)

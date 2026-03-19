@@ -40,6 +40,8 @@ services:
       REDIS_URL: redis://redis:6379
     ports:
       - "8000:8000"
+    volumes:
+      - ./src/llm/prompts/prompts_config.yaml:/app/src/llm/prompts/prompts_config.yaml
     depends_on:
       postgres:
         condition: service_healthy
