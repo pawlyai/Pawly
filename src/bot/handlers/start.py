@@ -12,7 +12,7 @@ from typing import Any
 
 from aiogram import Router
 from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
+from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo
 
 MINI_APP_URL = "https://pawlyai001.github.io/Pawly/miniapp/"
 
@@ -87,13 +87,10 @@ async def cmd_start(
     # No pet profile yet: show the profile setup form before anything else.
     if active_pet is None:
         session["awaiting_pet_profile"] = True
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(
-                    text="🐾 Create Pet Profile",
-                    web_app=WebAppInfo(url=MINI_APP_URL),
-                )]
-            ]
+        kb = ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=MINI_APP_URL))]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
         )
         await message.answer(
             "Welcome to Pawly! Before we begin, let's set up your pet's profile.",
