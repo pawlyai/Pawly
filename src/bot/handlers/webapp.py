@@ -49,13 +49,21 @@ async def handle_web_app_data(
         )
         return
 
+    is_additional = active_pet is not None
+
     session["active_pet_id"]        = str(pet.id)
     session["awaiting_pet_profile"]  = False
     session["is_new_user"]           = False
     session["profile_wizard_step"]   = None
     session["profile_wizard_data"]   = {}
 
-    await message.answer(
-        f"✅ Profile created for {pet.name}!\n\n"
-        "How can I help you today?"
-    )
+    if is_additional:
+        await message.answer(
+            f"✅ {pet.name}'s profile created! "
+            f"I've switched to {pet.name} — what would you like to know?"
+        )
+    else:
+        await message.answer(
+            f"✅ Profile created for {pet.name}!\n\n"
+            "How can I help you today?"
+        )
