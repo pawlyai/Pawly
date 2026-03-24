@@ -11,7 +11,7 @@ import re
 from typing import Any
 
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo
 
 MINI_APP_URL = "https://pawlyai001.github.io/Pawly/miniapp/"
@@ -87,14 +87,9 @@ async def cmd_start(
     # No pet profile yet: show the profile setup form before anything else.
     if active_pet is None:
         session["awaiting_pet_profile"] = True
-        kb = ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=MINI_APP_URL))]],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        )
         await message.answer(
             "Welcome to Pawly! Before we begin, let's set up your pet's profile.",
-            reply_markup=kb,
+            reply_markup=_make_miniapp_keyboard(),
         )
         return
 
@@ -112,4 +107,21 @@ async def cmd_start(
         telegram_id=user.telegram_id,
         is_new_user=is_new_user,
         has_marketing=marketing_context is not None,
+    )
+
+
+def _make_miniapp_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=MINI_APP_URL))]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+
+@router.message(Command("add_pet"))
+async def cmd_add_pet(message: Message, **_: object) -> None:
+    """Allow users with existing pets to add another pet profile."""
+    await message.answer(
+        "Let's add a new pet! Fill in their profile below.",
+        reply_markup=_make_miniapp_keyboard(),
     )
