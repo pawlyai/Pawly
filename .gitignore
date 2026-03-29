@@ -9,3 +9,4 @@ __pycache__/
 !.claude/skills/
 skills-lock.json
 uv.lock
+tests/blackbox_multiturn/venv/
