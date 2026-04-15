@@ -15,7 +15,8 @@ import uuid
 from typing import Any
 
 from src.db.models import Sentiment, SubscriptionTier, TriageLevel
-from src.llm.client import get_gemini_client
+from src.llm.client import get_llm_client
+from src.llm.model_registry import get_model
 from src.llm.graph.state import PawlyState
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
@@ -156,7 +157,7 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
     Returns response_text + LLM-classified triage, intent, sentiment,
     symptom_tags — all from a single LLM call.
     """
-    client = get_gemini_client()
+    client = get_llm_client()
     try:
         raw = await client.chat_structured(
             system_prompt=state["system_prompt"],
@@ -202,12 +203,8 @@ async def resolve_triage_node(state: PawlyState) -> dict[str, Any]:
 
 
 def should_override(state: PawlyState) -> str:
-    """Conditional edge: route to critical_override when rules escalate to RED."""
-    if (
-        state.get("final_triage") == TriageLevel.RED
-        and state.get("triage_overridden")
-        and state.get("override_direction") == "rules_stricter"
-    ):
+    """Conditional edge: route to critical_override for RED or ORANGE triage."""
+    if state.get("final_triage") in (TriageLevel.RED, TriageLevel.ORANGE):
         return "critical_override"
     return "finalize"
 
@@ -216,35 +213,48 @@ def should_override(state: PawlyState) -> str:
 
 async def critical_override_node(state: PawlyState) -> dict[str, Any]:
     """
-    Re-call Gemini with an explicit emergency override when the rule engine
-    classified RED but the LLM's structured triage was lower.
+    Re-call with the urgent model (Claude) for RED or ORANGE triage.
 
-    Uses a focused override prompt to keep cost down.
+    Uses an urgency-specific system prompt suffix and the urgent_model from
+    models_config.yaml (default: claude-opus-4-6).
     """
-    override_system = (
-        state["system_prompt"]
-        + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-        "by the safety system. You MUST treat this as URGENT. Set triage_level to RED. "
-        "Push immediate vet visit. Do not suggest home treatment."
-    )
-    client = get_gemini_client()
+    final_triage = state.get("final_triage", TriageLevel.GREEN)
+    urgent_model = get_model("urgent_model", "claude-opus-4-6")
+
+    if final_triage == TriageLevel.RED:
+        urgency_note = (
+            "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
+            "by the safety system. You MUST treat this as URGENT. Set triage_level to RED. "
+            "Push immediate vet visit. Do not suggest home treatment."
+        )
+    else:
+        urgency_note = (
+            "\n\nIMPORTANT: This situation requires prompt veterinary attention (ORANGE triage). "
+            "Set triage_level to ORANGE. Clearly recommend the owner contact their vet soon."
+        )
+
+    override_system = state["system_prompt"] + urgency_note
+    client = get_llm_client()
     try:
         raw = await client.chat_structured(
+            model=urgent_model,
             system_prompt=override_system,
             messages=state["messages"],
         )
         logger.warning(
-            "triage RED override re-call issued",
+            "triage urgent re-call issued",
+            level=final_triage.value,
+            model=urgent_model,
             pet_id=str(state["pet"].id) if state.get("pet") else None,
         )
         return {
             "response_text": raw.get("response_text", state.get("response_text", "")),
-            "llm_triage": TriageLevel.RED,
+            "llm_triage": final_triage,
             "input_tokens": state.get("input_tokens", 0) + raw.get("input_tokens", 0),
             "output_tokens": state.get("output_tokens", 0) + raw.get("output_tokens", 0),
         }
     except Exception as exc:
-        logger.error("RED override re-call failed", error=str(exc))
+        logger.error("urgent re-call failed", error=str(exc))
         return {}
 
 

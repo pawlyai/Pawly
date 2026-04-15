@@ -19,7 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from src.db.engine import get_session_factory
 from src.db.models import DailySummary, Pet, RawMessage, WeeklySummary
-from src.llm.client import get_gemini_client
+from src.llm.client import get_llm_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -162,7 +162,7 @@ async def generate_daily_summary(
         messages=convo,
     )
 
-    client = get_gemini_client()
+    client = get_llm_client()
     try:
         raw = await client.extract(
             system_prompt=filled,
@@ -245,7 +245,7 @@ async def generate_weekly_summary(
         summaries=summaries_block,
     )
 
-    client = get_gemini_client()
+    client = get_llm_client()
     try:
         raw = await client.extract(
             system_prompt=filled,

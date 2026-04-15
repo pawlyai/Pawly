@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     telegram_bot_token: str
     google_api_key: str
     google_maps_api_key: str = ""
+    anthropic_api_key: str = ""
     node_env: str = "development"
     port: int = 8000
     log_level: str = "info"

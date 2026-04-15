@@ -1,79 +1,52 @@
 """
-Google Gen AI wrapper - GeminiClient.
+LiteLLM wrapper — LLMClient.
 
-chat()            -> plain conversation (Gemini Flash)
-chat_structured() -> conversation with JSON-schema-constrained output
-extract()         -> structured extraction (Gemini Flash)
+Replaces the Gemini-specific GeminiClient. Model names follow LiteLLM conventions:
 
-Singleton: get_gemini_client()
+    gemini/gemini-2.5-flash   → Google Gemini  (uses GEMINI_API_KEY)
+    claude-opus-4-6           → Anthropic Claude (uses ANTHROPIC_API_KEY)
+
+Switch providers by editing models_config.yaml — no code changes needed.
+Set MODEL_HOT_RELOAD=true to pick up yaml changes without restarting.
+
+Public interface (unchanged from before):
+    chat()            -> plain conversation
+    chat_structured() -> conversation returning JSON with triage/intent/sentiment
+    extract()         -> structured extraction (uses extraction_model)
+
+Singleton: get_llm_client()
+get_gemini_client() is kept as a backward-compatible alias.
 """
 
-import asyncio
 import json
+import os
 from typing import Any
 
+import litellm
+
 from src.config import settings
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+litellm.suppress_debug_info = True
+
+# ── Structured response prompt suffix ─────────────────────────────────────────
+# Appended to the system prompt for chat_structured() calls.
+# Works across providers (Gemini, Claude, OpenAI) via json_object response_format.
+
+_STRUCTURED_SUFFIX = """
+You MUST respond with a valid JSON object only. No markdown fences, no prose — raw JSON.
+Required fields:
+  "response_text"  – string: the user-facing reply, plain text only, no emoji headers
+  "triage_level"   – string: one of "RED", "ORANGE", "GREEN"
+  "intent"         – string: one of "symptom_report", "nutrition", "exercise", "grooming", "behavior", "question", "general"
+  "sentiment"      – string: one of "CALM", "ANXIOUS", "PANIC"
+  "symptom_tags"   – array of strings: symptom keywords mentioned (empty array if none)
+"""
 
 
-# ── Structured response schema ────────────────────────────────────────────────
-# Used by chat_structured() to force Gemini to return both the user-facing
-# response text and classification metadata in a single call.
-
-RESPONSE_SCHEMA: dict[str, Any] = {
-    "type": "OBJECT",
-    "properties": {
-        "response_text": {
-            "type": "STRING",
-            "description": "The user-facing response message. Plain text only — no emoji headers or visual chrome.",
-        },
-        "triage_level": {
-            "type": "STRING",
-            "enum": ["RED", "ORANGE", "GREEN"],
-            "description": "Triage classification: RED (emergency), ORANGE (concerning), GREEN (routine).",
-        },
-        "intent": {
-            "type": "STRING",
-            "enum": ["symptom_report", "nutrition", "exercise", "grooming", "behavior", "question", "general"],
-            "description": "The primary intent of the user message.",
-        },
-        "sentiment": {
-            "type": "STRING",
-            "enum": ["CALM", "ANXIOUS", "PANIC"],
-            "description": "The owner's emotional state inferred from their message.",
-        },
-        "symptom_tags": {
-            "type": "ARRAY",
-            "items": {"type": "STRING"},
-            "description": "Symptom keywords mentioned or implied (e.g. 'vomiting', 'lethargy'). Empty list if none.",
-        },
-    },
-    "required": ["response_text", "triage_level", "intent", "sentiment", "symptom_tags"],
-}
-
-
-class GeminiClient:
-    def __init__(self, api_key: str) -> None:
-        try:
-            from google import genai
-            from google.genai import types
-            self._sdk_mode = "genai"
-            self._types = types
-            self._client = genai.Client(api_key=api_key)
-            return
-        except ImportError:
-            pass
-
-        try:
-            import google.generativeai as legacy_genai
-            self._sdk_mode = "legacy"
-            self._legacy = legacy_genai
-            self._legacy.configure(api_key=api_key)
-            return
-        except ImportError as exc:
-            raise RuntimeError(
-                "No Gemini SDK found. Install `google-genai` (preferred) or `google-generativeai`."
-            ) from exc
-
+class LLMClient:
     async def _call(
         self,
         model: str,
@@ -81,238 +54,35 @@ class GeminiClient:
         messages: list[dict[str, Any]],
         max_tokens: int,
         temperature: float,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Call Gemini synchronously via asyncio.to_thread."""
-        if self._sdk_mode == "genai":
-            contents = self._build_contents(messages)
-            response = await asyncio.to_thread(
-                self._sync_call_genai,
-                model,
-                system_prompt,
-                contents,
-                max_tokens,
-                temperature,
-            )
-            return self._format_response_genai(response)
-
-        payload = self._build_legacy_messages(system_prompt, messages)
-        response = await asyncio.to_thread(
-            self._sync_call_legacy,
-            model,
-            payload,
-            max_tokens,
-            temperature,
-        )
-        return self._format_response_legacy(response)
-
-    def _build_contents(self, messages: list[dict[str, Any]]) -> list[Any]:
-        contents: list[Any] = []
-        for msg in messages:
-            role = "user" if msg.get("role") == "user" else "model"
-            contents.append(
-                self._types.Content(
-                    role=role,
-                    parts=[self._types.Part.from_text(text=str(msg.get("content", "")))],
-                )
-            )
-        return contents
-
-    def _build_legacy_messages(
-        self,
-        system_prompt: str,
-        messages: list[dict[str, Any]],
-    ) -> list[dict[str, str]]:
-        formatted: list[dict[str, str]] = []
-        if system_prompt:
-            formatted.append({"author": "system", "content": system_prompt})
-        for msg in messages:
-            author = "user" if msg.get("role") == "user" else "assistant"
-            formatted.append({"author": author, "content": str(msg.get("content", ""))})
-        return formatted
-
-    def _sync_call_genai(
-        self,
-        model: str,
-        system_prompt: str,
-        contents: list[Any],
-        max_tokens: int,
-        temperature: float,
-    ) -> Any:
-        config = self._types.GenerateContentConfig(
-            system_instruction=system_prompt or None,
-            max_output_tokens=max_tokens,
-            temperature=temperature,
-        )
-        return self._client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=config,
-        )
-
-    def _sync_call_legacy(
-        self,
-        model: str,
-        messages: list[dict[str, str]],
-        max_tokens: int,
-        temperature: float,
-    ) -> Any:
-        system_prompt = ""
-        history: list[dict[str, Any]] = []
-        for message in messages:
-            author = message.get("author", "user")
-            content = message.get("content", "")
-            if author == "system":
-                system_prompt = f"{system_prompt}\n{content}".strip()
-                continue
-            role = "user" if author == "user" else "model"
-            history.append({"role": role, "parts": [content]})
-
-        generation_config = self._legacy.types.GenerationConfig(
-            max_output_tokens=max_tokens,
-            temperature=temperature,
-        )
-        model_client = self._legacy.GenerativeModel(
-            model_name=model,
-            system_instruction=system_prompt or None,
-        )
-        return model_client.generate_content(
-            contents=history,
-            generation_config=generation_config,
-        )
-
-    def _format_response_genai(self, response: Any) -> dict[str, Any]:
-        text = self._extract_text(response)
-        usage = getattr(response, "usage_metadata", None)
-        input_tokens = self._extract_token_count(
-            usage,
-            ("prompt_token_count", "input_tokens", "prompt_tokens"),
-        )
-        output_tokens = self._extract_token_count(
-            usage,
-            ("candidates_token_count", "output_tokens", "completion_tokens"),
-        )
-        return {
-            "text": text,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
+        litellm_messages = [{"role": "system", "content": system_prompt}] + messages
+        kwargs: dict[str, Any] = {
+            "model": model,
+            "messages": litellm_messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
         }
+        if response_format:
+            kwargs["response_format"] = response_format
 
-    def _format_response_legacy(self, response: Any) -> dict[str, Any]:
-        text = getattr(response, "text", "") or ""
-        usage = getattr(response, "usage_metadata", None) or getattr(response, "usage", None)
-        input_tokens = self._extract_token_count(
-            usage,
-            ("prompt_token_count", "prompt_tokens", "input_tokens"),
-        )
-        output_tokens = self._extract_token_count(
-            usage,
-            ("candidates_token_count", "completion_tokens", "output_tokens", "completion_token_count"),
-        )
-        return {
-            "text": text,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-        }
-
-    def _extract_text(self, response: Any) -> str:
-        text = getattr(response, "text", None)
-        if isinstance(text, str) and text.strip():
-            return text
-
-        candidates = getattr(response, "candidates", None) or []
-        if not candidates:
-            return ""
-
-        content = getattr(candidates[0], "content", None)
-        parts = getattr(content, "parts", None) or []
-        chunks: list[str] = []
-        for part in parts:
-            part_text = getattr(part, "text", None)
-            if isinstance(part_text, str):
-                chunks.append(part_text)
-        return "\n".join(chunks).strip()
-
-    def _extract_token_count(self, usage: Any, names: tuple[str, ...]) -> int:
-        if usage is None:
-            return 0
-        if isinstance(usage, dict):
-            for name in names:
-                count = usage.get(name)
-                if isinstance(count, int):
-                    return count
-            return 0
-        for name in names:
-            count = getattr(usage, name, None)
-            if isinstance(count, int):
-                return count
-        return 0
-
-    async def _call_structured(
-        self,
-        model: str,
-        system_prompt: str,
-        messages: list[dict[str, Any]],
-        max_tokens: int,
-        temperature: float,
-        response_schema: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Call Gemini with JSON response_schema enforcement."""
-        if self._sdk_mode == "genai":
-            contents = self._build_contents(messages)
-            response = await asyncio.to_thread(
-                self._sync_call_genai_structured,
-                model,
-                system_prompt,
-                contents,
-                max_tokens,
-                temperature,
-                response_schema,
-            )
-            raw = self._format_response_genai(response)
-            # Parse the JSON text into a dict and merge with token counts
-            try:
-                parsed = json.loads(raw["text"])
-            except (json.JSONDecodeError, TypeError):
-                parsed = {"response_text": raw["text"]}
-            parsed["input_tokens"] = raw["input_tokens"]
-            parsed["output_tokens"] = raw["output_tokens"]
-            return parsed
-
-        # Legacy SDK: fall back to regular call + manual JSON parse attempt
-        result = await self._call(model, system_prompt, messages, max_tokens, temperature)
         try:
-            parsed = json.loads(result["text"])
-            parsed["input_tokens"] = result["input_tokens"]
-            parsed["output_tokens"] = result["output_tokens"]
-            return parsed
-        except (json.JSONDecodeError, TypeError):
-            return {
-                "response_text": result["text"],
-                "input_tokens": result["input_tokens"],
-                "output_tokens": result["output_tokens"],
-            }
-
-    def _sync_call_genai_structured(
-        self,
-        model: str,
-        system_prompt: str,
-        contents: list[Any],
-        max_tokens: int,
-        temperature: float,
-        response_schema: dict[str, Any],
-    ) -> Any:
-        config = self._types.GenerateContentConfig(
-            system_instruction=system_prompt or None,
-            max_output_tokens=max_tokens,
-            temperature=temperature,
-            response_mime_type="application/json",
-            response_schema=response_schema,
-        )
-        return self._client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=config,
-        )
+            response = await litellm.acompletion(**kwargs)
+        except Exception as exc:
+            logger.error(
+                "litellm.acompletion failed",
+                model=model,
+                error_type=type(exc).__name__,
+                error=str(exc),
+            )
+            raise
+        text = response.choices[0].message.content or ""
+        usage = response.usage
+        return {
+            "text": text,
+            "input_tokens": getattr(usage, "prompt_tokens", 0),
+            "output_tokens": getattr(usage, "completion_tokens", 0),
+        }
 
     async def chat(
         self,
@@ -323,12 +93,9 @@ class GeminiClient:
         temperature: float = 0.7,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        """
-        Main conversation call (Gemini Flash by default).
-        Returns {"text": str, "input_tokens": int, "output_tokens": int}.
-        """
+        from src.llm.model_registry import get_model
         return await self._call(
-            model=model or settings.main_model,
+            model=model or get_model("main_model", settings.main_model),
             system_prompt=system_prompt,
             messages=messages,
             max_tokens=max_tokens,
@@ -341,40 +108,36 @@ class GeminiClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.2,
     ) -> dict[str, Any]:
-        """
-        Conversation call with structured JSON output.
-
-        Returns a dict with:
-            response_text: str
-            triage_level: "RED" | "ORANGE" | "GREEN"
-            intent: str
-            sentiment: "CALM" | "ANXIOUS" | "PANIC"
-            symptom_tags: list[str]
-            input_tokens: int
-            output_tokens: int
-        """
-        return await self._call_structured(
-            model=model or settings.main_model,
-            system_prompt=system_prompt,
+        from src.llm.model_registry import get_model
+        effective_model = model or get_model("main_model", settings.main_model)
+        # Claude follows JSON instructions via prompting; response_format is Gemini/OpenAI only
+        is_claude = effective_model.startswith("claude")
+        raw = await self._call(
+            model=effective_model,
+            system_prompt=system_prompt + _STRUCTURED_SUFFIX,
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            response_schema=RESPONSE_SCHEMA,
+            response_format=None if is_claude else {"type": "json_object"},
         )
+        try:
+            parsed = json.loads(raw["text"])
+        except (json.JSONDecodeError, TypeError):
+            parsed = {"response_text": raw["text"]}
+        parsed["input_tokens"] = raw["input_tokens"]
+        parsed["output_tokens"] = raw["output_tokens"]
+        return parsed
 
     async def extract(
         self,
         system_prompt: str,
         messages: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        """
-        Structured extraction call (Gemini Flash).
-        Returns {"text": str, "input_tokens": int, "output_tokens": int}.
-        """
+        from src.llm.model_registry import get_model
         return await self._call(
-            model=settings.extraction_model,
+            model=get_model("extraction_model", settings.extraction_model),
             system_prompt=system_prompt,
             messages=messages,
             max_tokens=1024,
@@ -382,11 +145,18 @@ class GeminiClient:
         )
 
 
-_client: GeminiClient | None = None
+_client: LLMClient | None = None
 
 
-def get_gemini_client() -> GeminiClient:
+def get_llm_client() -> LLMClient:
     global _client
     if _client is None:
-        _client = GeminiClient(api_key=settings.google_api_key)
+        os.environ.setdefault("GEMINI_API_KEY", settings.google_api_key)
+        if settings.anthropic_api_key:
+            os.environ.setdefault("ANTHROPIC_API_KEY", settings.anthropic_api_key)
+        _client = LLMClient()
     return _client
+
+
+# Backward-compatible alias
+get_gemini_client = get_llm_client

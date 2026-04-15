@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from src.db.models import MemoryTerm, MemoryType, Pet, PetMemory
-from src.llm.client import get_gemini_client
+from src.llm.client import get_llm_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -140,7 +140,7 @@ async def extract_memories(
         messages=_format_messages(raw_messages),
     )
 
-    client = get_gemini_client()
+    client = get_llm_client()
     try:
         raw = await client.extract(
             system_prompt=filled_prompt,

@@ -26,7 +26,8 @@ from src.db.models import (
     TriageRecord,
     User,
 )
-from src.llm.client import get_gemini_client
+from src.llm.client import get_llm_client
+from src.llm.model_registry import get_model
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
@@ -113,7 +114,7 @@ async def generate_opening(
 
     user_prompt = " ".join(parts)
 
-    client = get_gemini_client()
+    client = get_llm_client()
     try:
         raw = await client.chat(
             system_prompt=system,
@@ -282,8 +283,8 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL GEMINI ────────────────────────────────────────────────────────
-    client = get_gemini_client()
+    # ── 4. CALL LLM (main model) ──────────────────────────────────────────────
+    client = get_llm_client()
     try:
         raw = await client.chat(system_prompt=system, messages=messages)
         response_text = raw["text"]
@@ -301,26 +302,39 @@ async def _generate_response_classic(
     llm_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    if resolved.overridden and resolved.final_classification == TriageLevel.RED:
-        override_system = (
-            system
-            + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-            "by the safety system. You MUST treat this as URGENT. Push immediate vet visit. "
-            "Do not suggest home treatment."
-        )
+    if resolved.final_classification in (TriageLevel.RED, TriageLevel.ORANGE):
+        urgent_model = get_model("urgent_model", "claude-opus-4-6")
+        if resolved.final_classification == TriageLevel.RED:
+            urgency_note = (
+                "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
+                "by the safety system. You MUST treat this as URGENT. Push immediate vet visit. "
+                "Do not suggest home treatment."
+            )
+        else:
+            urgency_note = (
+                "\n\nIMPORTANT: This situation requires prompt veterinary attention (ORANGE triage). "
+                "Clearly recommend the owner contact their vet soon. Do not downplay the concern."
+            )
+        override_system = system + urgency_note
         try:
-            raw2 = await client.chat(system_prompt=override_system, messages=messages)
+            raw2 = await client.chat(
+                model=urgent_model,
+                system_prompt=override_system,
+                messages=messages,
+            )
             response_text = raw2["text"]
             in_tok += raw2["input_tokens"]
             out_tok += raw2["output_tokens"]
             logger.warning(
-                "triage RED override re-call issued",
+                "triage urgent re-call issued",
+                level=resolved.final_classification.value,
+                model=urgent_model,
                 pet_id=pet_id_str,
                 rule=rule_result.classification.value,
                 llm=llm_triage.value if llm_triage else None,
             )
         except Exception as exc:
-            logger.error("RED override re-call failed", error=str(exc))
+            logger.error("urgent re-call failed", error=str(exc))
 
     # Apply Figma visual format based on resolved triage level
     response_text = apply_response_format(response_text, resolved.final_classification)

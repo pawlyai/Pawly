@@ -22,7 +22,7 @@ dependencies = [
     # Background jobs
     "arq>=0.25.0",
     # AI / LLM
-    "google-genai>=1.0.0",
+    "litellm>=1.83.2",
     # Validation
     "pydantic>=2.7.0",
     "pydantic-settings>=2.3.0",
