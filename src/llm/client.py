@@ -80,6 +80,7 @@ class LLMClient:
         usage = response.usage
         return {
             "text": text,
+            "model": model,
             "input_tokens": getattr(usage, "prompt_tokens", 0),
             "output_tokens": getattr(usage, "completion_tokens", 0),
         }
@@ -89,43 +90,82 @@ class LLMClient:
         system_prompt: str,
         messages: list[dict[str, Any]],
         model: str | None = None,
+        fallback_model: str | None = None,
         max_tokens: int = 2048,
         temperature: float = 0.7,
         **kwargs: Any,
     ) -> dict[str, Any]:
         from src.llm.model_registry import get_model
-        return await self._call(
-            model=model or get_model("main_model", settings.main_model),
-            system_prompt=system_prompt,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-        )
+        primary = model or get_model("main_model", settings.main_model)
+        try:
+            return await self._call(
+                model=primary,
+                system_prompt=system_prompt,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        except Exception:
+            if fallback_model:
+                logger.warning("primary model failed, retrying with fallback", primary=primary, fallback=fallback_model)
+                return await self._call(
+                    model=fallback_model,
+                    system_prompt=system_prompt,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+            raise
 
     async def chat_structured(
         self,
         system_prompt: str,
         messages: list[dict[str, Any]],
         model: str | None = None,
+        fallback_model: str | None = None,
         max_tokens: int = 2048,
         temperature: float = 0.2,
     ) -> dict[str, Any]:
         from src.llm.model_registry import get_model
-        effective_model = model or get_model("main_model", settings.main_model)
-        # Claude follows JSON instructions via prompting; response_format is Gemini/OpenAI only
-        is_claude = effective_model.startswith("claude")
-        raw = await self._call(
-            model=effective_model,
-            system_prompt=system_prompt + _STRUCTURED_SUFFIX,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            response_format=None if is_claude else {"type": "json_object"},
-        )
+        primary = model or get_model("main_model", settings.main_model)
+        # Claude follows JSON via prompting; response_format is Gemini/OpenAI only
+        is_claude = primary.startswith("claude")
         try:
-            parsed = json.loads(raw["text"])
+            raw = await self._call(
+                model=primary,
+                system_prompt=system_prompt + _STRUCTURED_SUFFIX,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                response_format=None if is_claude else {"type": "json_object"},
+            )
+        except Exception:
+            if fallback_model:
+                logger.warning("primary model failed, retrying with fallback", primary=primary, fallback=fallback_model)
+                is_claude_fallback = fallback_model.startswith("claude")
+                raw = await self._call(
+                    model=fallback_model,
+                    system_prompt=system_prompt + _STRUCTURED_SUFFIX,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    response_format=None if is_claude_fallback else {"type": "json_object"},
+                )
+            else:
+                raise
+
+        # Strip markdown fences Claude sometimes wraps around JSON
+        text = raw["text"].strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1]  # drop the ```json opening line
+            text = text.rsplit("```", 1)[0].strip()
+
+        try:
+            parsed = json.loads(text)
         except (json.JSONDecodeError, TypeError):
             parsed = {"response_text": raw["text"]}
+
+        parsed["model"] = raw["model"]
         parsed["input_tokens"] = raw["input_tokens"]
         parsed["output_tokens"] = raw["output_tokens"]
         return parsed

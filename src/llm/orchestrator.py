@@ -27,7 +27,7 @@ from src.db.models import (
     User,
 )
 from src.llm.client import get_llm_client
-from src.llm.model_registry import get_model
+from src.llm.model_registry import get_model, get_model_for_triage
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
@@ -283,26 +283,40 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL LLM (main model) ──────────────────────────────────────────────
+    # ── 4. PRE-SELECT MODEL via rule triage (fast, no I/O) ────────────────────
+    # Running rule triage here lets us use urgent_model on the *first* LLM call
+    # for known-urgent messages, avoiding a costly second call in most cases.
+    rule_result = classify_by_rules(pet, user_message)
+    selected_model = get_model_for_triage(
+        rule_result.classification.value,
+        main_fallback=settings.main_model,
+        urgent_fallback="claude-opus-4-6",
+    )
+    main_model = get_model("main_model", settings.main_model)
+
+    # ── 5. CALL LLM ───────────────────────────────────────────────────────────
     client = get_llm_client()
     try:
-        raw = await client.chat(system_prompt=system, messages=messages)
+        raw = await client.chat(system_prompt=system, messages=messages, model=selected_model)
         response_text = raw["text"]
         in_tok = raw["input_tokens"]
         out_tok = raw["output_tokens"]
+        logger.info("llm call completed", model=raw["model"], in_tok=in_tok, out_tok=out_tok)
     except Exception as exc:
-        logger.error("llm call failed", error=str(exc))
+        logger.error("llm call failed", model=selected_model, error=str(exc))
         response_text = (
             "I'm having trouble connecting right now. Please try again in a moment."
         )
         in_tok = out_tok = 0
 
-    # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
-    rule_result = classify_by_rules(pet, user_message)
+    # ── 6. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     llm_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    if resolved.final_classification in (TriageLevel.RED, TriageLevel.ORANGE):
+    # Only re-call when the rules caught something the LLM missed (rules_stricter).
+    # If the LLM already classified correctly, the first call (already on urgent_model
+    # when rule said RED/ORANGE) is sufficient — no second call needed.
+    if resolved.overridden and resolved.override_direction == "rules_stricter":
         urgent_model = get_model("urgent_model", "claude-opus-4-6")
         if resolved.final_classification == TriageLevel.RED:
             urgency_note = (
@@ -319,6 +333,7 @@ async def _generate_response_classic(
         try:
             raw2 = await client.chat(
                 model=urgent_model,
+                fallback_model=main_model,
                 system_prompt=override_system,
                 messages=messages,
             )
@@ -326,9 +341,9 @@ async def _generate_response_classic(
             in_tok += raw2["input_tokens"]
             out_tok += raw2["output_tokens"]
             logger.warning(
-                "triage urgent re-call issued",
+                "triage override re-call issued",
                 level=resolved.final_classification.value,
-                model=urgent_model,
+                model=raw2["model"],
                 pet_id=pet_id_str,
                 rule=rule_result.classification.value,
                 llm=llm_triage.value if llm_triage else None,

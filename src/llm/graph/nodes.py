@@ -15,6 +15,7 @@ import uuid
 from typing import Any
 
 from src.db.models import Sentiment, SubscriptionTier, TriageLevel
+from src.config import settings
 from src.llm.client import get_llm_client
 from src.llm.model_registry import get_model
 from src.llm.graph.state import PawlyState
@@ -163,6 +164,12 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
             system_prompt=state["system_prompt"],
             messages=state["messages"],
         )
+        logger.info(
+            "llm call completed",
+            model=raw.get("model"),
+            in_tok=raw.get("input_tokens", 0),
+            out_tok=raw.get("output_tokens", 0),
+        )
         return {
             "response_text": raw.get("response_text", ""),
             "llm_triage": _parse_triage_level(raw.get("triage_level")),
@@ -203,8 +210,18 @@ async def resolve_triage_node(state: PawlyState) -> dict[str, Any]:
 
 
 def should_override(state: PawlyState) -> str:
-    """Conditional edge: route to critical_override for RED or ORANGE triage."""
-    if state.get("final_triage") in (TriageLevel.RED, TriageLevel.ORANGE):
+    """
+    Conditional edge: route to critical_override only when the rule engine
+    escalated beyond what the LLM classified (rules_stricter override).
+
+    If the LLM already returned RED/ORANGE on its own, the first call was
+    sufficient — no second call needed.
+    """
+    if (
+        state.get("final_triage") in (TriageLevel.RED, TriageLevel.ORANGE)
+        and state.get("triage_overridden")
+        and state.get("override_direction") == "rules_stricter"
+    ):
         return "critical_override"
     return "finalize"
 
@@ -234,17 +251,19 @@ async def critical_override_node(state: PawlyState) -> dict[str, Any]:
         )
 
     override_system = state["system_prompt"] + urgency_note
+    main_model = get_model("main_model", settings.main_model)
     client = get_llm_client()
     try:
         raw = await client.chat_structured(
             model=urgent_model,
+            fallback_model=main_model,
             system_prompt=override_system,
             messages=state["messages"],
         )
         logger.warning(
-            "triage urgent re-call issued",
+            "triage override re-call issued",
             level=final_triage.value,
-            model=urgent_model,
+            model=raw.get("model"),
             pet_id=str(state["pet"].id) if state.get("pet") else None,
         )
         return {
