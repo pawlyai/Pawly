@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
 
+    # Langfuse observability (optional — tracing degrades gracefully when absent)
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "http://langfuse-server:3000"
+
     model_config = ConfigDict(env_file=".env")
 
 

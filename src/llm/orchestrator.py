@@ -27,6 +27,7 @@ from src.db.models import (
     User,
 )
 from src.llm.client import get_gemini_client
+from src.observability.tracing import observe_span, update_span, update_trace
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
@@ -216,6 +217,7 @@ async def _generate_response_graph(
 # ── Classic path (USE_LANGGRAPH=false, default) ──────────────────────────────
 
 
+@observe_span(name="classic-orchestrator")
 async def _generate_response_classic(
     user: User,
     pet: Optional[Pet],
@@ -229,6 +231,25 @@ async def _generate_response_classic(
     tier = _tier(user)
     pet_id_str = str(pet.id) if pet else None
     is_health = looks_like_health_query(user_message)
+
+    # user_id/session_id/tags belong on the trace in v2 SDK
+    update_trace(
+        user_id=str(user.id),
+        session_id=dialogue_id,
+        tags=[tier.value, "classic-path"],
+        metadata={
+            "pet_id": pet_id_str,
+            "pet_name": pet.name if pet else None,
+            "subscription_tier": tier.value,
+        },
+    )
+    update_span(
+        input={"user_message": user_message},
+        metadata={
+            "message_type": message_type.value,
+            "is_health_query": is_health,
+        },
+    )
 
     # ── 1. LOAD CONTEXT ───────────────────────────────────────────────────────
     ctx: dict = {}
@@ -353,6 +374,18 @@ async def _generate_response_classic(
     intent = detect_intent(user_message)
     sentiment = detect_sentiment(user_message)
     symptom_tags = extract_symptom_keywords(user_message, rule_result.matched_patterns)
+
+    update_span(
+        output={"response_text": response_text},
+        metadata={
+            "triage_final": triage_result["final"],
+            "triage_overridden": triage_result["overridden"],
+            "intent": intent,
+            "symptom_tags": symptom_tags,
+            "input_tokens": in_tok,
+            "output_tokens": out_tok,
+        },
+    )
 
     return OrchestratorResult(
         response_text=response_text,

@@ -13,6 +13,7 @@ import json
 from typing import Any
 
 from src.config import settings
+from src.observability.tracing import observe_generation, update_generation
 
 
 # ── Structured response schema ────────────────────────────────────────────────
@@ -74,6 +75,7 @@ class GeminiClient:
                 "No Gemini SDK found. Install `google-genai` (preferred) or `google-generativeai`."
             ) from exc
 
+    @observe_generation(name="gemini-call")
     async def _call(
         self,
         model: str,
@@ -93,17 +95,28 @@ class GeminiClient:
                 max_tokens,
                 temperature,
             )
-            return self._format_response_genai(response)
+            result = self._format_response_genai(response)
+        else:
+            payload = self._build_legacy_messages(system_prompt, messages)
+            response = await asyncio.to_thread(
+                self._sync_call_legacy,
+                model,
+                payload,
+                max_tokens,
+                temperature,
+            )
+            result = self._format_response_legacy(response)
 
-        payload = self._build_legacy_messages(system_prompt, messages)
-        response = await asyncio.to_thread(
-            self._sync_call_legacy,
-            model,
-            payload,
-            max_tokens,
-            temperature,
+        update_generation(
+            model=model,
+            input=messages,
+            output=result["text"],
+            usage_details={
+                "input": result["input_tokens"],
+                "output": result["output_tokens"],
+            },
         )
-        return self._format_response_legacy(response)
+        return result
 
     def _build_contents(self, messages: list[dict[str, Any]]) -> list[Any]:
         contents: list[Any] = []
@@ -247,6 +260,7 @@ class GeminiClient:
                 return count
         return 0
 
+    @observe_generation(name="gemini-call-structured")
     async def _call_structured(
         self,
         model: str,
@@ -276,21 +290,35 @@ class GeminiClient:
                 parsed = {"response_text": raw["text"]}
             parsed["input_tokens"] = raw["input_tokens"]
             parsed["output_tokens"] = raw["output_tokens"]
-            return parsed
+        else:
+            # Legacy SDK: fall back to regular call + manual JSON parse attempt
+            result = await self._call(model, system_prompt, messages, max_tokens, temperature)
+            try:
+                parsed = json.loads(result["text"])
+                parsed["input_tokens"] = result["input_tokens"]
+                parsed["output_tokens"] = result["output_tokens"]
+            except (json.JSONDecodeError, TypeError):
+                parsed = {
+                    "response_text": result["text"],
+                    "input_tokens": result["input_tokens"],
+                    "output_tokens": result["output_tokens"],
+                }
 
-        # Legacy SDK: fall back to regular call + manual JSON parse attempt
-        result = await self._call(model, system_prompt, messages, max_tokens, temperature)
-        try:
-            parsed = json.loads(result["text"])
-            parsed["input_tokens"] = result["input_tokens"]
-            parsed["output_tokens"] = result["output_tokens"]
-            return parsed
-        except (json.JSONDecodeError, TypeError):
-            return {
-                "response_text": result["text"],
-                "input_tokens": result["input_tokens"],
-                "output_tokens": result["output_tokens"],
-            }
+        update_generation(
+            model=model,
+            input=messages,
+            output=parsed.get("response_text", ""),
+            usage_details={
+                "input": parsed.get("input_tokens", 0),
+                "output": parsed.get("output_tokens", 0),
+            },
+            metadata={
+                "triage_level": parsed.get("triage_level"),
+                "intent": parsed.get("intent"),
+                "sentiment": parsed.get("sentiment"),
+            },
+        )
+        return parsed
 
     def _sync_call_genai_structured(
         self,
