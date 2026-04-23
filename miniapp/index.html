@@ -261,7 +261,11 @@
     function show(id) { const el = document.getElementById(id); if (el) el.classList.add('show'); }
     function hide(id) { const el = document.getElementById(id); if (el) el.classList.remove('show'); }
 
-    function submitForm() {
+    // API base URL — override with ?api=https://your-tunnel for local testing
+    const API_URL = new URLSearchParams(window.location.search).get('api')
+                    || 'https://api.pawly.app';
+
+    async function submitForm() {
       const name   = document.getElementById('name').value.trim();
       const breed  = document.getElementById('breed').value.trim();
       const age    = document.getElementById('age').value.trim();
@@ -277,18 +281,44 @@
       if (!state.neutered){ show('err-neutered'); ok = false; }
       if (!ok) return;
 
-      tg.sendData(JSON.stringify({
-        name,
-        species:         state.species,
-        breed,
-        age,
-        age_unit:        state.age_unit,
-        gender:          state.gender,
-        neutered:        state.neutered,
-        weight:          weight || null,
-        weight_unit:     state.weight_unit,
-        medical_history: medHx || null,
-      }));
+      const btn = document.querySelector('.cta');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        const res = await fetch(`${API_URL}/miniapp/create-pet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            init_data:       tg.initData,
+            name,
+            species:         state.species,
+            breed:           breed || null,
+            age:             age || null,
+            age_unit:        state.age_unit,
+            gender:          state.gender,
+            neutered:        state.neutered,
+            weight:          weight || null,
+            weight_unit:     state.weight_unit,
+            medical_history: medHx || null,
+            start_param:     tg.initDataUnsafe?.start_param ?? null,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          tg.showAlert(`✅ ${data.pet_name}'s profile created!`, () => tg.close());
+        } else {
+          const err = await res.json().catch(() => ({}));
+          tg.showAlert('Something went wrong: ' + (err.detail || res.status));
+          btn.disabled = false;
+          btn.textContent = 'Create Profile & Start';
+        }
+      } catch (e) {
+        tg.showAlert('Network error — please check your connection and try again.');
+        btn.disabled = false;
+        btn.textContent = 'Create Profile & Start';
+      }
     }
   </script>
 </body>
