@@ -30,8 +30,18 @@ async def main() -> None:
     await init_engine()
     await init_redis()
 
-    # Build bot and dispatcher
-    bot, dp = await create_bot()
+    # Build bot and dispatcher.
+    # Production: token errors are hard failures — better to crash loudly than
+    # run silently without Telegram.
+    # Development: invalid/missing token skips the bot so the web API still works.
+    bot = None
+    dp = None
+    try:
+        bot, dp = await create_bot()
+    except Exception as exc:
+        if settings.node_env == "production":
+            raise
+        logger.warning("Telegram bot disabled (dev mode) — token invalid or missing", reason=str(exc))
 
     # Build FastAPI app
     fastapi_app = create_app()
@@ -51,7 +61,7 @@ async def main() -> None:
             webhook_url = (
                 f"https://{settings.webhook_host}/webhook/{settings.telegram_bot_token}"
             )
-            await bot.set_webhook(webhook_url, drop_pending_updates=True)
+            await bot.set_webhook(webhook_url, drop_pending_updates=True)  # type: ignore[union-attr]
             logger.info("webhook set", url=webhook_url)
 
             @fastapi_app.post(f"/webhook/{settings.telegram_bot_token}")
@@ -59,19 +69,25 @@ async def main() -> None:
                 from aiogram.types import Update
                 body = await request.body()
                 update = Update.model_validate_json(body)
-                await dp.feed_update(bot, update)
+                await dp.feed_update(bot, update)  # type: ignore[union-attr]
                 return Response()
 
             await server.serve()
         else:
-            # Development: long-polling + uvicorn side-by-side
-            await asyncio.gather(
-                dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types()),
-                server.serve(),
-            )
+            if bot is not None and dp is not None:
+                # Full dev mode: long-polling + uvicorn side-by-side
+                await asyncio.gather(
+                    dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types()),
+                    server.serve(),
+                )
+            else:
+                # API-only dev mode: no valid bot token, web API still works
+                logger.info("Running in API-only mode — POST /chat available, Telegram bot offline")
+                await server.serve()
     finally:
         logger.info("Shutting down Pawly")
-        await bot.session.close()
+        if bot is not None:
+            await bot.session.close()
         await close_arq_pool()
         await close_redis()
         await close_engine()

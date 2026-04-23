@@ -31,6 +31,62 @@ services:
       timeout: 3s
       retries: 5
 
+  # Dedicated Postgres for Langfuse — isolated from app DB
+  langfuse-postgres:
+    image: postgres:16
+    container_name: langfuse_postgres
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse_pass
+      POSTGRES_DB: langfuse
+    ports:
+      - "5433:5432"
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  langfuse-server:
+    image: langfuse/langfuse:2
+    container_name: langfuse_server
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse_pass@langfuse-postgres:5432/langfuse
+      NEXTAUTH_SECRET: pawly-langfuse-nextauth-secret-dev
+      SALT: pawly-langfuse-salt-dev
+      # Must be 64 hex chars (256 bits) — dev value only, rotate in prod
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      NEXTAUTH_URL: http://localhost:3000
+      # Required for container to be reachable from other services
+      HOSTNAME: "0.0.0.0"
+      TELEMETRY_ENABLED: "false"
+      # Headless init — pre-create org, project, API keys, and admin user on first boot
+      # All _ID fields are required alongside their name counterparts
+      LANGFUSE_INIT_ORG_ID: pawly-org-dev
+      LANGFUSE_INIT_ORG_NAME: pawly-org
+      LANGFUSE_INIT_PROJECT_ID: pawly-project-dev
+      LANGFUSE_INIT_PROJECT_NAME: pawly
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: lf-pk-pawly-local-dev
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: lf-sk-pawly-local-dev
+      LANGFUSE_INIT_USER_EMAIL: admin@pawly.local
+      LANGFUSE_INIT_USER_NAME: Pawly Admin
+      LANGFUSE_INIT_USER_PASSWORD: pawly-admin-dev
+    depends_on:
+      langfuse-postgres:
+        condition: service_healthy
+    healthcheck:
+      # curl and BusyBox wget both fail inside this container (IPv6/IPv4 mismatch).
+      # Node.js is guaranteed available in the langfuse image.
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/api/public/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   app:
     build: .
     container_name: pawly_app
@@ -38,6 +94,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://pawly:pawly_pass@postgres:5432/pawly
       REDIS_URL: redis://redis:6379
+      LANGFUSE_HOST: http://langfuse-server:3000
+      LANGFUSE_PUBLIC_KEY: lf-pk-pawly-local-dev
+      LANGFUSE_SECRET_KEY: lf-sk-pawly-local-dev
     ports:
       - "8000:8000"
     volumes:
@@ -46,6 +105,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      langfuse-server:
         condition: service_healthy
     command: sh -c "alembic upgrade head && python -m src.main"
 
@@ -56,6 +117,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://pawly:pawly_pass@postgres:5432/pawly
       REDIS_URL: redis://redis:6379
+      LANGFUSE_HOST: http://langfuse-server:3000
+      LANGFUSE_PUBLIC_KEY: lf-pk-pawly-local-dev
+      LANGFUSE_SECRET_KEY: lf-sk-pawly-local-dev
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,3 +130,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  langfuse_postgres_data:

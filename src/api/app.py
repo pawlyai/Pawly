@@ -4,7 +4,7 @@ FastAPI application factory.
 
 from fastapi import FastAPI
 
-from src.api.routes import admin, health
+from src.api.routes import admin, chat, health
 
 
 def create_app() -> FastAPI:
@@ -17,5 +17,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(admin.router)
+    app.include_router(chat.router)
 
     return app
