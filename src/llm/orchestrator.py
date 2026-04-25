@@ -488,6 +488,38 @@ def map_triage_to_risk(level: TriageLevel) -> Optional[RiskLevel]:
     return mapping.get(level)
 
 
+async def generate_followup_message(
+    pet_name: str,
+    pet_species: str,
+    triage_level: str,
+    symptom_tags: list[str],
+) -> str:
+    """Generate a short proactive check-in for a RED/ORANGE triage conversation."""
+    hours = 2 if triage_level.lower() == "red" else 4
+    urgency = "urgent" if triage_level.lower() == "red" else "concerning"
+    symptoms_str = ", ".join(symptom_tags) if symptom_tags else "health concerns"
+
+    prompt = (
+        f"You are following up {hours} hours after advising the owner of {pet_name} "
+        f"({pet_species}) about {symptoms_str}, which you classified as {urgency}. "
+        f"Write ONE warm, caring message (1-2 sentences) asking how {pet_name} is doing. "
+        f"Do not repeat medical advice. Be genuine and natural, not formulaic. "
+        f"{'No emoji — the situation was serious.' if triage_level.lower() == 'red' else 'One emoji is fine.'}"
+    )
+
+    client = get_gemini_client()
+    raw = await client.chat(
+        system_prompt=(
+            "You are Pawly, an AI pet care assistant. "
+            "Output only the follow-up message text — no preamble, no quotes."
+        ),
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=120,
+        temperature=0.7,
+    )
+    return raw["text"].strip()
+
+
 async def _store_triage_record(
     pet_id: uuid.UUID,
     message_id: Optional[str],

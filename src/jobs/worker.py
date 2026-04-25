@@ -9,6 +9,7 @@ from src.config import settings
 from src.jobs.cleanup import expire_old_memories, expire_pending_changes, run_cleanup
 from src.jobs.daily_summary import run_daily_summary
 from src.jobs.extraction import run_extraction
+from src.jobs.followup import run_followup_check
 from src.jobs.weekly_summary import run_weekly_summary
 
 
@@ -31,6 +32,7 @@ async def shutdown(ctx: dict) -> None:
 class WorkerSettings:
     functions = [
         run_extraction,
+        run_followup_check,
         run_daily_summary,
         run_weekly_summary,
         run_cleanup,
