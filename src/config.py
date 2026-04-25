@@ -13,9 +13,11 @@ class Settings(BaseSettings):
     log_level: str = "info"
     main_model: str = "gemini-2.0-flash"
     extraction_model: str = "gemini-2.0-flash"
+    fallback_model: str = "gemini-2.0-flash"  # used when main_model exhausts retries
     max_turns_in_context: int = 5
     max_messages_per_minute: int = 30
     webhook_host: str = ""  # e.g. "api.pawly.app" - required in production
+    miniapp_api_url: str = "https://api.pawly.app"  # override for local dev (e.g. ngrok URL)
     telegram_proxy_url: str = ""
     admin_telegram_ids: str = ""
     prompt_hot_reload: bool = False
