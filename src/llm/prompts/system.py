@@ -1,16 +1,17 @@
 """
 System prompt builder.
 
-ALL editable prompt text lives in prompts_config.yaml (same directory).
-Edit that file to tune personality, rules, or medical format - no Python
-changes required. The file is loaded once at import time unless hot reload
-is enabled.
+Prompt sections are loaded from Langfuse Prompt Management when available,
+with prompts_config.yaml as the fallback.
 
-Sections (keys in prompts_config.yaml):
-    identity           - who Pawly is + two operating modes
-    conversation_rules - opening, pet ID, info gathering, follow-up, closure
-    hard_rules         - non-negotiable safety + behaviour rules
-    medical_format     - internal assessment + response structure for health queries
+Langfuse prompt names (create these in the Langfuse UI under "Prompts"):
+    pawly-identity           - who Pawly is + persona + tone
+    pawly-conversation-rules - info gathering, triage flow, follow-up rules
+    pawly-hard-rules         - non-negotiable safety + behaviour rules
+    pawly-medical-format     - assessment format for health queries
+
+If a prompt doesn't exist in Langfuse yet, the YAML value is used instead.
+Set PROMPT_HOT_RELOAD=true to re-check Langfuse on every request (dev only).
 
 The build_system_prompt() function only assembles sections - do not touch it
 unless you need to add a new conditional section.
@@ -23,18 +24,62 @@ from typing import Optional
 import yaml
 
 from src.db.models import Pet, SubscriptionTier, User
+from src.utils.logger import get_logger
 
-# -- Load prompt sections from YAML -------------------------------------------
+logger = get_logger(__name__)
+
+# -- Langfuse prompt names ----------------------------------------------------
+
+_LF_PROMPT_NAMES = {
+    "identity": "pawly-identity",
+    "conversation_rules": "pawly-conversation-rules",
+    "hard_rules": "pawly-hard-rules",
+    "medical_format": "pawly-medical-format",
+}
+
+_lf_client = None
+try:
+    from langfuse import Langfuse
+    _lf_client = Langfuse()
+except Exception:
+    pass
+
+# -- Load prompt sections from YAML (fallback) --------------------------------
 
 _CONFIG_FILE = pathlib.Path(__file__).parent / "prompts_config.yaml"
 _CACHE: dict = {"mtime": None, "sections": None}
 
 
+def _load_yaml_sections() -> dict:
+    with _CONFIG_FILE.open("r", encoding="utf-8") as _f:
+        cfg: dict = yaml.safe_load(_f)
+    return {
+        "identity": cfg["identity"].rstrip("\n"),
+        "conversation_rules": cfg["conversation_rules"].rstrip("\n"),
+        "hard_rules": cfg["hard_rules"].rstrip("\n"),
+        "medical_format": cfg["medical_format"].rstrip("\n"),
+    }
+
+
+def _load_from_langfuse(yaml_sections: dict) -> dict:
+    """Fetch each section from Langfuse, falling back to YAML per-section."""
+    if _lf_client is None:
+        return yaml_sections
+    sections = {}
+    for key, name in _LF_PROMPT_NAMES.items():
+        try:
+            prompt = _lf_client.get_prompt(name, cache_ttl_seconds=300)
+            sections[key] = prompt.compile().rstrip("\n")
+        except Exception:
+            sections[key] = yaml_sections[key]
+    return sections
+
+
 def _load_sections() -> dict:
     """
-    Load prompt sections from YAML.
+    Load prompt sections from Langfuse (with per-section YAML fallback).
 
-    If PROMPT_HOT_RELOAD=true, re-read the file when mtime changes.
+    If PROMPT_HOT_RELOAD=true, bypass cache on every call.
     """
     hot_reload = os.getenv("PROMPT_HOT_RELOAD", "").lower() in {"1", "true", "yes"}
     mtime = _CONFIG_FILE.stat().st_mtime
@@ -42,18 +87,12 @@ def _load_sections() -> dict:
     if not hot_reload and _CACHE["sections"] is not None:
         return _CACHE["sections"]
 
-    if hot_reload and _CACHE["sections"] is not None and _CACHE["mtime"] == mtime:
+    if hot_reload and _CACHE["sections"] is not None and _CACHE["mtime"] == mtime and _lf_client is None:
         return _CACHE["sections"]
 
-    with _CONFIG_FILE.open("r", encoding="utf-8") as _f:
-        cfg: dict = yaml.safe_load(_f)
+    yaml_sections = _load_yaml_sections()
+    sections = _load_from_langfuse(yaml_sections)
 
-    sections = {
-        "identity": cfg["identity"].rstrip("\n"),
-        "conversation_rules": cfg["conversation_rules"].rstrip("\n"),
-        "hard_rules": cfg["hard_rules"].rstrip("\n"),
-        "medical_format": cfg["medical_format"].rstrip("\n"),
-    }
     _CACHE["mtime"] = mtime
     _CACHE["sections"] = sections
     return sections
