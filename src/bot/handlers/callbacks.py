@@ -269,11 +269,23 @@ async def handle_callback(
     data = callback.data or ""
     logger.info("callback received", data=data, telegram_id=user.telegram_id)
 
+    # ── Pet profile: dismiss the "new pet detected" prompt ─────────────────────
+    if data == "pet_profile_skip":
+        session.pop("pending_new_pet_name", None)
+        await callback.answer("Dismissed.")
+        if callback.message:
+            try:
+                await callback.message.edit_reply_markup(reply_markup=None)
+            except TelegramBadRequest:
+                pass
+        return
+
     # ── Pet profile: open the form ─────────────────────────────────────────────
     if data == "pet_profile_start":
         profile = session.get("profile_wizard_data") or {}
         session["profile_wizard_data"] = profile
         session["profile_wizard_step"] = None
+        session.pop("pending_new_pet_name", None)
         await callback.answer()
         if callback.message:
             try:
@@ -379,6 +391,7 @@ async def handle_callback(
         session["is_new_user"]          = False
         session["profile_wizard_step"]  = None
         session["profile_wizard_data"]  = {}
+        session.pop("pending_new_pet_name", None)
         await callback.answer("Profile created!")
 
         if callback.message:

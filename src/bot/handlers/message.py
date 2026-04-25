@@ -115,6 +115,50 @@ def match_pets_by_name(pets: list[Pet], text: str) -> list[Pet]:
     return matched
 
 
+# Matches phrases like "my cat Milo", "my other dog Rex", "my new kitten Whiskers".
+# The name must start with a capital letter (ordinary convention) and must not
+# overlap an existing pet name — the caller filters that.
+_NEW_PET_RE = re.compile(
+    r"\b[Mm]y\s+(?:new\s+|other\s+|another\s+|second\s+|third\s+)?"
+    r"(cat|dog|kitten|puppy|pet)\s+"
+    r"(?:named\s+|called\s+)?"
+    r"([A-Z][a-zA-Z]{1,20})",
+)
+_SPECIES_TO_FORM = {
+    "cat": "cat",
+    "kitten": "cat",
+    "dog": "dog",
+    "puppy": "dog",
+    "pet": "",  # unknown — user picks in the form
+}
+# Ordinary English words that could slip past the capital-letter rule after
+# a sentence boundary. Extend here if false positives show up.
+_NAME_STOPWORDS = {"He", "She", "It", "They", "The", "This", "That", "My"}
+
+
+def detect_new_pet_mention(pets: list[Pet], text: str) -> dict[str, str] | None:
+    if not text:
+        return None
+    existing = {(p.name or "").strip().lower() for p in pets}
+    for m in _NEW_PET_RE.finditer(text):
+        species_word = m.group(1).lower()
+        name = m.group(2).strip()
+        if name in _NAME_STOPWORDS:
+            continue
+        if name.lower() in existing:
+            continue
+        return {"name": name, "species": _SPECIES_TO_FORM.get(species_word, "")}
+    return None
+
+
+def build_new_pet_prompt_keyboard() -> InlineKeyboardMarkup:
+    from src.bot.handlers.start import MINI_APP_URL
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🐾 Create profile", web_app=WebAppInfo(url=MINI_APP_URL))],
+        [InlineKeyboardButton(text="Skip for now", callback_data="pet_profile_skip")],
+    ])
+
+
 def build_pet_choice_keyboard(pets: list[Pet]) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton(
@@ -416,21 +460,13 @@ async def handle_message(
     user_id_str = str(user.id)
     pet_id_str = str(active_pet.id) if active_pet else None
 
-    # If no active pet and not in wizard, prompt to start profile creation.
+    # If no active pet, send the mini-app keyboard to collect the pet profile.
     if active_pet is None:
         session["awaiting_pet_profile"] = True
-        from src.bot.handlers.start import MINI_APP_URL
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(
-                    text="🐾 Create Pet Profile",
-                    web_app=WebAppInfo(url=MINI_APP_URL),
-                )]
-            ]
-        )
+        from src.bot.handlers.start import MINI_APP_URL, _make_miniapp_keyboard
         await message.answer(
             "Before we begin, please create your pet's profile.",
-            reply_markup=kb,
+            reply_markup=_make_miniapp_keyboard(),
         )
         return
 
@@ -510,6 +546,28 @@ async def handle_message(
 
     # Resolve active pet from message text if multiple pets exist.
     pets = await load_user_pets(user_id_str)
+
+    # Detect when the user mentions a pet by name that isn't registered yet —
+    # e.g. "my other dog Rex" when only Milo has a profile. Guide them to
+    # create a profile for the new pet instead of silently attributing the
+    # message to the active pet.
+    new_pet = detect_new_pet_mention(pets, message.text)
+    pending_name = session.get("pending_new_pet_name")
+    if new_pet and new_pet["name"].lower() != (pending_name or "").lower():
+        session["pending_new_pet_name"] = new_pet["name"]
+        session["profile_wizard_data"] = {
+            "name": new_pet["name"],
+            **({"species": new_pet["species"]} if new_pet["species"] else {}),
+        }
+        session["profile_wizard_step"] = None
+        await message.answer(
+            f"I don't have a profile for *{new_pet['name']}* yet. "
+            "Want to set one up so I can give tailored advice?",
+            reply_markup=build_new_pet_prompt_keyboard(),
+            parse_mode="Markdown",
+        )
+        return
+
     if len(pets) > 1:
         matched = match_pets_by_name(pets, message.text)
         if len(matched) == 1:
@@ -562,11 +620,16 @@ async def handle_message(
 
     # 4. Send reply (split if > 4000 chars)
     # RED/ORANGE use HTML (formatters inject <b>, <blockquote> etc.)
-    # GREEN uses Markdown so LLM bold/italic renders properly
+    # GREEN uses Markdown so LLM bold/italic renders properly.
+    # Fallback to plain text if Telegram rejects the parse_mode
+    # (Gemini sometimes emits unclosed * or _ entities).
     triage_final = (result.triage_result or {}).get("final", "green")
     pm = "HTML" if triage_final in ("red", "orange") else "Markdown"
     for chunk in split_message(result.response_text, max_length=4000):
-        await message.answer(chunk, parse_mode=pm)
+        try:
+            await message.answer(chunk, parse_mode=pm)
+        except Exception:
+            await message.answer(chunk, parse_mode=None)
 
     # 5. Store bot reply as raw message
     bot_raw = await store_raw_message(
