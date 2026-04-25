@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     log_level: str = "info"
     main_model: str = "gemini-2.0-flash"
     extraction_model: str = "gemini-2.0-flash"
+    fallback_model: str = "gemini-2.0-flash"
+    miniapp_api_url: str = "https://api.pawly.app"
     max_turns_in_context: int = 5
     max_messages_per_minute: int = 30
     webhook_host: str = ""  # e.g. "api.pawly.app" - required in production
