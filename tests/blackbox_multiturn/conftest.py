@@ -2,11 +2,13 @@ import asyncio
 import json
 import os
 import re
+import time
 import uuid
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
+from threading import Lock
 from typing import Any
 
 import pytest
@@ -161,6 +163,34 @@ def _extract_json_payload(text: str) -> str:
     return stripped
 
 
+def _recover_reason_score_payload(text: str) -> str | None:
+    score_match = re.search(r'"score"\s*:\s*(-?\d+(?:\.\d+)?)', text)
+    reason_match = re.search(r'"reason"\s*:\s*"', text)
+    if score_match is None or reason_match is None:
+        return None
+
+    score_raw = score_match.group(1)
+    reason_start = reason_match.end()
+    reason_text = text[reason_start:].strip()
+
+    # If the response was truncated mid-string, keep the surviving suffix and
+    # rebuild a valid JSON object for the target schema.
+    reason_text = reason_text.removesuffix("}").rstrip()
+    if reason_text.endswith('"'):
+        reason_text = reason_text[:-1].rstrip()
+
+    try:
+        score_value = float(score_raw)
+    except ValueError:
+        return None
+
+    repaired_payload = {
+        "score": score_value,
+        "reason": reason_text,
+    }
+    return json.dumps(repaired_payload, ensure_ascii=True)
+
+
 class GeminiDeepEvalModelMixin:
     def __init__(self, client: GeminiClient, model_name: str | None = None) -> None:
         self._client = client
@@ -182,6 +212,13 @@ class GeminiDeepEvalModelMixin:
         try:
             return schema.model_validate_json(payload)
         except Exception as exc:
+            if getattr(schema, "__name__", "") == "ReasonScore":
+                repaired_payload = _recover_reason_score_payload(payload)
+                if repaired_payload is not None:
+                    try:
+                        return schema.model_validate_json(repaired_payload)
+                    except Exception:
+                        pass
             raise RuntimeError(
                 f"DeepEval judge response could not be parsed as JSON. "
                 f"Extracted payload: {payload!r}. Raw response: {text!r}"
@@ -263,6 +300,86 @@ class GeminiDeepEvalModelMixin:
 
     def get_model_name(self) -> str:
         return "gemini-deepeval-judge"
+
+
+class ResilientGeminiClient:
+    def __init__(
+        self,
+        client: GeminiClient,
+        *,
+        min_interval_seconds: float = 5.0,
+        retry_delay_seconds: float = 1.0,
+        max_attempts: int = 3,
+    ) -> None:
+        self._client = client
+        self._min_interval_seconds = min_interval_seconds
+        self._retry_delay_seconds = retry_delay_seconds
+        self._max_attempts = max_attempts
+        self._rate_lock = Lock()
+        self._last_request_at = 0.0
+
+    def _throttle(self) -> None:
+        with self._rate_lock:
+            elapsed = time.monotonic() - self._last_request_at
+            if elapsed < self._min_interval_seconds:
+                time.sleep(self._min_interval_seconds - elapsed)
+            self._last_request_at = time.monotonic()
+
+    def _is_retryable(self, exc: Exception) -> bool:
+        status_code = getattr(exc, "status_code", None)
+        if isinstance(status_code, int) and status_code in {429, 500, 502, 503, 504}:
+            return True
+
+        message = str(exc).upper()
+        transient_markers = (
+            "429",
+            "500",
+            "502",
+            "503",
+            "504",
+            "RESOURCE_EXHAUSTED",
+            "UNAVAILABLE",
+            "HIGH DEMAND",
+            "CONNECTERROR",
+            "NODENAME NOR SERVNAME",
+            "TIMED OUT",
+            "TIMEOUT",
+            "TRY AGAIN LATER",
+        )
+        return any(marker in message for marker in transient_markers)
+
+    def _retry_delay_for_attempt(self, attempt: int) -> float:
+        schedule = (5.0, 10.0, 15.0)
+        index = min(max(attempt - 1, 0), len(schedule) - 1)
+        return schedule[index]
+
+    async def _call_with_retry(self, method_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        last_error: Exception | None = None
+        method = getattr(self._client, method_name)
+        for attempt in range(1, self._max_attempts + 1):
+            self._throttle()
+            try:
+                return await method(*args, **kwargs)
+            except Exception as exc:
+                last_error = exc
+                if attempt >= self._max_attempts or not self._is_retryable(exc):
+                    raise
+                time.sleep(self._retry_delay_for_attempt(attempt))
+
+        assert last_error is not None
+        raise last_error
+
+    async def chat(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        return await self._call_with_retry("chat", *args, **kwargs)
+
+    async def chat_structured(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        return await self._call_with_retry("chat_structured", *args, **kwargs)
+
+    async def extract(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        return await self._call_with_retry("extract", *args, **kwargs)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._client, name)
 
 
 class FakeBot:
@@ -354,11 +471,42 @@ def real_gemini_client() -> GeminiClient:
 
 
 @pytest.fixture(scope="session")
-def deepeval_model(real_gemini_client: GeminiClient) -> Any:
+def resilient_gemini_client(real_gemini_client: GeminiClient) -> ResilientGeminiClient:
+    return ResilientGeminiClient(real_gemini_client)
+
+
+@pytest.fixture(autouse=True)
+def patch_blackbox_gemini_client(
+    monkeypatch: pytest.MonkeyPatch,
+    resilient_gemini_client: ResilientGeminiClient,
+) -> None:
+    monkeypatch.setattr("src.llm.client.get_gemini_client", lambda: resilient_gemini_client)
+    monkeypatch.setattr("src.llm.graph.nodes.get_gemini_client", lambda: resilient_gemini_client)
+    monkeypatch.setattr("src.llm.orchestrator.get_gemini_client", lambda: resilient_gemini_client)
+    monkeypatch.setattr("src.memory.extractor.get_gemini_client", lambda: resilient_gemini_client)
+    monkeypatch.setattr("src.memory.summarizer.get_gemini_client", lambda: resilient_gemini_client)
+
+
+@pytest.fixture(scope="session")
+def deepeval_model(resilient_gemini_client: ResilientGeminiClient) -> Any:
     deepeval = pytest.importorskip("deepeval.models")
     base_cls = getattr(deepeval, "DeepEvalBaseLLM")
     model_cls = type("GeminiDeepEvalModel", (GeminiDeepEvalModelMixin, base_cls), {})
-    return model_cls(real_gemini_client)
+    return model_cls(resilient_gemini_client)
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--multiturn-topic",
+        action="store",
+        default="multiturn_text_robustness",
+        help="Topic name for multiturn tests (e.g., multiturn_triage, multiturn_ethics)",
+    )
+
+
+@pytest.fixture(scope="session")
+def multiturn_topic(request: pytest.FixtureRequest) -> str:
+    return request.config.getoption("--multiturn-topic")
 
 
 @pytest.fixture(scope="session")

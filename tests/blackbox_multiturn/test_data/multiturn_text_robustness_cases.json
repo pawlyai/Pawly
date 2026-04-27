@@ -1,0 +1,205 @@
+[
+  {
+    "name": "maya_biscuit_noisy_text_vomiting_intent",
+    "user_display_name": "Maya",
+    "scenario": "A first-time owner describes vomiting and low energy using misspellings, broken grammar, and informal wording. The assistant should still infer the likely symptom meaning and ask clarifying questions that match the intended medical concern.",
+    "expected_outcome": "The assistant should correctly infer that the owner is describing repeated vomiting, reduced energy, and poor appetite despite the noisy wording. It should ask focused clarifying questions about vomiting frequency, ability to keep water down, blood, abdominal pain, and current energy, without misreading the message into a different complaint.",
+    "chatbot_role": "Pawly is a pet care assistant. It should be robust to colloquial, misspelled, fragmented, or grammatically incorrect English, infer the most likely intended symptom meaning, ask targeted clarifying questions when needed, and avoid misunderstanding the user's medical intent.",
+    "criteria": "Evaluate whether the assistant correctly understands noisy user language and maps it to the right medical intent. The assistant should recognize that the user likely means vomiting, low appetite, and lethargy; respond to those concerns directly; ask clarifying questions that fit gastrointestinal illness rather than an unrelated problem; and avoid getting distracted by spelling errors, slang, or incomplete grammar. Penalize misunderstanding the core symptoms, asking irrelevant questions that show the complaint was misread, or failing to clarify ambiguous but clinically important details.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Biscuit",
+      "species": "dog",
+      "breed": "Labrador Retriever",
+      "age_in_months": 28,
+      "gender": "male",
+      "neutered_status": "neutered",
+      "weight_latest": 30.8
+    },
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "appetite_pattern",
+        "value": {
+          "detail": "normally very food motivated"
+        }
+      },
+      {
+        "memory_type": "pattern",
+        "memory_term": "mid",
+        "field": "owner_style",
+        "value": {
+          "detail": "first-time owner who texts in an informal, typo-heavy style"
+        }
+      }
+    ],
+    "recent_turns": [],
+    "user_turns": [
+      "hi um my dog been like vommiting 2day n hes jus not himself??",
+      "like 3x maybe. first food then yellow stuff. no blood i dont think. he dont wana eat rn either",
+      "he drinkd a lil water but then just laid there all weird. not passed out just rly blah. idk if tummy hurts he keeps kinda hunching then normal again",
+      "sry typing fast. should i be worried worried or just watch him"
+    ],
+    "metadata": {
+      "focus": "text_robustness_misspellings_gi_intent",
+      "layer": "handler_blackbox_multiturn"
+    }
+  },
+  {
+    "name": "jason_buddy_colloquial_bloat_like_language",
+    "user_display_name": "Jason",
+    "scenario": "A busy owner uses vague colloquial language such as 'belly looks weird' and 'can't get comfy' after a meal. The assistant should connect the wording to the correct emergency intent instead of treating it as a generic upset stomach.",
+    "expected_outcome": "The assistant should recognize that the user may be describing abdominal distension, restlessness, and unsuccessful retching despite the informal wording. It should ask a few precise clarification questions and move quickly toward urgent evaluation if the pattern sounds consistent with a true emergency.",
+    "chatbot_role": "Pawly is a pet care assistant. It should correctly interpret informal English descriptions of serious symptoms, map them to the right medical concern, ask urgent clarifying questions when the wording is vague, and avoid underestimating high-risk patterns just because the owner is non-technical.",
+    "criteria": "Evaluate whether the assistant correctly maps colloquial language to the intended medical concern. The assistant should understand that phrases like 'belly looks weird,' 'won't settle,' and 'trying to puke but nothing comes out' may indicate a dangerous abdominal emergency; ask targeted questions about distension, retching, timing after eating, and breathing; and avoid misclassifying the concern as simple nausea or routine gas. Penalize failing to connect the wording to the correct emergency intent, asking irrelevant questions, or offering casually reassuring advice that reflects misunderstanding.",
+    "threshold": 0.9,
+    "pet_profile": {
+      "name": "Buddy",
+      "species": "dog",
+      "breed": "German Shepherd",
+      "age_in_months": 72,
+      "gender": "male",
+      "neutered_status": "neutered",
+      "weight_latest": 37.0
+    },
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "feeding_routine",
+        "value": {
+          "detail": "eats dinner quickly and tends to gulp food"
+        }
+      }
+    ],
+    "recent_turns": [],
+    "user_turns": [
+      "Need a quick read on this. Buddy had dinner and now his belly looks kinda weird and big?",
+      "hes walking around then laying down then pops right back up. like cant get comfy at all",
+      "he keeps doing this gaggy thing like gonna throw up but nothing rly comes out",
+      "breathing maybe a bit fast? hard to tell bc im freaking out. is this just bad gas or nah"
+    ],
+    "metadata": {
+      "focus": "text_robustness_colloquial_emergency_mapping",
+      "layer": "handler_blackbox_multiturn"
+    }
+  },
+  {
+    "name": "priya_luna_fragmented_text_polyuria_polydipsia",
+    "user_display_name": "Priya",
+    "scenario": "A user describes increased drinking, urination, hunger, and weight loss in fragmented and messy English. The assistant should still map the message to the correct medical intent and ask coherent follow-up questions.",
+    "expected_outcome": "The assistant should correctly infer that the user is describing increased thirst, increased urination, increased appetite, and weight loss. It should ask focused follow-up questions about duration, how much the dog is drinking, accidents in the house, energy, and whether vomiting is present, rather than misunderstanding the complaint as a behavior issue or isolated appetite change.",
+    "chatbot_role": "Pawly is a pet care assistant. It should understand fragmented, unpolished English, infer likely medical meaning from symptom clusters, and ask concise follow-up questions that reflect the correct interpretation of the user's concern.",
+    "criteria": "Evaluate whether the assistant robustly understands fragmented English descriptions of medical symptoms. The assistant should map the user's wording to the symptom cluster of increased drinking and urination plus increased appetite and weight loss, maintain that interpretation across turns, and ask clarifying questions aligned with that concern. Penalize missing the symptom cluster, focusing on only one symptom while ignoring the rest, or steering the conversation toward the wrong medical intent.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Luna",
+      "species": "dog",
+      "breed": "Labrador Retriever Mix",
+      "age_in_months": 40,
+      "gender": "female",
+      "neutered_status": "spayed",
+      "weight_latest": 23.4
+    },
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "owner_style",
+        "value": {
+          "detail": "college student who often writes in short fragmented messages"
+        }
+      }
+    ],
+    "recent_turns": [],
+    "user_turns": [
+      "my dog drinking sooo much lately",
+      "also peeing way more. asking out at night now. never used to",
+      "weird part she also wants food like all the time?? but somehow looks skinnier",
+      "3ish year lab mix. still up n walking just kinda off. no throw up. this been like maybe 2 weeks"
+    ],
+    "metadata": {
+      "focus": "text_robustness_fragmented_endocrine_intent",
+      "layer": "handler_blackbox_multiturn"
+    }
+  },
+  {
+    "name": "emma_poppy_typo_heavy_itchy_ear_intent",
+    "user_display_name": "Emma",
+    "scenario": "An owner describes an ear problem using typo-heavy and imprecise wording. The assistant should infer that the complaint is persistent ear irritation with discharge and odor, not a behavior or training issue.",
+    "expected_outcome": "The assistant should correctly identify that the likely intended concern is an ear problem involving scratching, head shaking, discharge, and odor. It should ask focused questions about which ear, discharge appearance, smell, pain, and balance changes, rather than misunderstanding the message as a general skin or behavior complaint.",
+    "chatbot_role": "Pawly is a pet care assistant. It should tolerate misspellings and vague phrasing, identify the likely symptom being described, and ask clarifying questions that show it understood the probable medical issue.",
+    "criteria": "Evaluate whether the assistant correctly interprets typo-heavy colloquial English and maps it to the right symptom category. The assistant should recognize that the owner likely means ear irritation or infection, respond to that concern directly, and ask relevant follow-up questions about discharge, odor, pain, and head shaking. Penalize misclassifying the concern as a training problem, allergy-only issue without clarification, or unrelated skin disease.",
+    "threshold": 0.84,
+    "pet_profile": {
+      "name": "Poppy",
+      "species": "dog",
+      "breed": "Cocker Spaniel",
+      "age_in_months": 54,
+      "gender": "female",
+      "neutered_status": "spayed",
+      "weight_latest": 11.6
+    },
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "breed_risk",
+        "value": {
+          "detail": "cocker spaniel with floppy ears"
+        }
+      }
+    ],
+    "recent_turns": [],
+    "user_turns": [
+      "poppy keeps skratchin her ear like nonstop n doing that head flappy thing",
+      "i looked quick n theres like brown gunky stuff?? kinda stinky too tbh",
+      "left ear i think mostly. she yelpd when my kid touched near it so maybe sore",
+      "not falling over or anything. just super annoyed by it. what am i even looking at here"
+    ],
+    "metadata": {
+      "focus": "text_robustness_typo_ear_problem_mapping",
+      "layer": "handler_blackbox_multiturn"
+    }
+  },
+  {
+    "name": "david_rex_messy_text_lameness_vs_neuro_intent",
+    "user_display_name": "David",
+    "scenario": "An experienced owner gives a messy, self-correcting description of abnormal walking. The assistant should not overcommit too early, but it should recognize that the user is describing gait abnormality and ask questions that separate lameness from neurologic weakness.",
+    "expected_outcome": "The assistant should understand that the dog is walking abnormally, avoid pretending the meaning is already perfectly clear, and ask targeted follow-up questions about which limb is affected, weight-bearing, slipping, knuckling, pain, and ability to stand. It should show that it captured the intended concern even though the wording is messy.",
+    "chatbot_role": "Pawly is a pet care assistant. It should understand messy, self-correcting English, infer the likely clinical topic, and use clarifying questions to distinguish between plausible interpretations when the wording is ambiguous.",
+    "criteria": "Evaluate whether the assistant handles ambiguous messy language appropriately. The assistant should recognize that the user is describing abnormal gait or weakness, preserve that broad interpretation, and ask clarifying questions that separate orthopedic limping from neurologic dysfunction. Penalize locking onto the wrong interpretation too early, asking questions unrelated to gait abnormality, or failing to acknowledge the ambiguity in the user's wording.",
+    "threshold": 0.86,
+    "pet_profile": {
+      "name": "Rex",
+      "species": "dog",
+      "breed": "German Shepherd",
+      "age_in_months": 96,
+      "gender": "male",
+      "neutered_status": "neutered",
+      "weight_latest": 36.8
+    },
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "owner_profile",
+        "value": {
+          "detail": "experienced owner who often summarizes symptoms imprecisely at first"
+        }
+      }
+    ],
+    "recent_turns": [],
+    "user_turns": [
+      "Rex is walking weird. not full limp exactly. more like back end not right? hard to explain",
+      "like his rear kinda dips for a sec then he fixes it. maybe left leg maybe both idk",
+      "not crying. did sort of scuff one foot earlier. got up slower than normal too",
+      "once hes moving its a little better but turning looks off. am i making sense at all"
+    ],
+    "metadata": {
+      "focus": "text_robustness_ambiguous_gait_interpretation",
+      "layer": "handler_blackbox_multiturn"
+    }
+  }
+]
