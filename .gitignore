@@ -10,3 +10,4 @@ __pycache__/
 skills-lock.json
 uv.lock
 tests/blackbox_multiturn/venv/
+.DS_Store

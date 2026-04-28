@@ -178,7 +178,7 @@ def main():
     # Initialize session state for selected report
     if "selected_report" not in st.session_state:
         available_reports = get_available_reports()
-        st.session_state.selected_report = available_reports[0] if available_reports else "multiturn_triage_report.json"
+        st.session_state.selected_report = available_reports[0] if available_reports else "multiturn_hallucination_report_gemini-deepeval-judge_v20260424_223747.json"
 
     # Load report data
     report = load_report(st.session_state.selected_report)
