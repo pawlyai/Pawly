@@ -26,7 +26,7 @@ from src.db.models import (
     TriageRecord,
     User,
 )
-from src.llm.client import get_gemini_client
+from src.llm.client import get_client_for_model, get_gemini_client
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
@@ -147,19 +147,21 @@ async def generate_response(
     message_type: MessageType = MessageType.TEXT,
     session: Optional[dict[str, Any]] = None,
     raw_message_id: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> OrchestratorResult:
     """
     Generate a response to a user message.
 
     When USE_LANGGRAPH=true, delegates to the LangGraph pipeline.
     Otherwise, uses the classic sequential orchestration path.
+    Pass *model* to override MAIN_MODEL for this call (e.g. for A/B comparison).
     """
     if settings.use_langgraph:
         return await _generate_response_graph(
             user, pet, dialogue_id, user_message, message_type, session,
         )
     return await _generate_response_classic(
-        user, pet, dialogue_id, user_message, message_type, session, raw_message_id,
+        user, pet, dialogue_id, user_message, message_type, session, raw_message_id, model,
     )
 
 
@@ -226,6 +228,7 @@ async def _generate_response_classic(
     message_type: MessageType = MessageType.TEXT,
     session: Optional[dict[str, Any]] = None,
     raw_message_id: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> OrchestratorResult:
     """Original sequential orchestration — proven stable path."""
     tier = _tier(user)
@@ -303,15 +306,16 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL GEMINI ────────────────────────────────────────────────────────
-    client = get_gemini_client()
+    # ── 4. CALL LLM ───────────────────────────────────────────────────────────
+    active_model = model or settings.main_model
+    client = get_client_for_model(active_model)
     try:
-        raw = await client.chat(system_prompt=system, messages=messages)
+        raw = await client.chat(system_prompt=system, messages=messages, model=active_model)
         response_text = raw["text"]
         in_tok = raw["input_tokens"]
         out_tok = raw["output_tokens"]
     except Exception as exc:
-        logger.error("llm call failed", error=str(exc))
+        logger.error("llm call failed", error=str(exc), model=active_model)
         response_text = (
             "I'm having trouble connecting right now. Please try again in a moment."
         )
@@ -330,7 +334,7 @@ async def _generate_response_classic(
             "Do not suggest home treatment."
         )
         try:
-            raw2 = await client.chat(system_prompt=override_system, messages=messages)
+            raw2 = await client.chat(system_prompt=override_system, messages=messages, model=active_model)
             response_text = raw2["text"]
             in_tok += raw2["input_tokens"]
             out_tok += raw2["output_tokens"]

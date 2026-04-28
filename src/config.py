@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
 
+    # Alternative LLM providers (optional — only needed if using Claude or DeepSeek models)
+    anthropic_api_key: str = ""
+    deepseek_api_key: str = ""
+
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""

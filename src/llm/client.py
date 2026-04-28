@@ -468,3 +468,208 @@ def get_gemini_client() -> GeminiClient:
     if _client is None:
         _client = GeminiClient(api_key=settings.google_api_key)
     return _client
+
+
+# ── Anthropic (Claude) client ─────────────────────────────────────────────────
+
+class AnthropicClient:
+    def __init__(self, api_key: str) -> None:
+        try:
+            import anthropic
+            self._client = anthropic.Anthropic(api_key=api_key)
+        except ImportError as exc:
+            raise RuntimeError("anthropic package not installed. Run: pip install anthropic") from exc
+
+    def _sync_call(
+        self,
+        model: str,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int,
+        temperature: float,
+    ) -> Any:
+        anthropic_messages = [
+            {"role": "user" if m.get("role") == "user" else "assistant",
+             "content": str(m.get("content", ""))}
+            for m in messages
+        ]
+        return self._client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            system=system_prompt or None,  # type: ignore[arg-type]
+            messages=anthropic_messages,   # type: ignore[arg-type]
+        )
+
+    @observe_generation(name="anthropic-call")
+    async def chat(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.7,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        model = model or settings.main_model
+        response = await _run_with_retry(self._sync_call, model, system_prompt, messages, max_tokens, temperature)
+        text = response.content[0].text if response.content else ""
+        in_tok = getattr(response.usage, "input_tokens", 0)
+        out_tok = getattr(response.usage, "output_tokens", 0)
+        update_generation(model=model, input=messages, output=text,
+                          usage_details={"input": in_tok, "output": out_tok})
+        return {"text": text, "input_tokens": in_tok, "output_tokens": out_tok}
+
+    async def chat_structured(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.7,
+    ) -> dict[str, Any]:
+        schema_hint = (
+            "\n\nRespond ONLY with a JSON object matching this exact structure:\n"
+            '{"response_text": "...", "triage_level": "RED|ORANGE|GREEN", '
+            '"intent": "symptom_report|nutrition|exercise|grooming|behavior|question|general", '
+            '"sentiment": "CALM|ANXIOUS|PANIC", "symptom_tags": []}'
+        )
+        result = await self.chat(system_prompt + schema_hint, messages, model, max_tokens, temperature)
+        try:
+            parsed = json.loads(result["text"])
+        except (json.JSONDecodeError, TypeError):
+            parsed = {"response_text": result["text"]}
+        parsed.setdefault("triage_level", "GREEN")
+        parsed.setdefault("intent", "general")
+        parsed.setdefault("sentiment", "CALM")
+        parsed.setdefault("symptom_tags", [])
+        parsed["input_tokens"] = result["input_tokens"]
+        parsed["output_tokens"] = result["output_tokens"]
+        return parsed
+
+    async def extract(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return await get_gemini_client().extract(system_prompt, messages)
+
+
+_anthropic_client: AnthropicClient | None = None
+
+
+def get_anthropic_client() -> AnthropicClient:
+    global _anthropic_client
+    if _anthropic_client is None:
+        _anthropic_client = AnthropicClient(api_key=settings.anthropic_api_key)
+    return _anthropic_client
+
+
+# ── DeepSeek client (OpenAI-compatible) ───────────────────────────────────────
+
+class DeepSeekClient:
+    def __init__(self, api_key: str) -> None:
+        try:
+            from openai import OpenAI
+            self._client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        except ImportError as exc:
+            raise RuntimeError("openai package not installed. Run: pip install openai") from exc
+
+    def _sync_call(
+        self,
+        model: str,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int,
+        temperature: float,
+    ) -> Any:
+        oai_messages: list[dict[str, str]] = []
+        if system_prompt:
+            oai_messages.append({"role": "system", "content": system_prompt})
+        for m in messages:
+            oai_messages.append({
+                "role": "user" if m.get("role") == "user" else "assistant",
+                "content": str(m.get("content", "")),
+            })
+        return self._client.chat.completions.create(
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            messages=oai_messages,  # type: ignore[arg-type]
+        )
+
+    @observe_generation(name="deepseek-call")
+    async def chat(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.7,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        model = model or settings.main_model
+        response = await _run_with_retry(self._sync_call, model, system_prompt, messages, max_tokens, temperature)
+        text = response.choices[0].message.content or "" if response.choices else ""
+        usage = getattr(response, "usage", None)
+        in_tok = getattr(usage, "prompt_tokens", 0)
+        out_tok = getattr(usage, "completion_tokens", 0)
+        update_generation(model=model, input=messages, output=text,
+                          usage_details={"input": in_tok, "output": out_tok})
+        return {"text": text, "input_tokens": in_tok, "output_tokens": out_tok}
+
+    async def chat_structured(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.7,
+    ) -> dict[str, Any]:
+        schema_hint = (
+            "\n\nRespond ONLY with a JSON object matching this exact structure:\n"
+            '{"response_text": "...", "triage_level": "RED|ORANGE|GREEN", '
+            '"intent": "symptom_report|nutrition|exercise|grooming|behavior|question|general", '
+            '"sentiment": "CALM|ANXIOUS|PANIC", "symptom_tags": []}'
+        )
+        result = await self.chat(system_prompt + schema_hint, messages, model, max_tokens, temperature)
+        try:
+            parsed = json.loads(result["text"])
+        except (json.JSONDecodeError, TypeError):
+            parsed = {"response_text": result["text"]}
+        parsed.setdefault("triage_level", "GREEN")
+        parsed.setdefault("intent", "general")
+        parsed.setdefault("sentiment", "CALM")
+        parsed.setdefault("symptom_tags", [])
+        parsed["input_tokens"] = result["input_tokens"]
+        parsed["output_tokens"] = result["output_tokens"]
+        return parsed
+
+    async def extract(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return await get_gemini_client().extract(system_prompt, messages)
+
+
+_deepseek_client: DeepSeekClient | None = None
+
+
+def get_deepseek_client() -> DeepSeekClient:
+    global _deepseek_client
+    if _deepseek_client is None:
+        _deepseek_client = DeepSeekClient(api_key=settings.deepseek_api_key)
+    return _deepseek_client
+
+
+# ── Unified factory ───────────────────────────────────────────────────────────
+
+def get_client_for_model(model: str | None = None) -> GeminiClient | AnthropicClient | DeepSeekClient:
+    """Return the right LLM client based on model name prefix."""
+    m = (model or settings.main_model).lower()
+    if m.startswith("claude"):
+        return get_anthropic_client()
+    if m.startswith("deepseek"):
+        return get_deepseek_client()
+    return get_gemini_client()

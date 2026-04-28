@@ -34,6 +34,10 @@ class ChatRequest(BaseModel):
     pet_name: str = "Demo Pet"
     pet_species: str = "dog"
     pet_age_months: int | None = 24
+    # Override the LLM model for comparison testing.
+    # Examples: "gemini-2.5-flash", "claude-sonnet-4-6", "deepseek-chat"
+    # Defaults to MAIN_MODEL env var when omitted.
+    model: str | None = None
     # Optional identifiers for trace correlation in Langfuse
     user_id: str | None = None
     dialogue_id: str | None = None
@@ -46,6 +50,7 @@ class ChatResponse(BaseModel):
     symptom_tags: list[str]
     input_tokens: int
     output_tokens: int
+    model_used: str
     user_id: str
     dialogue_id: str
 
@@ -84,9 +89,12 @@ async def chat(req: ChatRequest) -> ChatResponse:
         dialogue_id=dialogue_id,
         user_message=req.message,
         message_type=MessageType.TEXT,
+        model=req.model,
     )
 
+    from src.config import settings
     triage_level = result.triage_result["final"] if result.triage_result else None
+    model_used = req.model or settings.main_model
 
     return ChatResponse(
         response_text=result.response_text,
@@ -95,6 +103,7 @@ async def chat(req: ChatRequest) -> ChatResponse:
         symptom_tags=result.symptom_tags,
         input_tokens=result.input_tokens,
         output_tokens=result.output_tokens,
+        model_used=model_used,
         user_id=str(user_id),
         dialogue_id=dialogue_id,
     )
