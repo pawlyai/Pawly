@@ -434,6 +434,51 @@ async def enqueue_extraction(
         logger.error("failed to enqueue extraction", error=str(exc), pet_id=pet_id)
 
 
+async def enqueue_followup_check(
+    telegram_id: str,
+    user_id: str,
+    pet_name: str,
+    pet_species: str,
+    triage_level: str,
+    symptom_tags: list[str],
+    delay_hours: int,
+) -> None:
+    """Enqueue a proactive follow-up check, deduplicated per user via Redis."""
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        pool = await get_arq_pool()
+
+        # One pending follow-up per user at a time. TTL = delay + 1h buffer.
+        dedup_key = f"followup_pending:{user_id}"
+        ttl_seconds = delay_hours * 3600 + 3600
+        already_pending = await pool.exists(dedup_key)
+        if already_pending:
+            logger.info("followup already pending, skipping enqueue", user_id=user_id)
+            return
+
+        await pool.setex(dedup_key, ttl_seconds, "1")
+        await pool.enqueue_job(
+            "run_followup_check",
+            telegram_id=telegram_id,
+            user_id=user_id,
+            pet_name=pet_name,
+            pet_species=pet_species,
+            triage_level=triage_level,
+            symptom_tags=symptom_tags,
+            enqueued_at=datetime.now(timezone.utc).isoformat(),
+            _defer_by=timedelta(hours=delay_hours),
+        )
+        logger.info(
+            "followup_check enqueued",
+            user_id=user_id,
+            triage_level=triage_level,
+            delay_hours=delay_hours,
+        )
+    except Exception as exc:
+        logger.error("failed to enqueue followup_check", error=str(exc), user_id=user_id)
+
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 
 
@@ -651,6 +696,19 @@ async def handle_message(
             pet_id=pet_id_str,  # type: ignore[arg-type]
             dialogue_id=str(dialogue.id),
             message_ids=[str(raw_msg.id), str(bot_raw.id)],
+        )
+
+    # 7b. Schedule proactive follow-up for RED/ORANGE if user goes silent
+    if active_pet and triage_final in ("red", "orange"):
+        delay_hours = 2 if triage_final == "red" else 4
+        await enqueue_followup_check(
+            telegram_id=user.telegram_id,
+            user_id=user_id_str,
+            pet_name=active_pet.name or "your pet",
+            pet_species=active_pet.species.value,
+            triage_level=triage_final.upper(),
+            symptom_tags=result.symptom_tags,
+            delay_hours=delay_hours,
         )
 
     # 8. Update session counters
