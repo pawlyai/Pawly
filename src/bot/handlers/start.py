@@ -12,10 +12,11 @@ from typing import Any
 
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 
-MINI_APP_URL = "https://pawlyai001.github.io/Pawly/miniapp/"
+MINI_APP_URL = "https://pawlyai.github.io/Pawly/miniapp/"
 
+from src.config import settings
 from src.db.models import Pet, User
 from src.llm.orchestrator import generate_opening
 from src.utils.logger import get_logger
@@ -84,7 +85,7 @@ async def cmd_start(
 
     is_new_user = active_pet is None
 
-    # No pet profile yet: show the profile setup form before anything else.
+    # No pet profile yet: show the mini-app profile form before anything else.
     if active_pet is None:
         session["awaiting_pet_profile"] = True
         await message.answer(
@@ -110,12 +111,11 @@ async def cmd_start(
     )
 
 
-def _make_miniapp_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=MINI_APP_URL))]],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
+def _make_miniapp_keyboard() -> InlineKeyboardMarkup:
+    url = f"{MINI_APP_URL}?api={settings.miniapp_api_url}"
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=url)),
+    ]])
 
 
 @router.message(Command("add_pet"))

@@ -1,0 +1,13 @@
+# Local development overrides — applied automatically by `docker compose up`.
+# NOT used in production (deploy with `docker compose -f docker-compose.yml up -d`).
+
+services:
+  app:
+    environment:
+      # Force long-polling so the container doesn't try to register a webhook
+      # against the unreachable production host (api.pawly.app).
+      NODE_ENV: development
+
+  langfuse-server:
+    environment:
+      NEXTAUTH_URL: http://localhost:3000
