@@ -143,6 +143,19 @@ class Severity(str, enum.Enum):
     CRITICAL = "critical"
 
 
+class AgentMemoryCategory(str, enum.Enum):
+    PREFERENCE = "preference"      # response style preferences
+    COMMUNICATION = "communication"  # language, tone, emoji usage
+    PATTERN = "pattern"            # interaction timing and engagement patterns
+    RELATIONSHIP = "relationship"  # trust level, sensitivity areas, emotional tone
+    GOAL = "goal"                  # long-term care goals the user has expressed
+
+
+class AgentMemoryScope(str, enum.Enum):
+    SHORT = "short"   # ephemeral context, 7-day TTL
+    LONG = "long"     # persistent across sessions, no expiry
+
+
 def enum_type(enum_cls: type[enum.Enum], name: str) -> SAEnum:
     """Persist enum values (e.g. 'new_free') instead of enum member names."""
     return SAEnum(
@@ -404,3 +417,35 @@ class WeeklySummary(Base):
     week_end: Mapped[date] = mapped_column(Date, nullable=False)
     summary: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+
+class AgentMemory(Base):
+    """
+    Per-user agent-level memory: how the bot should interact with this user.
+
+    Unlike PetMemory (which stores health facts about a pet), AgentMemory stores
+    learned interaction preferences, communication style, and relationship context
+    that shape the agent's tone and approach for each individual user.
+    """
+
+    __tablename__ = "agent_memories"
+    __table_args__ = (
+        Index("ix_agent_memories_user_field_active", "user_id", "field", "is_active"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    category: Mapped[AgentMemoryCategory] = mapped_column(
+        enum_type(AgentMemoryCategory, "agentmemorycategory"), nullable=False
+    )
+    scope: Mapped[AgentMemoryScope] = mapped_column(
+        enum_type(AgentMemoryScope, "agentmemoryscope"), nullable=False
+    )
+    field: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    value: Mapped[dict] = mapped_column(JSON, nullable=False)
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    source_message_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now(), nullable=True)
