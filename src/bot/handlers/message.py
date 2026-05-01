@@ -535,7 +535,7 @@ async def handle_message(
     # If no active pet, send the mini-app keyboard to collect the pet profile.
     if active_pet is None:
         session["awaiting_pet_profile"] = True
-        from src.bot.handlers.start import MINI_APP_URL, _make_miniapp_keyboard
+        from src.bot.handlers.start import _make_miniapp_keyboard
         await message.answer(
             "Before we begin, please create your pet's profile.",
             reply_markup=_make_miniapp_keyboard(),
