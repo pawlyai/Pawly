@@ -19,6 +19,7 @@ unless you need to add a new conditional section.
 
 import os
 import pathlib
+from datetime import datetime, timezone
 from typing import Optional
 
 import yaml
@@ -177,6 +178,18 @@ def build_system_prompt(
             "Naturally guide them to share their pet's name, species, age, and breed "
             "within the first few messages. Be conversational, not a form.",
         ]
+
+    # Section 9 - Reminder detection (always injected so bot knows today's date)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    parts += [
+        "",
+        f"Today's date (UTC): {today}.",
+        "Reminder rule: when the user mentions a specific future action (vaccine, vet "
+        "appointment, medication, deworming, grooming), append EXACTLY ONE line at the "
+        "very end of your response in this format — nothing after it: "
+        "[SET_REMINDER: <brief action> | <YYYY-MM-DD>]. "
+        "Only emit this when there is a clear scheduled date or timeframe. Omit entirely otherwise.",
+    ]
 
     # Marketing context hint
     if marketing_context:

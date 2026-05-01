@@ -10,6 +10,7 @@ from src.jobs.cleanup import expire_old_memories, expire_pending_changes, run_cl
 from src.jobs.daily_summary import run_daily_summary
 from src.jobs.extraction import run_extraction
 from src.jobs.followup import run_followup_check
+from src.jobs.reminder import run_reminder_check
 from src.jobs.weekly_summary import run_weekly_summary
 
 
@@ -33,6 +34,7 @@ class WorkerSettings:
     functions = [
         run_extraction,
         run_followup_check,
+        run_reminder_check,
         run_daily_summary,
         run_weekly_summary,
         run_cleanup,
@@ -45,6 +47,7 @@ class WorkerSettings:
     job_timeout = 60  # seconds
     max_jobs = 10
     cron_jobs = [
+        cron(run_reminder_check),              # every minute (default second=0)
         cron(run_daily_summary, hour=2, minute=0),
         cron(run_weekly_summary, weekday=0, hour=3, minute=0),  # Monday
         cron(run_cleanup, hour=4, minute=0),

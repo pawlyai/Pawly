@@ -404,3 +404,21 @@ class WeeklySummary(Base):
     week_end: Mapped[date] = mapped_column(Date, nullable=False)
     summary: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    pet_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("pets.id", ondelete="SET NULL"), nullable=True
+    )
+    telegram_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    remind_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    is_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
