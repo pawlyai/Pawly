@@ -46,7 +46,7 @@ logger = get_logger(__name__)
 
 # Matches: [SET_REMINDER: Give vaccine | 2026-08-15]
 _REMINDER_RE = re.compile(
-    r"\[SET_REMINDER:\s*(.+?)\s*\|\s*(\d{4}-\d{2}-\d{2})\]\s*$",
+    r"\[SET_REMINDER:\s*(.+?)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\]\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 _AFFIRMATIVE = {"yes", "y", "yeah", "yep", "ok", "okay", "sure", "confirm", "yup", "是", "好"}
