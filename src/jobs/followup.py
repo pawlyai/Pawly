@@ -96,6 +96,18 @@ async def run_followup_check(
     redis = ctx["redis"]
     await redis.delete(_FOLLOWUP_KEY.format(user_id=user_id))
 
+    # Store proactive context so the next /start or message can pick up naturally
+    import json as _json
+    proactive_data = _json.dumps({
+        "pet_name": pet_name,
+        "pet_species": pet_species,
+        "triage_level": triage_level,
+        "symptom_tags": symptom_tags,
+        "message_text": text,
+        "sent_at": datetime.now(timezone.utc).isoformat(),
+    })
+    await redis.setex(f"proactive_ctx:{telegram_id}", 86400, proactive_data)
+
     logger.info(
         "followup: check-in sent",
         telegram_id=telegram_id,

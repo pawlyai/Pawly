@@ -78,39 +78,69 @@ async def generate_opening(
     pet: Optional[Pet],
     is_new_user: bool,
     marketing_context: Optional[dict[str, str]],
+    memory_context: str = "",
+    proactive_context: Optional[dict] = None,
 ) -> OrchestratorResult:
     """
-    Generate a personalised /start welcome message.
+    Generate the /start greeting. Three cases:
 
-    New users get an onboarding prompt; returning users get a warm re-greeting.
-    Marketing context (channel / theme) is woven in when present.
+    1. Pure new user (no pet) — warm onboarding explaining Pawly + prompt to create profile.
+    2. Returning user after proactive follow-up — pick up naturally from the check-in.
+    3. Returning user normal /start — personalised greeting using pet memory.
     """
     system = build_system_prompt(
         user=user,
         pet=pet,
         is_new_user=is_new_user,
         marketing_context=marketing_context,
+        memory_context=memory_context,
     )
 
-    parts: list[str] = []
-    if is_new_user:
-        parts.append(
-            "This is the user's very first message. "
-            "Give a warm, friendly welcome. "
-            "Introduce yourself as Pawly, an AI pet care assistant. "
-            "Ask them to tell you about their pet (name, species, age)."
-        )
-    else:
-        name = pet.name if pet else "their pet"
-        parts.append(f"Welcome the user back warmly. Mention {name} by name.")
+    # ── Case 1: pure new user ─────────────────────────────────────────────────
+    if is_new_user or pet is None:
+        parts = [
+            "A brand new user has just opened Pawly for the first time. "
+            "Write a warm, inviting 2–3 sentence intro as Pawly. "
+            "Explain you're an AI pet care companion who helps with health questions, "
+            "behavior, nutrition, and daily care. "
+            "Tell them the first step is creating their pet's profile by tapping the button below. "
+            "Be genuine — don't sound like marketing copy.",
+        ]
+        if marketing_context:
+            th = marketing_context.get("theme", "")
+            if th:
+                parts.append(f"Their interest area is '{th}' — weave that in naturally.")
 
-    if marketing_context:
-        ch = marketing_context.get("channel", "")
-        th = marketing_context.get("theme", "")
-        if ch:
-            parts.append(f"The user arrived from the '{ch}' channel.")
-        if th:
-            parts.append(f"Their area of interest is '{th}' — subtly acknowledge this.")
+    # ── Case 2: returning user coming back after a proactive follow-up ────────
+    elif proactive_context:
+        pet_name = proactive_context.get("pet_name", pet.name)
+        triage = proactive_context.get("triage_level", "").upper()
+        symptoms = proactive_context.get("symptom_tags", [])
+        sent_text = proactive_context.get("message_text", "")
+        symptom_str = ", ".join(symptoms) if symptoms else "the health concern"
+        urgency = "urgent situation" if triage == "RED" else "health concern"
+        parts = [
+            f"You recently sent this follow-up to the owner of {pet_name}: \"{sent_text}\"",
+            f"They've now opened the chat. Warmly ask how {pet_name} is doing "
+            f"with the {urgency} ({symptom_str}). "
+            f"1–2 sentences only — don't repeat medical advice.",
+        ]
+
+    # ── Case 3: returning user normal /start ──────────────────────────────────
+    else:
+        pet_name = pet.name
+        species = pet.species.value
+        parts = [
+            f"Welcome back the owner of {pet_name} the {species}. "
+            f"Be warm and personal — always use {pet_name}'s name. "
+            f"If there's memory context, reference something specific: "
+            f"a recent symptom, an ongoing concern, or a positive development. "
+            f"1–2 sentences. Don't just say 'welcome back' generically.",
+        ]
+        if marketing_context:
+            ch = marketing_context.get("channel", "")
+            if ch:
+                parts.append(f"The user came from the '{ch}' channel.")
 
     user_prompt = " ".join(parts)
 
@@ -119,17 +149,22 @@ async def generate_opening(
         raw = await client.chat(
             system_prompt=system,
             messages=[{"role": "user", "content": user_prompt}],
-            max_tokens=512,
+            max_tokens=256,
+            temperature=0.8,
         )
         text = raw["text"]
         in_tok = raw["input_tokens"]
         out_tok = raw["output_tokens"]
     except Exception as exc:
         logger.error("generate_opening failed", error=str(exc))
-        text = (
-            "Hi! I'm Pawly, your AI pet care assistant. "
-            "Tell me about your pet and how I can help!"
-        )
+        if is_new_user or pet is None:
+            text = (
+                "Hi! I'm Pawly, your AI pet care companion — here to help with "
+                "your pet's health, behavior, and daily care. "
+                "Tap the button below to create your pet's profile and get started! 🐾"
+            )
+        else:
+            text = f"Hey, great to see you! How is {pet.name} doing today?"
         in_tok = out_tok = 0
 
     return OrchestratorResult(

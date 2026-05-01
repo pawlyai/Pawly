@@ -7,6 +7,7 @@ Handles deep-link parameters in the format:
 Example Telegram link: https://t.me/PawlyBot?start=ch_ig_cp_summer_th_dog_cr_vid1_v2
 """
 
+import json
 import re
 from typing import Any
 
@@ -17,7 +18,8 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, W
 MINI_APP_URL = "https://pawlyai.github.io/Pawly/miniapp/"
 
 from src.config import settings
-from src.db.models import Pet, User
+from src.db.models import Pet, SubscriptionTier, User
+from src.db.redis import get_redis
 from src.llm.orchestrator import generate_opening
 from src.utils.logger import get_logger
 
@@ -85,21 +87,63 @@ async def cmd_start(
 
     is_new_user = active_pet is None
 
-    # No pet profile yet: show the mini-app profile form before anything else.
+    # ── Read and consume proactive context (set by followup job) ────────────
+    proactive_context: dict | None = None
+    try:
+        redis = get_redis()
+        raw_ctx = await redis.getdel(f"proactive_ctx:{user.telegram_id}")
+        if raw_ctx:
+            proactive_context = json.loads(raw_ctx)
+    except Exception:
+        pass
+
+    # ── New user: LLM-generated onboarding + mini-app keyboard ──────────────
     if active_pet is None:
         session["awaiting_pet_profile"] = True
+        opening = await generate_opening(
+            user=user,
+            pet=None,
+            is_new_user=True,
+            marketing_context=marketing_context,
+        )
         await message.answer(
-            "Welcome to Pawly! Before we begin, let's set up your pet's profile.",
+            opening.response_text,
+            parse_mode=None,
             reply_markup=_make_miniapp_keyboard(),
         )
         return
+
+    # ── Returning user: load memory for personalisation ──────────────────────
+    memory_context = ""
+    try:
+        from src.memory.reader import load_pet_context
+        from src.llm.prompts.context import build_context_block
+
+        ctx = await load_pet_context(
+            pet_id=str(active_pet.id),
+            user_id=str(user.id),
+            tier=getattr(user, "subscription_tier", SubscriptionTier.NEW_FREE),
+        )
+        memory_context, _ = build_context_block(
+            pet=active_pet,
+            long_term=ctx.get("long_term_memories", []),
+            mid_term=ctx.get("mid_term_memories", []),
+            short_term=ctx.get("short_term_memories", []),
+            recent_turns=ctx.get("recent_turns", []),
+            daily_summary=ctx.get("daily_summary"),
+            pending=ctx.get("pending_confirmations", []),
+        )
+    except Exception as exc:
+        logger.warning("failed to load memory for opening", error=str(exc))
 
     # ── Generate personalised opening via LLM ───────────────────────────────
     opening = await generate_opening(
         user=user,
         pet=active_pet,
-        is_new_user=is_new_user,
+        is_new_user=False,
         marketing_context=marketing_context,
+        memory_context=memory_context,
+        proactive_context=proactive_context,
     )
 
     await message.answer(opening.response_text, parse_mode=None)
