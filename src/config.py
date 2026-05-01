@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_host: str = "http://langfuse-server:3000"
 
+    # Support email (SMTP) — leave smtp_host empty to disable email sending
+    support_email: str = "internal_tech@pawlyai.com"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""  # defaults to smtp_user if empty
+
     model_config = ConfigDict(env_file=".env")
 
 
