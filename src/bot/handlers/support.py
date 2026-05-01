@@ -98,14 +98,25 @@ async def handle_support_submission(
         pet_info = f"{active_pet.name} ({active_pet.species.value}, {age})"
 
     username = f"@{user.telegram_username}" if user.telegram_username else user.display_name or "—"
+
+    # Build a clickable reply link — prefer t.me/username, fall back to tg://user?id=
+    if user.telegram_username:
+        reply_link = f"https://t.me/{user.telegram_username}"
+    else:
+        reply_link = f"tg://user?id={user.telegram_id}"
+
     subject = f"[Pawly Support] {category} from {username}"
     body = (
-        f"Category: {category}\n"
-        f"From: {username} (Telegram ID: {user.telegram_id})\n"
-        f"Pet: {pet_info}\n"
-        f"Time: {now}\n"
-        f"\nMessage:\n{'—' * 40}\n"
+        f"Category:   {category}\n"
+        f"From:       {username}\n"
+        f"Telegram:   {reply_link}\n"
+        f"User ID:    {user.telegram_id}\n"
+        f"Pet:        {pet_info}\n"
+        f"Time:       {now}\n"
+        f"\n{'—' * 40}\n"
         f"{message.text}\n"
+        f"{'—' * 40}\n"
+        f"\nTo reply: click the Telegram link above and message the user directly.\n"
     )
 
     sent = await send_support_email(subject, body)
