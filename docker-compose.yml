@@ -165,7 +165,9 @@ services:
     command: python -m arq src.jobs.worker.WorkerSettings
 
   reports:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.reports
     container_name: pawly_reports
     env_file: .env
     environment:
