@@ -288,7 +288,7 @@
       try {
         const res = await fetch(`${API_URL}/miniapp/create-pet`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
           body: JSON.stringify({
             init_data:       tg.initData,
             name,
