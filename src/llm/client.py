@@ -398,7 +398,7 @@ class GeminiClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -419,7 +419,7 @@ class GeminiClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
     ) -> dict[str, Any]:
         """
         Conversation call with structured JSON output.

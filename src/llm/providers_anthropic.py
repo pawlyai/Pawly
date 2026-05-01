@@ -35,7 +35,7 @@ class AnthropicClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
         **_: Any,
     ) -> dict[str, Any]:
         msgs = self._format_messages(messages)
@@ -68,7 +68,7 @@ class AnthropicClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
     ) -> dict[str, Any]:
         """Force JSON output via tool-use; returns same fields as Gemini's structured call."""
         msgs = self._format_messages(messages)

@@ -32,7 +32,7 @@ class OpenAIClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
         **_: Any,
     ) -> dict[str, Any]:
         msgs: list[dict[str, str]] = []
@@ -68,7 +68,7 @@ class OpenAIClient:
         messages: list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 2048,
-        temperature: float = 0.7,
+        temperature: float = 0.3,
     ) -> dict[str, Any]:
         msgs: list[dict[str, str]] = []
         if system_prompt:
