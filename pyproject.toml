@@ -52,6 +52,8 @@ dev = [
     # Multi-provider LLM evaluation
     "anthropic>=0.40.0",
     "openai>=1.40.0",
+    # Required because the conftest monkeypatch references src.llm.graph
+    "langgraph>=0.2.0",
 ]
 
 [tool.setuptools.packages.find]
