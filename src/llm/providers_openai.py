@@ -9,7 +9,7 @@ import os
 from typing import Any
 
 from src.llm.client import RESPONSE_SCHEMA
-from src.observability.langfuse_decorator import observe_generation, update_generation
+from src.observability.tracing import observe_generation, update_generation
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
