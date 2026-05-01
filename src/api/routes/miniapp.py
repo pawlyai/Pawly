@@ -69,7 +69,12 @@ async def create_pet(req: PetProfileRequest) -> dict:
     if req.init_data:
         validated = _validate_init_data(req.init_data, settings.telegram_bot_token)
         if validated is None:
-            raise HTTPException(status_code=401, detail="Invalid Telegram initData")
+            if not is_dev:
+                raise HTTPException(status_code=401, detail="Invalid Telegram initData")
+            # Dev mode: HMAC failed but still extract user for local testing
+            logger.warning("initData HMAC failed in dev mode — extracting user without validation")
+            params = dict(urllib.parse.parse_qsl(req.init_data, keep_blank_values=True))
+            validated = params
         try:
             tg_user = json.loads(validated.get("user", "{}"))
         except (json.JSONDecodeError, AttributeError):
