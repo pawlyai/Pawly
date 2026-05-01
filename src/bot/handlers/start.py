@@ -15,8 +15,6 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 
-MINI_APP_URL = "https://pawlyai.github.io/Pawly/miniapp/"
-
 from src.config import settings
 from src.db.models import Pet, SubscriptionTier, User
 from src.db.redis import get_redis
@@ -156,7 +154,7 @@ async def cmd_start(
 
 
 def _make_miniapp_keyboard() -> InlineKeyboardMarkup:
-    url = f"{MINI_APP_URL}?api={settings.miniapp_api_url}"
+    url = f"{settings.miniapp_api_url}/miniapp/"
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="🐾 Create Pet Profile", web_app=WebAppInfo(url=url)),
     ]])

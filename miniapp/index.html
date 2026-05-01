@@ -261,9 +261,8 @@
     function show(id) { const el = document.getElementById(id); if (el) el.classList.add('show'); }
     function hide(id) { const el = document.getElementById(id); if (el) el.classList.remove('show'); }
 
-    // API base URL — override with ?api=https://your-tunnel for local testing
-    const API_URL = new URLSearchParams(window.location.search).get('api')
-                    || 'https://another-establish-unmapped.ngrok-free.dev';
+    // API is served from the same origin as this page
+    const API_URL = window.location.origin;
 
     async function submitForm() {
       const name   = document.getElementById('name').value.trim();
