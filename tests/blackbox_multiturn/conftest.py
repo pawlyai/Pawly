@@ -464,15 +464,41 @@ class ConversationRuntime:
 
 
 @pytest.fixture(scope="session")
-def real_gemini_client() -> GeminiClient:
-    if not settings.google_api_key.strip():
-        pytest.skip("GOOGLE_API_KEY is required for DeepEval black-box tests.")
-    return get_gemini_client()
+def active_model_name(request: pytest.FixtureRequest) -> str:
+    """Model name to evaluate. Resolved from --model CLI, then PAWLY_MODEL env, then settings."""
+    cli = request.config.getoption("--model", default=None)
+    if cli:
+        return cli
+    return os.environ.get("PAWLY_MODEL") or settings.main_model
 
 
 @pytest.fixture(scope="session")
-def resilient_gemini_client(real_gemini_client: GeminiClient) -> ResilientGeminiClient:
-    return ResilientGeminiClient(real_gemini_client)
+def underlying_chat_client(active_model_name: str) -> Any:
+    """Resolve the chat client for the chosen model. Skips if API key missing."""
+    from src.llm.providers import provider_for, get_chat_client
+    provider = provider_for(active_model_name)
+
+    if provider == "Gemini":
+        if not settings.google_api_key.strip():
+            pytest.skip("GOOGLE_API_KEY is required for Gemini models.")
+    elif provider == "Anthropic":
+        if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+            pytest.skip("ANTHROPIC_API_KEY is required for Claude models.")
+    elif provider == "OpenAI":
+        if not os.environ.get("OPENAI_API_KEY", "").strip():
+            pytest.skip("OPENAI_API_KEY is required for GPT models.")
+
+    # Force settings.main_model so orchestrator passes the right model name to the client.
+    settings.main_model = active_model_name
+    settings.extraction_model = active_model_name
+    settings.fallback_model = active_model_name
+    return get_chat_client(active_model_name)
+
+
+@pytest.fixture(scope="session")
+def resilient_gemini_client(underlying_chat_client: Any) -> ResilientGeminiClient:
+    """Retains the historical fixture name; wraps any provider in retry logic."""
+    return ResilientGeminiClient(underlying_chat_client)
 
 
 @pytest.fixture(autouse=True)
@@ -488,11 +514,14 @@ def patch_blackbox_gemini_client(
 
 
 @pytest.fixture(scope="session")
-def deepeval_model(resilient_gemini_client: ResilientGeminiClient) -> Any:
+def deepeval_model(resilient_gemini_client: ResilientGeminiClient, active_model_name: str) -> Any:
     deepeval = pytest.importorskip("deepeval.models")
     base_cls = getattr(deepeval, "DeepEvalBaseLLM")
     model_cls = type("GeminiDeepEvalModel", (GeminiDeepEvalModelMixin, base_cls), {})
-    return model_cls(resilient_gemini_client)
+    instance = model_cls(resilient_gemini_client)
+    # Override the reported model name so the report filename reflects the active model.
+    setattr(instance, "model", active_model_name)
+    return instance
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -501,6 +530,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         action="store",
         default="multiturn_text_robustness",
         help="Topic name for multiturn tests (e.g., multiturn_triage, multiturn_ethics)",
+    )
+    parser.addoption(
+        "--model",
+        action="store",
+        default=None,
+        help="LLM model to evaluate (e.g. gemini-2.0-flash, claude-sonnet-4-6, gpt-4o-mini).",
     )
 
 

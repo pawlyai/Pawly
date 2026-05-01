@@ -171,12 +171,14 @@ services:
     container_name: pawly_reports
     env_file: .env
     environment:
-      # Minimal env — tests use fake Redis/DB, only real key needed is GOOGLE_API_KEY
+      # Tests use fake Redis/DB; pass API keys for whichever providers you evaluate.
       DATABASE_URL: postgresql+asyncpg://pawly:pawly_pass@postgres:5432/pawly
     ports:
       - "8501:8501"
     volumes:
       - ./tests:/app/tests
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
     command: >
       streamlit run tests/blackbox_multiturn/ui_app.py
       --server.port=8501
