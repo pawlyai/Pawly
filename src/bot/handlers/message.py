@@ -14,7 +14,7 @@ Text message handler — orchestrates the full inbound message flow:
 import re
 import time
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from aiogram import F, Router
@@ -43,6 +43,32 @@ from src.utils.logger import get_logger
 
 router = Router(name="message")
 logger = get_logger(__name__)
+
+# Matches: [SET_REMINDER: Give vaccine | 2026-08-15]
+_REMINDER_RE = re.compile(
+    r"\[SET_REMINDER:\s*(.+?)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\]\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_AFFIRMATIVE = {"yes", "y", "yeah", "yep", "ok", "okay", "sure", "confirm", "yup", "是", "好"}
+_NEGATIVE = {"no", "n", "nope", "nah", "skip", "cancel", "不", "不用"}
+
+
+def _extract_reminder(text: str) -> tuple[str, dict | None]:
+    """Strip [SET_REMINDER:...] from response text. Returns (clean_text, data|None)."""
+    m = _REMINDER_RE.search(text)
+    if not m:
+        return text, None
+    content = m.group(1).strip()
+    date_str = m.group(2).strip()
+    clean = _REMINDER_RE.sub("", text).rstrip()
+    try:
+        remind_at = datetime(
+            *[int(x) for x in date_str.split("-")],
+            hour=9, minute=0, tzinfo=timezone.utc,
+        )
+        return clean, {"content": content, "remind_at": remind_at.isoformat()}
+    except ValueError:
+        return text, None
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -632,6 +658,27 @@ async def handle_message(
             )
             return
 
+    # 0. Handle pending reminder confirmation (yes/no intercept before LLM)
+    pending_reminder = session.get("pending_reminder")
+    if pending_reminder:
+        lower = message.text.strip().lower()
+        if lower in _AFFIRMATIVE:
+            session.pop("pending_reminder", None)
+            from src.bot.handlers.reminder import save_reminder
+            remind_at = datetime.fromisoformat(pending_reminder["remind_at"])
+            await save_reminder(user, active_pet, pending_reminder["content"], remind_at)
+            date_str = remind_at.strftime("%B %d, %Y")
+            await message.answer(
+                f"Done! I'll remind you: *{pending_reminder['content']}* on {date_str} 🔔",
+                parse_mode="Markdown",
+            )
+            return
+        elif lower in _NEGATIVE:
+            session.pop("pending_reminder", None)
+            await message.answer("No problem, reminder skipped.")
+            return
+        # else: not a yes/no — continue normally, reminder stays pending
+
     # 1. Store raw user message (session/dialogue IDs may be empty strings on
     #    the very first message — acceptable for the append-only audit log)
     raw_msg = await store_raw_message(
@@ -662,6 +709,20 @@ async def handle_message(
         message_type=MessageType.TEXT,
         session=session,
     )
+
+    # 3b. Extract [SET_REMINDER:...] from response and store in session
+    clean_text, reminder_data = _extract_reminder(result.response_text)
+    if reminder_data and not session.get("pending_reminder"):
+        session["pending_reminder"] = reminder_data
+        remind_dt = datetime.fromisoformat(reminder_data["remind_at"])
+        date_str = remind_dt.strftime("%B %d, %Y")
+        result.response_text = (
+            clean_text
+            + f'\n\n_Want me to set a reminder: "{reminder_data["content"]}" on {date_str}?'
+            " Reply **Yes** or **No**._"
+        )
+    elif clean_text != result.response_text:
+        result.response_text = clean_text
 
     # 4. Send reply (split if > 4000 chars)
     # RED/ORANGE use HTML (formatters inject <b>, <blockquote> etc.)
