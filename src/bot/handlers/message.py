@@ -679,6 +679,14 @@ async def handle_message(
             return
         # else: not a yes/no — continue normally, reminder stays pending
 
+    # 0b. Handle in-progress support submission
+    if session.get("awaiting_support_message"):
+        session.pop("awaiting_support_message", None)
+        category = session.pop("support_category", "Other")
+        from src.bot.handlers.support import handle_support_submission
+        await handle_support_submission(message, user, active_pet, category)
+        return
+
     # 1. Store raw user message (session/dialogue IDs may be empty strings on
     #    the very first message — acceptable for the append-only audit log)
     raw_msg = await store_raw_message(
