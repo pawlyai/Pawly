@@ -178,11 +178,12 @@ def detect_new_pet_mention(pets: list[Pet], text: str) -> dict[str, str] | None:
 
 
 def build_new_pet_prompt_keyboard() -> InlineKeyboardMarkup:
-    from src.bot.handlers.start import MINI_APP_URL
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🐾 Create profile", web_app=WebAppInfo(url=MINI_APP_URL))],
-        [InlineKeyboardButton(text="Skip for now", callback_data="pet_profile_skip")],
-    ])
+    from src.bot.handlers.start import _make_miniapp_keyboard
+    kb = _make_miniapp_keyboard()
+    kb.inline_keyboard.append(
+        [InlineKeyboardButton(text="Skip for now", callback_data="pet_profile_skip")]
+    )
+    return kb
 
 
 def build_pet_choice_keyboard(pets: list[Pet]) -> InlineKeyboardMarkup:
