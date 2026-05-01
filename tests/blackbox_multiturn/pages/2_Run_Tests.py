@@ -5,13 +5,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).parent.parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import streamlit as st
 
 from src.llm.providers import SUPPORTED_MODELS
 
 st.set_page_config(page_title="Run Tests", page_icon="▶️", layout="wide")
-
-REPO_ROOT = Path(__file__).parent.parent.parent.parent
 TEST_DATA_DIR = REPO_ROOT / "tests" / "blackbox_multiturn" / "test_data"
 TEST_FILE = "tests/blackbox_multiturn/test_message_handler_multiturn.py"
 
