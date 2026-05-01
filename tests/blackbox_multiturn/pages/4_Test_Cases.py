@@ -75,14 +75,23 @@ Each case is a JSON object with this exact schema:
   "memories": [],
   "recent_turns": [],
   "user_turns": [3-6 conversational turns from the owner, plain strings],
-  "metadata": {"focus": "<focus>", "layer": "handler_blackbox_multiturn"}
+  "metadata": {"focus": "<<FOCUS>>", "layer": "handler_blackbox_multiturn"}
 }
 
-Topic: {topic}
-Focus area: {focus}
-Number of cases to generate: {count}
+Topic: <<TOPIC>>
+Focus area: <<FOCUS>>
+Number of cases to generate: <<COUNT>>
 
 Output ONLY the JSON array — no commentary, no markdown fences."""
+
+
+def build_prompt(topic: str, focus: str, count: int) -> str:
+    return (
+        GENERATOR_PROMPT
+        .replace("<<TOPIC>>", topic)
+        .replace("<<FOCUS>>", focus)
+        .replace("<<COUNT>>", str(count))
+    )
 
 
 def call_generator(prompt: str, model: str) -> str:
@@ -227,7 +236,7 @@ def main() -> None:
             focus = st.text_input("Focus area", value="vomiting clarification")
 
         topic = selected_name.replace("_cases.json", "")
-        prompt = GENERATOR_PROMPT.format(topic=topic, focus=focus, count=count)
+        prompt = build_prompt(topic=topic, focus=focus, count=count)
         with st.expander("Show prompt"):
             st.code(prompt, language="text")
 
