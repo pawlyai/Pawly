@@ -42,6 +42,7 @@ def main() -> None:
             "Gemini": "GOOGLE_API_KEY",
             "Anthropic": "ANTHROPIC_API_KEY",
             "OpenAI": "OPENAI_API_KEY",
+            "DeepSeek": "DEEPSEEK_API_KEY",
         }[provider]
         if os.environ.get(env_key, "").strip():
             st.success(f"{env_key} is set ✓")

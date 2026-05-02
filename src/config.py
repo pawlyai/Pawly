@@ -8,9 +8,10 @@ class Settings(BaseSettings):
     telegram_bot_token: str
     google_api_key: str
     google_maps_api_key: str = ""
-    # Optional — required only when evaluating Claude / GPT models in the test runner
+    # Optional — required only when evaluating Claude / GPT / DeepSeek models in the test runner
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    deepseek_api_key: str = ""
     node_env: str = "development"
     port: int = 8000
     log_level: str = "info"
