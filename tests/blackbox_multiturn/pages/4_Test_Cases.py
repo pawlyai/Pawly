@@ -120,6 +120,19 @@ def call_generator(prompt: str, model: str) -> str:
             max_tokens=4096,
         )
         return resp.choices[0].message.content or ""
+    if model.startswith("deepseek"):
+        # DeepSeek serves an OpenAI-compatible API at https://api.deepseek.com/v1
+        from openai import OpenAI
+        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("DEEPSEEK_API_KEY not set")
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com/v1")
+        resp = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=4096,
+        )
+        return resp.choices[0].message.content or ""
     # Default: Gemini
     from google import genai
     from google.genai import types

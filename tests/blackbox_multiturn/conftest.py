@@ -487,6 +487,9 @@ def underlying_chat_client(active_model_name: str) -> Any:
     elif provider == "OpenAI":
         if not os.environ.get("OPENAI_API_KEY", "").strip():
             pytest.skip("OPENAI_API_KEY is required for GPT models.")
+    elif provider == "DeepSeek":
+        if not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+            pytest.skip("DEEPSEEK_API_KEY is required for DeepSeek models.")
 
     # Force settings.main_model so orchestrator passes the right model name to the client.
     settings.main_model = active_model_name

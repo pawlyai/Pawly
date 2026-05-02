@@ -4,9 +4,10 @@ Multi-provider LLM dispatch.
 Returns a chat client whose `.chat()` / `.chat_structured()` interface matches
 GeminiClient, dispatched by model name prefix:
 
-    gemini-*  → GeminiClient    (existing)
-    claude-*  → AnthropicClient (requires `anthropic` SDK + ANTHROPIC_API_KEY)
-    gpt-*     → OpenAIClient    (requires `openai` SDK + OPENAI_API_KEY)
+    gemini-*    → GeminiClient    (existing)
+    claude-*    → AnthropicClient (requires `anthropic` SDK + ANTHROPIC_API_KEY)
+    gpt-*       → OpenAIClient    (requires `openai` SDK + OPENAI_API_KEY)
+    deepseek-*  → DeepSeekClient  (requires `openai` SDK + DEEPSEEK_API_KEY)
 
 Used by the orchestrator and the multiturn test runner so the same
 conversation pipeline can be evaluated across providers without touching
@@ -59,6 +60,10 @@ SUPPORTED_MODELS: dict[str, list[str]] = {
         "gpt-4o",
         "gpt-4o-mini",
     ],
+    "DeepSeek": [
+        "deepseek-chat",
+        "deepseek-reasoner",
+    ],
 }
 
 
@@ -73,6 +78,8 @@ def provider_for(model: str) -> str:
         return "Anthropic"
     if model.startswith("gpt"):
         return "OpenAI"
+    if model.startswith("deepseek"):
+        return "DeepSeek"
     return "Gemini"
 
 
@@ -87,6 +94,9 @@ def get_chat_client(model: str | None = None) -> ChatClient:
     if provider == "OpenAI":
         from src.llm.providers_openai import get_openai_client
         return get_openai_client()
+    if provider == "DeepSeek":
+        from src.llm.providers_deepseek import get_deepseek_client
+        return get_deepseek_client()
     return get_gemini_client()
 
 
