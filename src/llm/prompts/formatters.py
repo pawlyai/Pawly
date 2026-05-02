@@ -22,7 +22,8 @@ _LLM_CHROME_PATTERNS: list[re.Pattern] = [
     re.compile(r"^[🚨\*\s]*red\s+flag\s+alert[^\n]*$", re.I | re.M),
     re.compile(r"^[⚠️🏥\*\s]*recommend\s+immediate\s+vet\s+visit[^\n]*$", re.I | re.M),
     re.compile(r"^[🏥\*\s]*please\s+seek\s+immediate\s+vet\s+care[^\n]*$", re.I | re.M),
-    re.compile(r"^[🔄\*\s]*care\s+mode[^\n]*$", re.I | re.M),
+    re.compile(r"^[🔄🟠\*\s]*care\s+mode[^\n]*$", re.I | re.M),
+    re.compile(r"^[🔄\*\s]*switching\s+to[^\n]*$", re.I | re.M),
 ]
 
 
@@ -35,6 +36,13 @@ def _strip_llm_chrome(text: str) -> str:
     return text.strip()
 
 
+def _md_bold_to_html(text: str) -> str:
+    # Run AFTER html.escape so the inserted tags survive escaping. The LLM
+    # often emits Markdown **bold** even though replies render with HTML
+    # parse mode; without this users see literal `**` in chat.
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text, flags=re.DOTALL)
+
+
 def apply_response_format(response_text: str, triage: TriageLevel) -> str:
     """Wrap *response_text* with the visual format matching *triage* level."""
     if triage == TriageLevel.RED:
@@ -45,7 +53,7 @@ def apply_response_format(response_text: str, triage: TriageLevel) -> str:
 
 
 def _format_red_flag(text: str) -> str:
-    body = html.escape(_strip_llm_chrome(text))
+    body = _md_bold_to_html(html.escape(_strip_llm_chrome(text)))
     return (
         # Header row — mimics the red card title bar
         "🚨 <b>RED FLAG ALERT</b>  ·  🔴 <b>URGENT</b>\n\n"
@@ -60,13 +68,6 @@ def _format_red_flag(text: str) -> str:
 
 
 def _format_care_mode(text: str) -> str:
-    body = html.escape(_strip_llm_chrome(text))
-    return (
-        # Transition indicator
-        "🔄 <i>Switching to Care Mode for precise analysis...</i>\n\n"
-        # Mode badge + content in dark accent block
-        "<blockquote>"
-        "🟠 <b>CARE MODE</b>\n\n"
-        f"{body}"
-        "</blockquote>"
-    )
+    # Care mode replies render as plain content — no transition indicator
+    # and no CARE MODE badge. We don't surface the active mode to users.
+    return _md_bold_to_html(html.escape(_strip_llm_chrome(text)))
