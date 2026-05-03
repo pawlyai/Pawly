@@ -616,11 +616,18 @@ def mock_multiturn_runtime(
     from src.llm import orchestrator
 
     def _apply(case: dict[str, Any], user: User, pet: Pet) -> ConversationRuntime:
-        memories = [_build_pet_memory(pet.id, item) for item in case.get("memories", [])]
+        structured_memories: list[PetMemory] = []
+        narrative_turns: list[dict[str, str]] = []
+        for item in case.get("memories", []):
+            if "memory_type" in item:
+                structured_memories.append(_build_pet_memory(pet.id, item))
+            elif "role" in item and "content" in item:
+                # Longitudinal-style: past session turns used as historical context.
+                narrative_turns.append(item)
         runtime = ConversationRuntime(
             pet=pet,
-            memories=memories,
-            recent_turns=case.get("recent_turns", []),
+            memories=structured_memories,
+            recent_turns=narrative_turns + case.get("recent_turns", []),
         )
         fake_session_id = uuid.uuid4()
         fake_dialogue_id = uuid.uuid4()
