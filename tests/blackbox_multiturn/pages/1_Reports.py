@@ -9,6 +9,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lang import lang_toggle, t  # noqa: E402
+from utils.export import generate_csv  # noqa: E402
 
 st.set_page_config(page_title="Reports", page_icon="📋", layout="wide")
 
@@ -21,7 +22,11 @@ _STATUS_KEYS = ["status_all", "status_passed", "status_failed"]
 def get_available_reports() -> list[str]:
     if not RESULTS_DIR.exists():
         return []
-    return sorted([f.name for f in RESULTS_DIR.glob("*.json")])
+    return sorted(
+        f.name
+        for f in RESULTS_DIR.glob("*.json")
+        if f.name != "translation_cache.json"
+    )
 
 
 def load_report(filename: str) -> dict[str, Any]:
@@ -38,7 +43,7 @@ def get_status_emoji(status: str) -> str:
 
 
 def render_summary(summary: dict[str, Any], selected: str) -> None:
-    col_title, col_selector = st.columns([2, 1])
+    col_title, col_selector, col_export = st.columns([2, 1, 1])
     with col_title:
         st.title(t("report_title"))
     with col_selector:
@@ -53,6 +58,13 @@ def render_summary(summary: dict[str, Any], selected: str) -> None:
             if choice != selected:
                 st.session_state.selected_report = choice
                 st.rerun()
+    with col_export:
+        st.write("")  # align button vertically with selector
+        if st.button("📥 Export CSV", use_container_width=True, key="open_export_btn"):
+            st.session_state["show_export_panel"] = not st.session_state.get(
+                "show_export_panel", False
+            )
+            st.session_state.pop("export_ready", None)
 
     total = summary.get("total_cases", 0)
     passed = summary.get("passed_threshold", 0)
@@ -112,6 +124,90 @@ def render_case_details(case: dict[str, Any]) -> None:
             st.markdown("---")
 
 
+CACHE_PATH = RESULTS_DIR / "translation_cache.json"
+
+
+def _build_report_label(fname: str) -> str:
+    """Return a display label for a report file: name + pass rate."""
+    try:
+        r = load_report(fname)
+        s = r.get("summary", {})
+        total = s.get("total_cases", 0)
+        passed = s.get("passed_threshold", 0)
+        rate = (passed / total * 100) if total else 0.0
+        return f"{fname}  —  {rate:.1f}% pass ({passed}/{total})"
+    except Exception:
+        return fname
+
+
+def _render_export_panel(all_reports: list[str]) -> None:
+    """Multi-select panel for choosing reports and triggering CSV export."""
+    with st.container(border=True):
+        header_col, close_col = st.columns([5, 1])
+        with header_col:
+            st.subheader("📥 Export Reports to CSV")
+        with close_col:
+            if st.button("✕ Close", key="close_export_btn"):
+                st.session_state["show_export_panel"] = False
+                st.session_state.pop("export_ready", None)
+                st.rerun()
+
+        label_map = {f: _build_report_label(f) for f in all_reports}
+
+        selected_exports: list[str] = st.multiselect(
+            "Select one or more reports to export:",
+            options=all_reports,
+            format_func=lambda f: label_map.get(f, f),
+            default=[],
+            key="export_report_multiselect",
+        )
+
+        export_col, _ = st.columns([1, 3])
+        with export_col:
+            export_clicked = st.button(
+                "Export Selected",
+                disabled=len(selected_exports) == 0,
+                type="primary",
+                key="do_export_btn",
+            )
+
+        if export_clicked and selected_exports:
+            progress_bar = st.progress(0.0, text="Starting export…")
+
+            def _on_progress(frac: float, msg: str) -> None:
+                progress_bar.progress(min(frac, 1.0), text=msg)
+
+            reports_data = [
+                (fname.replace(".json", ""), load_report(fname))
+                for fname in selected_exports
+            ]
+            try:
+                csv_bytes = generate_csv(reports_data, CACHE_PATH, on_progress=_on_progress)
+                out_name = (
+                    f"{selected_exports[0].replace('.json', '')}.csv"
+                    if len(selected_exports) == 1
+                    else f"export_{len(selected_exports)}_reports.csv"
+                )
+                st.session_state["export_ready"] = {
+                    "data": csv_bytes,
+                    "filename": out_name,
+                }
+            except Exception as exc:
+                st.error(f"Export failed: {exc}")
+
+        if "export_ready" in st.session_state:
+            ready = st.session_state["export_ready"]
+            size_kb = len(ready["data"]) // 1024
+            st.success(f"Ready — {size_kb} KB  •  {ready['filename']}")
+            st.download_button(
+                label="⬇️ Download CSV",
+                data=ready["data"],
+                file_name=ready["filename"],
+                mime="text/csv",
+                key="download_csv_btn",
+            )
+
+
 def main() -> None:
     lang_toggle()
 
@@ -128,6 +224,9 @@ def main() -> None:
     cases = report.get("cases", [])
 
     render_summary(summary, st.session_state.selected_report)
+
+    if st.session_state.get("show_export_panel"):
+        _render_export_panel(reports)
 
     st.sidebar.title(t("filters"))
     status_idx = st.sidebar.radio(
