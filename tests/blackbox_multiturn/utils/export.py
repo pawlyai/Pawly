@@ -171,6 +171,35 @@ def translate_uncached(
     return cache
 
 
+def translate_for_display(text: str, cache_path: Path) -> str:
+    """Translate a single text to Chinese for UI display using the shared cache.
+
+    Returns the original text if DEEPSEEK_API_KEY is not set or translation fails.
+    """
+    if not text:
+        return text
+
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if not api_key:
+        return text
+
+    ck = hashlib.sha256(f"ui:{text}".encode("utf-8")).hexdigest()
+    cache = load_translation_cache(cache_path)
+
+    if ck in cache:
+        return cache[ck]
+
+    results = _translate_batch([text], api_key)
+    translated = results[0] if results else "[translation failed]"
+
+    if translated != "[translation failed]":
+        cache[ck] = translated
+        save_translation_cache(cache, cache_path)
+        return translated
+
+    return text
+
+
 def generate_csv(
     reports: list[tuple[str, dict[str, Any]]],
     cache_path: Path,

@@ -8,12 +8,13 @@ from typing import Any
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from lang import lang_toggle, t  # noqa: E402
-from utils.export import generate_csv  # noqa: E402
+from lang import get_lang, lang_toggle, t  # noqa: E402
+from utils.export import generate_csv, translate_for_display  # noqa: E402
 
 st.set_page_config(page_title="Reports", page_icon="📋", layout="wide")
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
+CACHE_PATH = RESULTS_DIR / "translation_cache.json"
 
 _SORT_KEYS = ["sort_name", "sort_score_high", "sort_score_low", "sort_turns"]
 _STATUS_KEYS = ["status_all", "status_passed", "status_failed"]
@@ -99,6 +100,9 @@ def render_case_details(case: dict[str, Any]) -> None:
     st.markdown(f"**{t('status')}:** :{color}[{status_label}]")
     st.divider()
 
+    if get_lang() == "zh":
+        reason = translate_for_display(reason, CACHE_PATH)
+
     st.subheader(t("eval_reason"))
     st.write(reason)
     st.divider()
@@ -111,6 +115,8 @@ def render_case_details(case: dict[str, Any]) -> None:
     for i, turn in enumerate(turns):
         role = turn.get("role", "unknown")
         content = turn.get("content", "")
+        if get_lang() == "zh":
+            content = translate_for_display(content, CACHE_PATH)
         if role == "user":
             st.markdown(f"**{t('user_turn', i=i+1)}**")
             st.info(content)
@@ -122,9 +128,6 @@ def render_case_details(case: dict[str, Any]) -> None:
             st.success(clean)
         if i < len(turns) - 1:
             st.markdown("---")
-
-
-CACHE_PATH = RESULTS_DIR / "translation_cache.json"
 
 
 def _build_report_label(fname: str) -> str:
