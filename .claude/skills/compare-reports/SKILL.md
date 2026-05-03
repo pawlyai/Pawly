@@ -1,6 +1,6 @@
 ---
 name: compare-reports
-description: Cross-report analysis tool for comparing multiturn blackbox test results. Analyzes agreement, differences, root causes, and generates actionable insights across multiple test runs. Use when user wants to compare test reports, analyze differences between runs, or understand why model performance varies across versions.
+description: Cross-report analysis tool for comparing multiturn blackbox test results. Analyzes agreement, differences, root causes, and generates actionable insights across multiple test runs. Use when user wants to compare test reports, analyze differences between runs, understand why model performance varies across versions, or requests Chinese translation of analysis reports.
 ---
 
 # Cross-Report Analysis Skill
@@ -49,6 +49,36 @@ The skill will:
 ```bash
 /compare-reports --summary
 ```
+
+### Generate Chinese translation
+```bash
+/compare-reports --chinese
+```
+or
+```bash
+/compare-reports ethics --chinese
+```
+
+## Chinese Translation Support
+
+When the `--chinese` flag is used or when the user explicitly requests a Chinese translation, the skill will:
+
+1. **Generate bilingual output** - Create both English and Chinese versions of the analysis report
+2. **Preserve technical terms** - Keep technical terminology in English with Chinese explanations where appropriate
+3. **Maintain structure** - Keep the same report structure and sections in both languages
+4. **Save separate files** - Generate `cross_report_analysis_<type>_<timestamp>_zh.md` for Chinese version
+
+### Translation Guidelines:
+- Technical terms (e.g., "threshold", "CV", "pass rate") remain in English with Chinese context
+- Statistical terms and metrics use standard Chinese translations
+- Code snippets and file paths remain unchanged
+- Emoji indicators (✅❌⚠️) are preserved
+- Markdown formatting is maintained for compatibility
+
+### Triggers for Chinese Output:
+- `--chinese` flag in command
+- User request: "请提供中文版" or "生成中文报告"
+- User request: "translate to Chinese" or "Chinese version"
 
 ## Analysis Output Structure
 
@@ -148,9 +178,22 @@ Generate actionable insights:
   - Model improvements: Failure reason clusters
 ```
 
+### Step 8: Chinese Translation (Optional)
+```python
+If --chinese flag or Chinese translation requested:
+  - Read the generated English report
+  - Translate all narrative sections to Chinese
+  - Preserve technical terms and code blocks
+  - Maintain markdown structure and formatting
+  - Save as separate _zh.md file
+  - Ensure consistency in terminology across sections
+```
+
 ## Output Format
 
 Generate a markdown report: `tests/blackbox_multiturn/results/cross_report_analysis_<timestamp>.md`
+
+If Chinese translation is requested, also generate: `tests/blackbox_multiturn/results/cross_report_analysis_<timestamp>_zh.md`
 
 ### Report Structure:
 ```markdown
