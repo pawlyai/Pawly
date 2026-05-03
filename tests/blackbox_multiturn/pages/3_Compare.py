@@ -1,10 +1,14 @@
 """Side-by-side comparison of multiple reports."""
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import streamlit as st
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from lang import lang_toggle, t  # noqa: E402
 
 st.set_page_config(page_title="Compare", page_icon="⚖️", layout="wide")
 
@@ -38,29 +42,31 @@ def parse_filename(name: str) -> dict[str, str]:
 
 
 def main() -> None:
-    st.title("⚖️ Compare Runs")
-    st.caption("Pick 2–6 reports to compare pass rates and per-case scores.")
+    lang_toggle()
+
+    st.title(t("compare_title"))
+    st.caption(t("compare_caption"))
 
     reports = list_reports()
     if not reports:
-        st.warning("No reports yet — run tests first.")
+        st.warning(t("no_reports_compare"))
         return
 
     selected = st.multiselect(
-        "Reports to compare",
+        t("reports_to_compare"),
         reports,
         default=reports[:2],
         max_selections=6,
     )
 
     if len(selected) < 2:
-        st.info("Pick at least two reports.")
+        st.info(t("pick_two"))
         return
 
     loaded = [(name, load(name)) for name in selected]
 
     # ── Summary table ────────────────────────────────────────────────────────
-    st.subheader("Summary")
+    st.subheader(t("summary"))
     summary_rows: list[dict[str, Any]] = []
     for name, report in loaded:
         meta = parse_filename(name)
@@ -73,37 +79,37 @@ def main() -> None:
             if report.get("cases") else 0
         )
         summary_rows.append({
-            "Report": name,
-            "Topic": meta["topic"],
-            "Model": meta["model"],
-            "Cases": total,
-            "Passed": passed,
-            "Pass Rate (%)": round(rate, 1),
-            "Avg Score": round(avg_score, 3),
+            t("col_report"): name,
+            t("col_topic"): meta["topic"],
+            t("col_model"): meta["model"],
+            t("col_cases"): total,
+            t("col_passed"): passed,
+            t("col_pass_rate"): round(rate, 1),
+            t("col_avg_score"): round(avg_score, 3),
         })
     st.dataframe(summary_rows, use_container_width=True, hide_index=True)
 
     # ── Pass rate bar chart ──────────────────────────────────────────────────
-    st.subheader("Pass rate")
+    st.subheader(t("pass_rate_chart"))
+    pass_rate_col = t("col_pass_rate")
     chart_data = [
         {"Run": f"{parse_filename(name)['model']}\n({parse_filename(name)['timestamp']})",
-         "Pass Rate (%)": row["Pass Rate (%)"]}
+         pass_rate_col: row[pass_rate_col]}
         for name, row in zip(selected, summary_rows)
     ]
     try:
         import altair as alt
-        chart_df = chart_data
-        chart = alt.Chart(alt.Data(values=chart_df)).mark_bar().encode(
+        chart = alt.Chart(alt.Data(values=chart_data)).mark_bar().encode(
             x=alt.X("Run:N", sort=None),
-            y=alt.Y("Pass Rate (%):Q", scale=alt.Scale(domain=[0, 100])),
+            y=alt.Y(f"{pass_rate_col}:Q", scale=alt.Scale(domain=[0, 100])),
             color="Run:N",
         ).properties(height=300)
         st.altair_chart(chart, use_container_width=True)
     except ImportError:
-        st.bar_chart({r["Run"]: r["Pass Rate (%)"] for r in chart_data})
+        st.bar_chart({r["Run"]: r[pass_rate_col] for r in chart_data})
 
     # ── Per-case score matrix ────────────────────────────────────────────────
-    st.subheader("Per-case scores")
+    st.subheader(t("per_case_scores"))
     case_names: set[str] = set()
     for _, report in loaded:
         for case in report.get("cases", []):
@@ -111,7 +117,7 @@ def main() -> None:
 
     matrix_rows: list[dict[str, Any]] = []
     for case_name in sorted(case_names):
-        row: dict[str, Any] = {"Case": case_name}
+        row: dict[str, Any] = {t("case"): case_name}
         for filename, report in loaded:
             meta = parse_filename(filename)
             label = f"{meta['model']}"
@@ -124,8 +130,8 @@ def main() -> None:
     st.dataframe(matrix_rows, use_container_width=True, hide_index=True)
 
     # ── Side-by-side reasoning per case ──────────────────────────────────────
-    st.subheader("Drill into a case")
-    case_pick = st.selectbox("Case", sorted(case_names))
+    st.subheader(t("drill_into"))
+    case_pick = st.selectbox(t("case"), sorted(case_names))
     cols = st.columns(len(loaded))
     for col, (filename, report) in zip(cols, loaded):
         meta = parse_filename(filename)
@@ -133,13 +139,13 @@ def main() -> None:
         with col:
             st.markdown(f"**{meta['model']}**  \n_{meta['timestamp']}_")
             if not case:
-                st.caption("Not in this report.")
+                st.caption(t("not_in_report"))
                 continue
             score = case.get("score", 0)
             threshold = case.get("threshold", 0.7)
             emoji = "✅" if score >= threshold else "❌"
-            st.metric("Score", f"{emoji} {score:.2f}", delta=f"th: {threshold:.2f}")
-            st.markdown("**Reason**")
+            st.metric(t("score"), f"{emoji} {score:.2f}", delta=f"th: {threshold:.2f}")
+            st.markdown(f"**{t('reason')}**")
             st.write(case.get("reason", "—"))
 
 
