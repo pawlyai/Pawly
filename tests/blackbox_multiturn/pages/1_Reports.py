@@ -294,6 +294,7 @@ def main() -> None:
                 use_container_width=True,
             ):
                 st.session_state.selected_case_index = i
+                st.rerun()
     with right:
         render_case_details(filtered[st.session_state.selected_case_index])
 
