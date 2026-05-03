@@ -29,6 +29,9 @@ CSV_HEADERS = [
     "threshold",
     "pass_fail",
     "eval_rationale",
+    "category",
+    "focus",
+    "priority",
     "total_turns",
     "turn_number",
     "speaker",
@@ -207,6 +210,10 @@ def generate_csv(
             threshold = float(case.get("threshold", 0.7))
             pass_fail = "PASS" if score >= threshold else "FAIL"
             eval_rationale = case.get("reason", "")
+            metadata = case.get("metadata", {})
+            category = metadata.get("category", "")
+            focus = metadata.get("focus", "")
+            priority = metadata.get("priority", "")
             turns = case.get("turns", [])
             total_turns = len(turns)
 
@@ -236,6 +243,9 @@ def generate_csv(
                         "threshold": threshold,
                         "pass_fail": pass_fail,
                         "eval_rationale": eval_rationale,
+                        "category": category,
+                        "focus": focus,
+                        "priority": priority,
                         "total_turns": total_turns,
                         "turn_number": ti + 1,
                         "speaker": "USER" if turn.get("role") == "user" else "AI",
@@ -287,6 +297,9 @@ def generate_csv(
                 row["threshold"],
                 row["pass_fail"],
                 row["eval_rationale"].replace("\n", "\\n"),
+                row["category"],
+                row["focus"],
+                row["priority"],
                 row["total_turns"],
                 row["turn_number"],
                 row["speaker"],
