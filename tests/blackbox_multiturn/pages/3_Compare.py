@@ -8,11 +8,13 @@ from typing import Any
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from lang import lang_toggle, t  # noqa: E402
+from lang import get_lang, lang_toggle, t  # noqa: E402
+from utils.export import translate_for_display  # noqa: E402
 
 st.set_page_config(page_title="Compare", page_icon="⚖️", layout="wide")
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
+CACHE_PATH = RESULTS_DIR / "translation_cache.json"
 
 
 def list_reports() -> list[str]:
@@ -146,7 +148,10 @@ def main() -> None:
             emoji = "✅" if score >= threshold else "❌"
             st.metric(t("score"), f"{emoji} {score:.2f}", delta=f"th: {threshold:.2f}")
             st.markdown(f"**{t('reason')}**")
-            st.write(case.get("reason", "—"))
+            reason = case.get("reason", "—")
+            if get_lang() == "zh" and reason != "—":
+                reason = translate_for_display(reason, CACHE_PATH)
+            st.write(reason)
 
 
 main()
