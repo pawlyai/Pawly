@@ -1,7 +1,10 @@
 """Single-report browser — case list + transcripts."""
 
 import json
+import queue
 import sys
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -155,7 +158,8 @@ def _render_export_panel(all_reports: list[str]) -> None:
         with close_col:
             if st.button("✕ Close", key="close_export_btn"):
                 st.session_state["show_export_panel"] = False
-                st.session_state.pop("export_ready", None)
+                for _k in ("export_ready", "_export_thread", "_export_queue", "_export_progress"):
+                    st.session_state.pop(_k, None)
                 st.rerun()
 
         label_map = {f: _build_report_label(f) for f in all_reports}
@@ -170,39 +174,85 @@ def _render_export_panel(all_reports: list[str]) -> None:
 
         export_col, _ = st.columns([1, 3])
         with export_col:
+            _is_running = "_export_thread" in st.session_state
             export_clicked = st.button(
                 "Export Selected",
-                disabled=len(selected_exports) == 0,
+                disabled=len(selected_exports) == 0 or _is_running,
                 type="primary",
                 key="do_export_btn",
             )
 
-        if export_clicked and selected_exports:
+        if export_clicked and selected_exports and not _is_running:
             # Deduplicate selection order-preservingly; duplicate entries would
             # produce duplicate rows in the CSV.
             unique_exports = list(dict.fromkeys(selected_exports))
-            progress_bar = st.progress(0.0, text="Starting export…")
-
-            def _on_progress(frac: float, msg: str) -> None:
-                progress_bar.progress(min(frac, 1.0), text=msg)
-
+            out_name = (
+                f"{unique_exports[0].replace('.json', '')}.csv"
+                if len(unique_exports) == 1
+                else f"export_{len(unique_exports)}_reports.csv"
+            )
             reports_data = [
                 (fname.replace(".json", ""), load_report(fname))
                 for fname in unique_exports
             ]
-            try:
-                csv_bytes = generate_csv(reports_data, CACHE_PATH, on_progress=_on_progress)
-                out_name = (
-                    f"{unique_exports[0].replace('.json', '')}.csv"
-                    if len(unique_exports) == 1
-                    else f"export_{len(unique_exports)}_reports.csv"
-                )
-                st.session_state["export_ready"] = {
-                    "data": csv_bytes,
-                    "filename": out_name,
-                }
-            except Exception as exc:
-                st.error(f"Export failed: {exc}")
+            st.session_state.pop("export_ready", None)
+            _progress_q: queue.Queue = queue.Queue()
+
+            def _run_export(
+                _rd: list = reports_data,
+                _name: str = out_name,
+                _q: queue.Queue = _progress_q,
+            ) -> None:
+                def _on_prog(frac: float, msg: str) -> None:
+                    _q.put(("progress", frac, msg))
+                try:
+                    result = generate_csv(_rd, CACHE_PATH, on_progress=_on_prog)
+                    _q.put(("done", result, _name))
+                except Exception as exc:
+                    _q.put(("error", str(exc)))
+
+            _t = threading.Thread(target=_run_export, daemon=True)
+            st.session_state["_export_thread"] = _t
+            st.session_state["_export_queue"] = _progress_q
+            st.session_state["_export_progress"] = (0.0, "Starting export…")
+            _t.start()
+            st.rerun()
+
+        # Poll the background export thread on every rerun
+        if "_export_thread" in st.session_state:
+            _q: queue.Queue = st.session_state["_export_queue"]
+            _last_frac, _last_msg = st.session_state.get("_export_progress", (0.0, "Running…"))
+            _result = None
+            _error = None
+            _done_name = None
+
+            while True:
+                try:
+                    _item = _q.get_nowait()
+                    if _item[0] == "done":
+                        _result, _done_name = _item[1], _item[2]
+                    elif _item[0] == "error":
+                        _error = _item[1]
+                    else:
+                        _last_frac, _last_msg = _item[1], _item[2]
+                        st.session_state["_export_progress"] = (_last_frac, _last_msg)
+                except queue.Empty:
+                    break
+
+            if _result is not None:
+                st.session_state["export_ready"] = {"data": _result, "filename": _done_name}
+                for _k in ("_export_thread", "_export_queue", "_export_progress"):
+                    st.session_state.pop(_k, None)
+                st.rerun()
+            elif _error is not None:
+                st.error(f"Export failed: {_error}")
+                for _k in ("_export_thread", "_export_queue", "_export_progress"):
+                    st.session_state.pop(_k, None)
+            else:
+                st.progress(_last_frac, text=_last_msg)
+                st.info("⏳ Export running in background — page refreshes automatically, you can keep browsing.")
+                time.sleep(0.5)
+                st.rerun()
 
         if "export_ready" in st.session_state:
             ready = st.session_state["export_ready"]
