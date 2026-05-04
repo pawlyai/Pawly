@@ -6,12 +6,18 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+BLACKBOX_DIR = Path(__file__).parent.parent  # tests/blackbox_multiturn/
+RESULTS_DIR = BLACKBOX_DIR / "results"
+CACHE_PATH = RESULTS_DIR / "translation_cache.json"
+
+for _p in (str(REPO_ROOT), str(BLACKBOX_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import streamlit as st
 
 from src.llm.providers import SUPPORTED_MODELS
+from utils.export import pre_translate_report  # noqa: E402
 
 st.set_page_config(page_title="Run Tests", page_icon="▶️", layout="wide")
 TEST_DATA_DIR = REPO_ROOT / "tests" / "blackbox_multiturn" / "test_data"
@@ -75,11 +81,20 @@ def main() -> None:
         progress = st.progress(0.0, text="Starting…")
         all_logs: list[str] = []
 
+        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+
         for idx, topic in enumerate(selected_topics):
             progress.progress(
                 idx / len(selected_topics),
                 text=f"Running {topic} on {model}…",
             )
+
+            # Snapshot existing reports so we can identify new ones after the run.
+            before = {
+                f for f in RESULTS_DIR.glob("*.json")
+                if f.name != "translation_cache.json"
+            } if RESULTS_DIR.exists() else set()
+
             cmd = [
                 sys.executable, "-m", "pytest",
                 TEST_FILE,
@@ -109,6 +124,38 @@ def main() -> None:
             except Exception as exc:
                 all_logs.append(f"[error] {exc}")
                 log_area.code("\n".join(all_logs[-200:]), language="text")
+                continue
+
+            # Pre-translate turns in any new report so CSV export is instant later.
+            if api_key and RESULTS_DIR.exists():
+                after = {
+                    f for f in RESULTS_DIR.glob("*.json")
+                    if f.name != "translation_cache.json"
+                }
+                new_reports = sorted(after - before, key=lambda f: f.stat().st_mtime)
+                for report_path in new_reports:
+                    trans_bar = st.progress(
+                        0.0,
+                        text=f"Pre-translating {report_path.name}…",
+                    )
+
+                    def _on_trans(
+                        done: int,
+                        total: int,
+                        _bar: st.delta_generator.DeltaGenerator = trans_bar,
+                    ) -> None:
+                        _bar.progress(
+                            done / max(total, 1),
+                            text=f"Pre-translating turns… ({done}/{total})",
+                        )
+
+                    n = pre_translate_report(report_path, CACHE_PATH, api_key, on_progress=_on_trans)
+                    label = (
+                        f"Cached {n} translations for {report_path.stem} ✓"
+                        if n
+                        else f"All turns already cached for {report_path.stem} ✓"
+                    )
+                    trans_bar.progress(1.0, text=label)
 
         progress.progress(1.0, text="Done")
         st.success("Run finished. Check the **Reports** or **Compare** pages for results.")
