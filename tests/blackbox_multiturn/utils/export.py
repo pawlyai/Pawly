@@ -186,6 +186,44 @@ def translate_uncached(
     return cache
 
 
+def pre_translate_report(
+    report_path: Path,
+    cache_path: Path,
+    api_key: str,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> int:
+    """Translate all turns in a single report file and persist the cache.
+
+    Called automatically after a test run so downloads are instant later.
+    Returns the number of turns that were newly translated (0 if all cached).
+    """
+    try:
+        with report_path.open("r", encoding="utf-8") as fh:
+            report_data = json.load(fh)
+    except Exception as exc:
+        logger.error("Cannot read report %s: %s", report_path, exc)
+        return 0
+
+    report_name = report_path.stem
+    cache = load_translation_cache(cache_path)
+
+    items: list[tuple[str, str]] = []
+    for case in report_data.get("cases", []):
+        for ti, turn in enumerate(case.get("turns", [])):
+            content = turn.get("content", "")
+            ck = cache_key(report_name, ti, content)
+            items.append((ck, content))
+
+    uncached = [(k, c) for k, c in items if k not in cache]
+    if not uncached:
+        return 0
+
+    translate_uncached(uncached, cache, api_key, on_progress=on_progress)
+    save_translation_cache(cache, cache_path)
+    logger.info("Pre-translated %d turns for %s", len(uncached), report_name)
+    return len(uncached)
+
+
 def generate_csv(
     reports: list[tuple[str, dict[str, Any]]],
     cache_path: Path,
