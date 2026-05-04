@@ -194,6 +194,20 @@ def _render_export_panel(all_reports: list[str]) -> None:
 
         label_map = {f: _build_report_label(f) for f in all_reports}
 
+        # Quick-select shortcuts
+        _sc1, _sc2, _sc3 = st.columns([1, 1, 4])
+        with _sc1:
+            if st.button("🔖 All regression", key="sel_regression_btn",
+                         help="Select all reports whose name contains 'regression'"):
+                st.session_state["export_report_multiselect"] = sorted(
+                    f for f in all_reports if "regression" in f.lower()
+                )
+                st.rerun()
+        with _sc2:
+            if st.button("✖ Clear", key="sel_clear_btn"):
+                st.session_state["export_report_multiselect"] = []
+                st.rerun()
+
         selected_exports: list[str] = st.multiselect(
             "Select one or more reports to export:",
             options=all_reports,
@@ -216,11 +230,13 @@ def _render_export_panel(all_reports: list[str]) -> None:
             # Deduplicate selection order-preservingly; duplicate entries would
             # produce duplicate rows in the CSV.
             unique_exports = list(dict.fromkeys(selected_exports))
-            out_name = (
-                f"{unique_exports[0].replace('.json', '')}.csv"
-                if len(unique_exports) == 1
-                else f"export_{len(unique_exports)}_reports.csv"
-            )
+            _all_regression = all("regression" in f.lower() for f in unique_exports)
+            if len(unique_exports) == 1:
+                out_name = f"{unique_exports[0].replace('.json', '')}.csv"
+            elif _all_regression:
+                out_name = f"regression_all_{len(unique_exports)}_reports.csv"
+            else:
+                out_name = f"export_{len(unique_exports)}_reports.csv"
             reports_data = [
                 (fname.replace(".json", ""), load_report(fname))
                 for fname in unique_exports
