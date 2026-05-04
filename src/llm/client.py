@@ -82,6 +82,19 @@ RESPONSE_SCHEMA: dict[str, Any] = {
             "enum": ["RED", "ORANGE", "GREEN"],
             "description": "Triage classification: RED (emergency), ORANGE (concerning), GREEN (routine).",
         },
+        "confidence": {
+            "type": "NUMBER",
+            "description": "Self-rated confidence in the triage decision, 0.0-1.0. High = enough information to commit; low = a clarification turn is needed.",
+        },
+        "missing_info": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+            "description": "Information still needed to raise confidence (e.g. 'duration', 'breathing pattern'). Empty when confident.",
+        },
+        "clarification_question": {
+            "type": "STRING",
+            "description": "ONE focused follow-up question to fill the most important missing_info. Empty string when confident.",
+        },
         "intent": {
             "type": "STRING",
             "enum": ["symptom_report", "nutrition", "exercise", "grooming", "behavior", "question", "general"],
@@ -98,7 +111,11 @@ RESPONSE_SCHEMA: dict[str, Any] = {
             "description": "Symptom keywords mentioned or implied (e.g. 'vomiting', 'lethargy'). Empty list if none.",
         },
     },
-    "required": ["response_text", "triage_level", "intent", "sentiment", "symptom_tags"],
+    "required": [
+        "response_text", "triage_level", "confidence",
+        "missing_info", "clarification_question",
+        "intent", "sentiment", "symptom_tags",
+    ],
 }
 
 
@@ -440,6 +457,25 @@ class GeminiClient:
             max_tokens=max_tokens,
             temperature=temperature,
             response_schema=RESPONSE_SCHEMA,
+        )
+
+    async def chat_with_schema(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        response_schema: dict[str, Any],
+        model: str | None = None,
+        max_tokens: int = 1024,
+        temperature: float = 0.2,
+    ) -> dict[str, Any]:
+        """Structured call with a caller-supplied response_schema (Gemini-specific)."""
+        return await self._call_structured(
+            model=model or settings.main_model,
+            system_prompt=system_prompt,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            response_schema=response_schema,
         )
 
     async def extract(

@@ -15,8 +15,12 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from sqlalchemy import select
+
 from src.config import settings
+from src.db.engine import get_session_factory
 from src.db.models import (
+    Dialogue,
     MessageType,
     Pet,
     RiskLevel,
@@ -27,15 +31,15 @@ from src.db.models import (
     User,
 )
 from src.llm.client import get_gemini_client
-from src.observability.tracing import observe_span, update_span, update_trace
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
 from src.memory.reader import load_pet_context, load_related_memories
+from src.observability.tracing import observe_span, update_span, update_trace
+from src.triage.red_gate import should_fast_escape, verify_red
 from src.triage.rules_engine import (
     classify_by_rules,
     compare_and_resolve,
-    detect_triage_from_response,
 )
 from src.utils.logger import get_logger
 
@@ -61,13 +65,17 @@ class OrchestratorResult:
     """Returned by both generate_response() and generate_opening()."""
 
     response_text: str
-    triage_result: Optional[dict] = None       # {"rule", "llm", "final", "overridden", "matched_patterns"}
+    triage_result: Optional[dict] = None       # {"rule", "llm", "final", "overridden", "matched_patterns", ...}
     intent: Optional[str] = None
     symptom_tags: list[str] = field(default_factory=list)
     risk_level: Optional[RiskLevel] = None
     sentiment_user: Optional[Sentiment] = None
     input_tokens: int = 0
     output_tokens: int = 0
+    # True when this turn is a clarification question — caller skips the
+    # RED visual chrome, the proactive follow-up scheduler, and the
+    # TriageRecord write because the triage isn't finalised yet.
+    is_clarification: bool = False
 
 
 # ── Public entry points ───────────────────────────────────────────────────────
@@ -262,12 +270,30 @@ async def _generate_response_classic(
     session: Optional[dict[str, Any]] = None,
     raw_message_id: Optional[str] = None,
 ) -> OrchestratorResult:
-    """Original sequential orchestration — proven stable path."""
+    """
+    Classic sequential orchestration with the v2 confidence loop:
+
+        1. Load pet context + memory
+        2. Call chat_structured → response_text + triage_level + confidence
+           + clarification_question + intent + sentiment + symptom_tags
+        3. Run rules engine; resolve final triage (max severity)
+        4. Branch on the resolved triage:
+             a. Fast-escape (rules matched a critical RED pattern) →
+                return as-is, RED is final, skip the gate.
+             b. Final = RED, gate enabled, no fast-escape → run red_gate.
+                If gate confirms → use its response_text + citation.
+                If gate downgrades → return its clarification_question
+                as a clarification turn.
+             c. Confidence below threshold + round budget remaining →
+                return clarification_question as a clarification turn.
+             d. Otherwise finalise with the structured response_text.
+        5. Persist clarification round/state on the Dialogue row.
+        6. Apply visual chrome only on finalised turns.
+    """
     tier = _tier(user)
     pet_id_str = str(pet.id) if pet else None
     is_health = looks_like_health_query(user_message)
 
-    # user_id/session_id/tags belong on the trace in v2 SDK
     update_trace(
         user_id=str(user.id),
         session_id=dialogue_id,
@@ -315,6 +341,9 @@ async def _generate_response_classic(
     daily_summary = ctx.get("daily_summary")
     pending = ctx.get("pending_confirmations", [])
 
+    # Existing clarification round count for this dialogue
+    prior_round = await _load_clarification_round(dialogue_id)
+
     # ── 2. BUILD SYSTEM PROMPT ────────────────────────────────────────────────
     memory_context, pending_confirmation = build_context_block(
         pet=pet,  # type: ignore[arg-type]
@@ -338,63 +367,149 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL GEMINI ────────────────────────────────────────────────────────
+    # ── 4. CALL GEMINI (structured) ───────────────────────────────────────────
     client = get_gemini_client()
+    in_tok = out_tok = 0
     try:
-        raw = await client.chat(system_prompt=system, messages=messages)
-        response_text = raw["text"]
-        in_tok = raw["input_tokens"]
-        out_tok = raw["output_tokens"]
+        raw = await client.chat_structured(system_prompt=system, messages=messages)
+        response_text = (raw.get("response_text") or "").strip()
+        confidence = float(raw.get("confidence") or 0.0)
+        clarification_question = (raw.get("clarification_question") or "").strip()
+        missing_info = list(raw.get("missing_info") or [])
+        llm_triage_str = raw.get("triage_level")
+        llm_triage = (
+            TriageLevel(llm_triage_str.lower()) if isinstance(llm_triage_str, str) else None
+        )
+        intent = raw.get("intent") or detect_intent(user_message)
+        sentiment_str = raw.get("sentiment")
+        sentiment = (
+            Sentiment(sentiment_str.lower()) if isinstance(sentiment_str, str) else detect_sentiment(user_message)
+        )
+        symptom_tags = list(raw.get("symptom_tags") or [])
+        in_tok = int(raw.get("input_tokens") or 0)
+        out_tok = int(raw.get("output_tokens") or 0)
     except Exception as exc:
-        logger.error("llm call failed", error=str(exc))
+        logger.error("structured llm call failed", error=str(exc))
         response_text = (
             "I'm having trouble connecting right now. Please try again in a moment."
         )
-        in_tok = out_tok = 0
+        confidence = 0.0
+        clarification_question = ""
+        missing_info = []
+        llm_triage = None
+        intent = detect_intent(user_message)
+        sentiment = detect_sentiment(user_message)
+        symptom_tags = []
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     rule_result = classify_by_rules(pet, user_message)
-    llm_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    if resolved.overridden and resolved.final_classification == TriageLevel.RED:
-        override_system = (
-            system
-            + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-            "by the safety system. You MUST treat this as URGENT. Push immediate vet visit. "
-            "Do not suggest home treatment."
-        )
-        try:
-            raw2 = await client.chat(system_prompt=override_system, messages=messages)
-            response_text = raw2["text"]
-            in_tok += raw2["input_tokens"]
-            out_tok += raw2["output_tokens"]
-            logger.warning(
-                "triage RED override re-call issued",
-                pet_id=pet_id_str,
-                rule=rule_result.classification.value,
-                llm=llm_triage.value if llm_triage else None,
-            )
-        except Exception as exc:
-            logger.error("RED override re-call failed", error=str(exc))
+    # Merge symptom keywords from rule engine
+    symptom_tags = sorted({*symptom_tags, *extract_symptom_keywords(user_message, rule_result.matched_patterns)})
 
-    # Apply Figma visual format based on resolved triage level
-    response_text = apply_response_format(response_text, resolved.final_classification)
+    fast_escape = should_fast_escape(rule_result.matched_rules)
+
+    is_clarification = False
+    citation = ""
+    matched_scenario = ""
+    gate_ran = False
+    final_triage = resolved.final_classification
+
+    # ── 5a. RED branch: fast-escape vs Red gate vs gate-clarify ───────────────
+    if final_triage == TriageLevel.RED and not fast_escape and settings.red_gate_enabled:
+        gate_ran = True
+        gate = await verify_red(
+            pet=pet,
+            user_message=user_message,
+            recent_turns=recent_turns,
+            memory_context=memory_context,
+            matched_rules=rule_result.matched_rules,
+        )
+        in_tok += gate.input_tokens
+        out_tok += gate.output_tokens
+        citation = gate.citation
+        matched_scenario = gate.matched_scenario
+
+        if gate.confirmed_red:
+            # Replace LLM body with the gate's grounded response
+            if gate.response_text:
+                response_text = gate.response_text
+            # final_triage stays RED
+        elif gate.clarification_question and prior_round < settings.clarification_max_rounds:
+            # Gate asked for one more piece of info before committing to RED.
+            # Treat as a clarification turn at the next-lower (Orange) tier so
+            # we don't slap RED chrome onto a question.
+            response_text = gate.clarification_question
+            final_triage = TriageLevel.ORANGE
+            is_clarification = True
+        else:
+            # Gate said not RED but we've exhausted the round budget — fall
+            # back to the LLM's structured response_text at Orange.
+            final_triage = TriageLevel.ORANGE
+            if gate.response_text:
+                response_text = gate.response_text
+
+    # ── 5b. Non-RED clarification: confidence-driven loop ─────────────────────
+    elif (
+        not is_clarification
+        and clarification_question
+        and confidence < settings.clarification_threshold
+        and prior_round < settings.clarification_max_rounds
+        and not fast_escape
+    ):
+        response_text = clarification_question
+        is_clarification = True
+
+    # ── 5c. Persist clarification state on the Dialogue ───────────────────────
+    new_round = (prior_round + 1) if is_clarification else 0
+    new_state = _build_clarification_state(
+        prior_round=prior_round,
+        is_clarification=is_clarification,
+        question=clarification_question if is_clarification else "",
+        missing_info=missing_info,
+        triage=final_triage,
+        confidence=confidence,
+    )
+    try:
+        await _save_clarification_state(dialogue_id, new_round, new_state)
+    except Exception as exc:
+        logger.warning("save_clarification_state failed", error=str(exc))
+
+    # ── 6. Apply visual chrome — finalised turns only ─────────────────────────
+    if not is_clarification:
+        response_text = apply_response_format(response_text, final_triage)
+        if citation and final_triage == TriageLevel.RED:
+            # Append the source name on confirmed-RED turns. We add it after
+            # the formatter so it sits below the closing footer.
+            response_text = f"{response_text}\n\n<i>Reference: {citation}</i>"
 
     triage_result = {
         "rule": rule_result.classification.value,
         "llm": llm_triage.value if llm_triage else None,
-        "final": resolved.final_classification.value,
+        "final": final_triage.value,
         "overridden": resolved.overridden,
         "override_direction": resolved.override_direction,
         "matched_patterns": rule_result.matched_rules,
-        "confidence": rule_result.confidence,
+        "confidence": confidence,
+        "is_clarification": is_clarification,
+        "clarification_round": new_round,
+        "missing_info": missing_info,
+        "fast_escape": fast_escape,
+        "red_gate_ran": gate_ran,
+        "matched_scenario": matched_scenario,
+        "citation": citation,
     }
 
-    risk_level = map_triage_to_risk(resolved.final_classification)
+    risk_level = map_triage_to_risk(final_triage)
 
-    # Persist triage record for non-GREEN outcomes (or health queries)
-    if pet and (is_health or resolved.final_classification != TriageLevel.GREEN):
+    # Persist TriageRecord only on finalised non-GREEN outcomes — clarification
+    # turns aren't a final classification.
+    if (
+        pet
+        and not is_clarification
+        and (is_health or final_triage != TriageLevel.GREEN)
+    ):
         try:
             await _store_triage_record(
                 pet_id=pet.id,
@@ -405,16 +520,16 @@ async def _generate_response_classic(
         except Exception as exc:
             logger.warning("store_triage_record failed", error=str(exc))
 
-    # ── 6. DETECT INTENT + SENTIMENT + SYMPTOMS ───────────────────────────────
-    intent = detect_intent(user_message)
-    sentiment = detect_sentiment(user_message)
-    symptom_tags = extract_symptom_keywords(user_message, rule_result.matched_patterns)
-
     update_span(
         output={"response_text": response_text},
         metadata={
             "triage_final": triage_result["final"],
             "triage_overridden": triage_result["overridden"],
+            "is_clarification": is_clarification,
+            "clarification_round": new_round,
+            "confidence": confidence,
+            "fast_escape": fast_escape,
+            "red_gate_ran": gate_ran,
             "intent": intent,
             "symptom_tags": symptom_tags,
             "input_tokens": in_tok,
@@ -431,6 +546,7 @@ async def _generate_response_classic(
         sentiment_user=sentiment,
         input_tokens=in_tok,
         output_tokens=out_tok,
+        is_clarification=is_clarification,
     )
 
 
@@ -553,6 +669,67 @@ async def generate_followup_message(
         temperature=0.7,
     )
     return raw["text"].strip()
+
+
+async def _load_clarification_round(dialogue_id: Optional[str]) -> int:
+    """Look up the dialogue's current clarification_round (0 if missing)."""
+    if not dialogue_id:
+        return 0
+    try:
+        dialogue_uuid = uuid.UUID(dialogue_id)
+    except (ValueError, TypeError):
+        return 0
+    factory = get_session_factory()
+    async with factory() as db:
+        row = await db.execute(
+            select(Dialogue.clarification_round).where(Dialogue.id == dialogue_uuid)
+        )
+        value = row.scalar_one_or_none()
+    return int(value) if value is not None else 0
+
+
+async def _save_clarification_state(
+    dialogue_id: Optional[str],
+    new_round: int,
+    new_state: dict,
+) -> None:
+    """Persist the new round count + state JSON onto the Dialogue row."""
+    if not dialogue_id:
+        return
+    try:
+        dialogue_uuid = uuid.UUID(dialogue_id)
+    except (ValueError, TypeError):
+        return
+    factory = get_session_factory()
+    async with factory() as db:
+        result = await db.execute(
+            select(Dialogue).where(Dialogue.id == dialogue_uuid)
+        )
+        dialogue = result.scalar_one_or_none()
+        if dialogue is None:
+            return
+        dialogue.clarification_round = new_round
+        dialogue.clarification_state = new_state
+        await db.commit()
+
+
+def _build_clarification_state(
+    prior_round: int,
+    is_clarification: bool,
+    question: str,
+    missing_info: list[str],
+    triage: TriageLevel,
+    confidence: float,
+) -> dict:
+    """Compose the JSONB blob written to Dialogue.clarification_state."""
+    return {
+        "prior_round": prior_round,
+        "is_clarification": is_clarification,
+        "last_question": question,
+        "last_missing_info": missing_info,
+        "last_triage": triage.value,
+        "last_confidence": round(float(confidence), 3),
+    }
 
 
 async def _store_triage_record(

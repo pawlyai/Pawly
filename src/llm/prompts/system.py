@@ -36,6 +36,7 @@ _LF_PROMPT_NAMES = {
     "conversation_rules": "pawly-conversation-rules",
     "hard_rules": "pawly-hard-rules",
     "medical_format": "pawly-medical-format",
+    "triage_loop": "pawly-triage-loop",
 }
 
 _lf_client = None
@@ -59,6 +60,7 @@ def _load_yaml_sections() -> dict:
         "conversation_rules": cfg["conversation_rules"].rstrip("\n"),
         "hard_rules": cfg["hard_rules"].rstrip("\n"),
         "medical_format": cfg["medical_format"].rstrip("\n"),
+        "triage_loop": cfg.get("triage_loop", "").rstrip("\n"),
     }
 
 
@@ -133,6 +135,8 @@ def build_system_prompt(
         "",
         sections["medical_format"],
     ]
+    if sections.get("triage_loop"):
+        parts += ["", sections["triage_loop"]]
 
     # Section 5 - Pet profile
     if pet:

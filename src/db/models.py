@@ -313,6 +313,13 @@ class Dialogue(Base):
     pet_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     topic_primary: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_open: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Number of consecutive clarification turns spent in the current loop.
+    # Reset to 0 once the orchestrator finalises a triage assessment.
+    clarification_round: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Audit trail of the loop: questions asked, latest missing_info, last
+    # confidence/triage. Not used for routing — the routing decision uses
+    # only clarification_round + the current LLM output.
+    clarification_state: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     session: Mapped["ChatSession"] = relationship("ChatSession", back_populates="dialogues")

@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
 
+    # Confidence-driven clarification loop
+    clarification_threshold: float = 0.7   # below this, ask clarification instead of finalising
+    clarification_max_rounds: int = 4      # safety cap on consecutive clarification turns
+
+    # Prompt-grounded RED gate (second LLM hop on RED triage with Tier-1 source references)
+    red_gate_enabled: bool = True
+
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""

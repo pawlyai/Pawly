@@ -768,8 +768,14 @@ async def handle_message(
             message_ids=[str(raw_msg.id), str(bot_raw.id)],
         )
 
-    # 7b. Schedule proactive follow-up for RED/ORANGE if user goes silent
-    if active_pet and triage_final in ("red", "orange"):
+    # 7b. Schedule proactive follow-up for RED/ORANGE if user goes silent.
+    # Skip during clarification turns — the triage isn't final yet, and
+    # firing a follow-up before we've committed to a level confuses the user.
+    if (
+        active_pet
+        and triage_final in ("red", "orange")
+        and not result.is_clarification
+    ):
         delay_hours = 2 if triage_final == "red" else 4
         await enqueue_followup_check(
             telegram_id=user.telegram_id,
