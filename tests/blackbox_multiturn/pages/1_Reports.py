@@ -22,11 +22,14 @@ _STATUS_KEYS = ["status_all", "status_passed", "status_failed"]
 def get_available_reports() -> list[str]:
     if not RESULTS_DIR.exists():
         return []
-    return sorted(
+    # Use dict.fromkeys to deduplicate while preserving sort order (glob can
+    # yield the same path twice on some filesystems via symlinks or aliases).
+    names = (
         f.name
         for f in RESULTS_DIR.glob("*.json")
         if f.name != "translation_cache.json"
     )
+    return sorted(dict.fromkeys(names))
 
 
 def load_report(filename: str) -> dict[str, Any]:
@@ -172,6 +175,9 @@ def _render_export_panel(all_reports: list[str]) -> None:
             )
 
         if export_clicked and selected_exports:
+            # Deduplicate selection order-preservingly; duplicate entries would
+            # produce duplicate rows in the CSV.
+            unique_exports = list(dict.fromkeys(selected_exports))
             progress_bar = st.progress(0.0, text="Starting export…")
 
             def _on_progress(frac: float, msg: str) -> None:
@@ -179,14 +185,14 @@ def _render_export_panel(all_reports: list[str]) -> None:
 
             reports_data = [
                 (fname.replace(".json", ""), load_report(fname))
-                for fname in selected_exports
+                for fname in unique_exports
             ]
             try:
                 csv_bytes = generate_csv(reports_data, CACHE_PATH, on_progress=_on_progress)
                 out_name = (
-                    f"{selected_exports[0].replace('.json', '')}.csv"
-                    if len(selected_exports) == 1
-                    else f"export_{len(selected_exports)}_reports.csv"
+                    f"{unique_exports[0].replace('.json', '')}.csv"
+                    if len(unique_exports) == 1
+                    else f"export_{len(unique_exports)}_reports.csv"
                 )
                 st.session_state["export_ready"] = {
                     "data": csv_bytes,
