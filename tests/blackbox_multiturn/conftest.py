@@ -643,6 +643,12 @@ def mock_multiturn_runtime(
         async def _fake_store_triage_record(*args: Any, **kwargs: Any) -> None:
             return None
 
+        async def _fake_load_clarification_round(*args: Any, **kwargs: Any) -> int:
+            return 0
+
+        async def _fake_save_clarification_state(*args: Any, **kwargs: Any) -> None:
+            return None
+
         async def _fake_load_user_pets(user_id: str) -> list[Pet]:
             return [pet]
 

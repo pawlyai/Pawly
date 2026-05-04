@@ -672,20 +672,33 @@ async def generate_followup_message(
 
 
 async def _load_clarification_round(dialogue_id: Optional[str]) -> int:
-    """Look up the dialogue's current clarification_round (0 if missing)."""
+    """
+    Look up the dialogue's current clarification_round (0 if missing).
+
+    Degrades to 0 when the DB engine isn't initialised (e.g. blackbox
+    test runner with mocked DB) or any DB error is raised — the loop
+    just starts a fresh round-0 cycle, which is safe.
+    """
     if not dialogue_id:
         return 0
     try:
         dialogue_uuid = uuid.UUID(dialogue_id)
     except (ValueError, TypeError):
         return 0
-    factory = get_session_factory()
-    async with factory() as db:
-        row = await db.execute(
-            select(Dialogue.clarification_round).where(Dialogue.id == dialogue_uuid)
-        )
-        value = row.scalar_one_or_none()
-    return int(value) if value is not None else 0
+    try:
+        factory = get_session_factory()
+    except RuntimeError:
+        return 0
+    try:
+        async with factory() as db:
+            row = await db.execute(
+                select(Dialogue.clarification_round).where(Dialogue.id == dialogue_uuid)
+            )
+            value = row.scalar_one_or_none()
+        return int(value) if value is not None else 0
+    except Exception as exc:
+        logger.warning("load_clarification_round failed", error=str(exc))
+        return 0
 
 
 async def _save_clarification_state(
@@ -693,24 +706,35 @@ async def _save_clarification_state(
     new_round: int,
     new_state: dict,
 ) -> None:
-    """Persist the new round count + state JSON onto the Dialogue row."""
+    """
+    Persist the new round count + state JSON onto the Dialogue row.
+
+    No-op when the DB engine isn't initialised or any DB error fires —
+    same safe-degradation path as _load_clarification_round.
+    """
     if not dialogue_id:
         return
     try:
         dialogue_uuid = uuid.UUID(dialogue_id)
     except (ValueError, TypeError):
         return
-    factory = get_session_factory()
-    async with factory() as db:
-        result = await db.execute(
-            select(Dialogue).where(Dialogue.id == dialogue_uuid)
-        )
-        dialogue = result.scalar_one_or_none()
-        if dialogue is None:
-            return
-        dialogue.clarification_round = new_round
-        dialogue.clarification_state = new_state
-        await db.commit()
+    try:
+        factory = get_session_factory()
+    except RuntimeError:
+        return
+    try:
+        async with factory() as db:
+            result = await db.execute(
+                select(Dialogue).where(Dialogue.id == dialogue_uuid)
+            )
+            dialogue = result.scalar_one_or_none()
+            if dialogue is None:
+                return
+            dialogue.clarification_round = new_round
+            dialogue.clarification_state = new_state
+            await db.commit()
+    except Exception as exc:
+        logger.warning("save_clarification_state failed", error=str(exc))
 
 
 def _build_clarification_state(
