@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 _DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 _TRANSLATION_MODEL = "deepseek-chat"
 _BATCH_SIZE = 10
+_MAX_WORKERS = 5  # concurrent DeepSeek API calls
 
 CSV_HEADERS = [
     "report_name",
@@ -157,16 +159,29 @@ def translate_uncached(
 
     total = len(pending)
     done = 0
+
+    # Build batches upfront so futures map cleanly to their keys.
+    batches: list[tuple[list[str], list[str]]] = []
     for batch_start in range(0, total, _BATCH_SIZE):
         batch = pending[batch_start : batch_start + _BATCH_SIZE]
-        keys = [k for k, _ in batch]
-        texts = [c for _, c in batch]
-        results = _translate_batch(texts, api_key)
-        for key, result in zip(keys, results):
-            cache[key] = result
-        done += len(batch)
-        if on_progress:
-            on_progress(done, total)
+        batches.append(([k for k, _ in batch], [c for _, c in batch]))
+
+    # Run up to _MAX_WORKERS batches concurrently; as_completed returns each
+    # future in completion order so progress and cache updates stay on the
+    # main thread (no lock needed).
+    with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as executor:
+        future_to_keys = {
+            executor.submit(_translate_batch, texts, api_key): keys
+            for keys, texts in batches
+        }
+        for future in as_completed(future_to_keys):
+            keys = future_to_keys[future]
+            results = future.result()
+            for key, result in zip(keys, results):
+                cache[key] = result
+            done += len(keys)
+            if on_progress:
+                on_progress(done, total)
 
     return cache
 
