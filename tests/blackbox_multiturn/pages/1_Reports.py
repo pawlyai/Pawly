@@ -9,6 +9,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lang import get_lang, lang_toggle, t  # noqa: E402
+from utils import parse_filename  # noqa: E402
 from utils.export import generate_csv, translate_for_display  # noqa: E402
 
 st.set_page_config(page_title="Reports", page_icon="📋", layout="wide")
@@ -43,12 +44,11 @@ def get_status_emoji(status: str) -> str:
     return "✅" if status == "passed_threshold" else "❌"
 
 
-def render_summary(summary: dict[str, Any], selected: str) -> None:
+def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -> None:
     col_title, col_selector, col_export = st.columns([2, 1, 1])
     with col_title:
         st.title(t("report_title"))
     with col_selector:
-        reports = get_available_reports()
         if reports:
             choice = st.selectbox(
                 t("select_report"),
@@ -214,19 +214,50 @@ def _render_export_panel(all_reports: list[str]) -> None:
 def main() -> None:
     lang_toggle()
 
-    reports = get_available_reports()
+    all_reports = get_available_reports()
+    if not all_reports:
+        st.warning(t("no_reports"))
+        return
+
+    # Parse filenames to extract unique models and categories for filtering
+    parsed = {fname: parse_filename(fname) for fname in all_reports}
+    models = sorted({p["model"] for p in parsed.values() if p["model"]})
+    categories = sorted({p["topic"] for p in parsed.values() if p["topic"]})
+
+    # Report-level filters in sidebar
+    st.sidebar.subheader(t("report_filters"))
+    sel_category = st.sidebar.selectbox(
+        t("filter_by_category"),
+        options=[""] + categories,
+        format_func=lambda x: t("all_categories") if x == "" else x,
+        key="filter_category",
+    )
+    sel_model = st.sidebar.selectbox(
+        t("filter_by_model"),
+        options=[""] + models,
+        format_func=lambda x: t("all_models") if x == "" else x,
+        key="filter_model",
+    )
+    st.sidebar.divider()
+
+    reports = [
+        fname for fname in all_reports
+        if (not sel_category or parsed[fname]["topic"] == sel_category)
+        and (not sel_model or parsed[fname]["model"] == sel_model)
+    ]
+
     if not reports:
         st.warning(t("no_reports"))
         return
 
-    if "selected_report" not in st.session_state:
+    if "selected_report" not in st.session_state or st.session_state.selected_report not in reports:
         st.session_state.selected_report = reports[0]
 
     report = load_report(st.session_state.selected_report)
     summary = report.get("summary", {})
     cases = report.get("cases", [])
 
-    render_summary(summary, st.session_state.selected_report)
+    render_summary(summary, st.session_state.selected_report, reports)
 
     if st.session_state.get("show_export_panel"):
         _render_export_panel(reports)

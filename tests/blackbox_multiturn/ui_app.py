@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
+from utils import parse_filename
 
 st.set_page_config(
     page_title="Pawly Multi-Turn Tests",
@@ -30,18 +31,6 @@ def load_report(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as fh:
         return json.load(fh)
 
-
-def parse_filename(name: str) -> dict[str, str]:
-    # Pattern: {topic}_report_{model}_v{timestamp}.json
-    stem = name.replace(".json", "")
-    parts = stem.split("_report_")
-    topic = parts[0] if parts else ""
-    rest = parts[1] if len(parts) > 1 else ""
-    if "_v" in rest:
-        model, ts = rest.rsplit("_v", 1)
-    else:
-        model, ts = rest, ""
-    return {"topic": topic, "model": model, "timestamp": ts}
 
 
 def main() -> None:
