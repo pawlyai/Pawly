@@ -1,6 +1,7 @@
 """Single-report browser — case list + transcripts."""
 
 import json
+import os
 import queue
 import sys
 import threading
@@ -13,7 +14,7 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lang import get_lang, lang_toggle, t  # noqa: E402
 from utils import parse_filename  # noqa: E402
-from utils.export import generate_csv, translate_for_display  # noqa: E402
+from utils.export import generate_csv, pre_translate_report, translate_for_display  # noqa: E402
 
 st.set_page_config(page_title="Reports", page_icon="📋", layout="wide")
 
@@ -151,6 +152,28 @@ def _build_report_label(fname: str) -> str:
 
 def _render_export_panel(all_reports: list[str]) -> None:
     """Multi-select panel for choosing reports and triggering CSV export."""
+    # ── Auto pre-translate all reports when panel first opens ─────────────────
+    # Kick off a background thread the first time this panel is shown per session.
+    # By the time the user selects reports and clicks Export, translations are
+    # already cached and the export completes instantly.
+    _PT_STATE = "_pretrans_bg"
+    _api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if _api_key and _PT_STATE not in st.session_state and not st.session_state.get("_pretrans_complete"):
+        _ptq: queue.Queue = queue.Queue()
+
+        def _pretrans_all(_reports: list[str] = all_reports, _q: queue.Queue = _ptq, _ak: str = _api_key) -> None:
+            for i, fname in enumerate(_reports):
+                try:
+                    pre_translate_report(RESULTS_DIR / fname, CACHE_PATH, _ak)
+                except Exception:
+                    pass
+                _q.put(i + 1)
+            _q.put("done")
+
+        _ptt = threading.Thread(target=_pretrans_all, daemon=True)
+        st.session_state[_PT_STATE] = {"q": _ptq, "total": len(all_reports), "done_count": 0}
+        _ptt.start()
+
     with st.container(border=True):
         header_col, close_col = st.columns([5, 1])
         with header_col:
@@ -158,9 +181,16 @@ def _render_export_panel(all_reports: list[str]) -> None:
         with close_col:
             if st.button("✕ Close", key="close_export_btn"):
                 st.session_state["show_export_panel"] = False
-                for _k in ("export_ready", "_export_thread", "_export_queue", "_export_progress"):
+                for _k in ("export_ready", "_export_thread", "_export_queue", "_export_progress",
+                           _PT_STATE, "_pretrans_complete"):
                     st.session_state.pop(_k, None)
                 st.rerun()
+
+        # Show pre-translation status when it's running
+        if _PT_STATE in st.session_state:
+            _pts = st.session_state[_PT_STATE]
+            _n, _tot = _pts["done_count"], _pts["total"]
+            st.caption(f"⏳ Caching translations in background: {_n}/{_tot} reports — export will be instant once complete.")
 
         label_map = {f: _build_report_label(f) for f in all_reports}
 
@@ -253,6 +283,27 @@ def _render_export_panel(all_reports: list[str]) -> None:
                 st.info("⏳ Export running in background — page refreshes automatically, you can keep browsing.")
                 time.sleep(0.5)
                 st.rerun()
+
+        # Poll the pre-translation background thread (drives caption updates +
+        # triggers a rerun every 0.5 s while pre-translation is in progress and
+        # no export thread is competing for the rerun cycle).
+        if _PT_STATE in st.session_state and "_export_thread" not in st.session_state:
+            _pts2 = st.session_state[_PT_STATE]
+            _ptq2: queue.Queue = _pts2["q"]
+            while True:
+                try:
+                    _ptmsg = _ptq2.get_nowait()
+                    if _ptmsg == "done":
+                        del st.session_state[_PT_STATE]
+                        st.session_state["_pretrans_complete"] = True
+                        break
+                    else:
+                        _pts2["done_count"] = _ptmsg
+                        st.session_state[_PT_STATE] = _pts2
+                except queue.Empty:
+                    break
+            time.sleep(0.5)
+            st.rerun()
 
         if "export_ready" in st.session_state:
             ready = st.session_state["export_ready"]
