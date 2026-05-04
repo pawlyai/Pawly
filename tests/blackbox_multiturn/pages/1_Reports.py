@@ -150,6 +150,26 @@ def _build_report_label(fname: str) -> str:
         return fname
 
 
+def _build_regression_run_groups(all_reports: list[str]) -> dict[str, list[str]]:
+    """Group regression reports by run_session_id recorded at test time.
+
+    Returns {run_session_id: [fname, ...]} sorted by fname within each group.
+    Only reports that carry a run_session_id are included.
+    """
+    groups: dict[str, list[str]] = {}
+    for fname in all_reports:
+        if "regression" not in fname.lower():
+            continue
+        try:
+            r = load_report(fname)
+            rid = r.get("summary", {}).get("run_session_id", "")
+        except Exception:
+            rid = ""
+        if rid:
+            groups.setdefault(rid, []).append(fname)
+    return {k: sorted(v) for k, v in groups.items()}
+
+
 def _render_export_panel(all_reports: list[str]) -> None:
     """Multi-select panel for choosing reports and triggering CSV export."""
     # ── Auto pre-translate all reports when panel first opens ─────────────────
@@ -194,8 +214,26 @@ def _render_export_panel(all_reports: list[str]) -> None:
 
         label_map = {f: _build_report_label(f) for f in all_reports}
 
-        # Quick-select shortcuts
-        _sc1, _sc2, _sc3 = st.columns([1, 1, 4])
+        # ── Quick-select shortcuts ─────────────────────────────────────────────
+        _run_groups = _build_regression_run_groups(all_reports)
+        if _run_groups:
+            st.markdown("**Regression runs** (one button = one complete run):")
+            for _rid in sorted(_run_groups.keys(), reverse=True):
+                _fnames = _run_groups[_rid]
+                _date = f"{_rid[:4]}-{_rid[4:6]}-{_rid[6:8]} {_rid[9:11]}:{_rid[11:13]}"
+                _models = sorted({parse_filename(f)["model"] for f in _fnames})
+                _model_str = " / ".join(_models)
+                _total_cases = sum(
+                    load_report(f).get("summary", {}).get("total_cases", 0)
+                    for f in _fnames
+                )
+                _btn_label = f"📋 {_date}  ·  {_model_str}  ·  {len(_fnames)} topics  ·  {_total_cases} cases"
+                if st.button(_btn_label, key=f"sel_run_{_rid}", use_container_width=True):
+                    st.session_state["export_report_multiselect"] = _fnames
+                    st.rerun()
+            st.divider()
+
+        _sc1, _sc2 = st.columns([1, 1])
         with _sc1:
             if st.button("🔖 All regression", key="sel_regression_btn",
                          help="Select all reports whose name contains 'regression'"):

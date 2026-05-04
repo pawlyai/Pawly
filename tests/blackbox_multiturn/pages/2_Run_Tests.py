@@ -1,8 +1,10 @@
 """Trigger a new evaluation run with a chosen model + topics."""
 
+import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -82,6 +84,9 @@ def main() -> None:
         all_logs: list[str] = []
 
         api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        # Single session ID shared across all topics in this batch run so the
+        # export panel can group them as one regression run.
+        _run_session_id = time.strftime("%Y%m%d_%H%M%S")
 
         for idx, topic in enumerate(selected_topics):
             progress.progress(
@@ -126,13 +131,28 @@ def main() -> None:
                 log_area.code("\n".join(all_logs[-200:]), language="text")
                 continue
 
-            # Pre-translate turns in any new report so CSV export is instant later.
-            if api_key and RESULTS_DIR.exists():
+            # Detect new report files produced by this topic run.
+            if RESULTS_DIR.exists():
                 after = {
                     f for f in RESULTS_DIR.glob("*.json")
                     if f.name != "translation_cache.json"
                 }
                 new_reports = sorted(after - before, key=lambda f: f.stat().st_mtime)
+
+                # Tag each new report with the shared session ID so the export
+                # panel can group all topics from this batch into one run.
+                for _rp in new_reports:
+                    try:
+                        _rd = json.loads(_rp.read_text(encoding="utf-8"))
+                        _rd.setdefault("summary", {})["run_session_id"] = _run_session_id
+                        _rp.write_text(json.dumps(_rd, indent=2, ensure_ascii=True), encoding="utf-8")
+                    except Exception:
+                        pass
+            else:
+                new_reports = []
+
+            # Pre-translate turns in any new report so CSV export is instant later.
+            if api_key and new_reports:
                 for report_path in new_reports:
                     trans_bar = st.progress(
                         0.0,
