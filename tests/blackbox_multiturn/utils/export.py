@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 _DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 _TRANSLATION_MODEL = "deepseek-chat"
 _BATCH_SIZE = 10
+_MAX_WORKERS = 5  # concurrent DeepSeek API calls
 
 CSV_HEADERS = [
     "report_name",
@@ -157,16 +159,29 @@ def translate_uncached(
 
     total = len(pending)
     done = 0
+
+    # Build batches upfront so futures map cleanly to their keys.
+    batches: list[tuple[list[str], list[str]]] = []
     for batch_start in range(0, total, _BATCH_SIZE):
         batch = pending[batch_start : batch_start + _BATCH_SIZE]
-        keys = [k for k, _ in batch]
-        texts = [c for _, c in batch]
-        results = _translate_batch(texts, api_key)
-        for key, result in zip(keys, results):
-            cache[key] = result
-        done += len(batch)
-        if on_progress:
-            on_progress(done, total)
+        batches.append(([k for k, _ in batch], [c for _, c in batch]))
+
+    # Run up to _MAX_WORKERS batches concurrently; as_completed returns each
+    # future in completion order so progress and cache updates stay on the
+    # main thread (no lock needed).
+    with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as executor:
+        future_to_keys = {
+            executor.submit(_translate_batch, texts, api_key): keys
+            for keys, texts in batches
+        }
+        for future in as_completed(future_to_keys):
+            keys = future_to_keys[future]
+            results = future.result()
+            for key, result in zip(keys, results):
+                cache[key] = result
+            done += len(keys)
+            if on_progress:
+                on_progress(done, total)
 
     return cache
 
@@ -198,6 +213,44 @@ def translate_for_display(text: str, cache_path: Path) -> str:
         return translated
 
     return text
+
+
+def pre_translate_report(
+    report_path: Path,
+    cache_path: Path,
+    api_key: str,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> int:
+    """Translate all turns in a single report file and persist the cache.
+
+    Called automatically after a test run so CSV downloads are instant later.
+    Returns the number of turns that were newly translated (0 if all cached).
+    """
+    try:
+        with report_path.open("r", encoding="utf-8") as fh:
+            report_data = json.load(fh)
+    except Exception as exc:
+        logger.error("Cannot read report %s: %s", report_path, exc)
+        return 0
+
+    report_name = report_path.stem
+    cache = load_translation_cache(cache_path)
+
+    items: list[tuple[str, str]] = []
+    for case in report_data.get("cases", []):
+        for ti, turn in enumerate(case.get("turns", [])):
+            content = turn.get("content", "")
+            ck = cache_key(report_name, ti, content)
+            items.append((ck, content))
+
+    uncached = [(k, c) for k, c in items if k not in cache]
+    if not uncached:
+        return 0
+
+    translate_uncached(uncached, cache, api_key, on_progress=on_progress)
+    save_translation_cache(cache, cache_path)
+    logger.info("Pre-translated %d turns for %s", len(uncached), report_name)
+    return len(uncached)
 
 
 def generate_csv(
