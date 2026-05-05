@@ -13,8 +13,9 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from lang import get_lang, lang_toggle, t  # noqa: E402
-from utils import parse_filename  # noqa: E402
 from utils.export import generate_csv, pre_translate_report, translate_for_display  # noqa: E402
+
+from utils import compute_report_stats, parse_filename  # noqa: E402
 
 st.set_page_config(page_title="Reports", page_icon="📋", layout="wide")
 
@@ -51,7 +52,7 @@ def get_status_emoji(status: str) -> str:
     return "✅" if status == "passed_threshold" else "❌"
 
 
-def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -> None:
+def render_summary(report: dict[str, Any], selected: str, reports: list[str]) -> None:
     col_title, col_selector, col_export = st.columns([2, 1, 1])
     with col_title:
         st.title(t("report_title"))
@@ -74,10 +75,7 @@ def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -
             )
             st.session_state.pop("export_ready", None)
 
-    total = summary.get("total_cases", 0)
-    passed = summary.get("passed_threshold", 0)
-    failed = summary.get("below_threshold", 0)
-    pass_rate = (passed / total * 100) if total > 0 else 0
+    total, passed, failed, pass_rate = compute_report_stats(report)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(t("total_cases"), total)
@@ -141,10 +139,7 @@ def _build_report_label(fname: str) -> str:
     """Return a display label for a report file: name + pass rate."""
     try:
         r = load_report(fname)
-        s = r.get("summary", {})
-        total = s.get("total_cases", 0)
-        passed = s.get("passed_threshold", 0)
-        rate = (passed / total * 100) if total else 0.0
+        total, passed, _failed, rate = compute_report_stats(r)
         return f"{fname}  —  {rate:.1f}% pass ({passed}/{total})"
     except Exception:
         return fname
@@ -224,7 +219,7 @@ def _render_export_panel(all_reports: list[str]) -> None:
                 _models = sorted({parse_filename(f)["model"] for f in _fnames})
                 _model_str = " / ".join(_models)
                 _total_cases = sum(
-                    load_report(f).get("summary", {}).get("total_cases", 0)
+                    compute_report_stats(load_report(f))[0]
                     for f in _fnames
                 )
                 _btn_label = f"📋 {_date}  ·  {_model_str}  ·  {len(_fnames)} topics  ·  {_total_cases} cases"
@@ -415,10 +410,9 @@ def main() -> None:
         st.session_state.selected_report = reports[0]
 
     report = load_report(st.session_state.selected_report)
-    summary = report.get("summary", {})
     cases = report.get("cases", [])
 
-    render_summary(summary, st.session_state.selected_report, reports)
+    render_summary(report, st.session_state.selected_report, reports)
 
     if st.session_state.get("show_export_panel"):
         _render_export_panel(reports)

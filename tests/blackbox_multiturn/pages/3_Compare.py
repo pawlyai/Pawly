@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from lang import get_lang, lang_toggle, t  # noqa: E402
 from utils.export import translate_for_display  # noqa: E402
 
+from utils import compute_report_stats  # noqa: E402
+
 st.set_page_config(page_title="Compare", page_icon="⚖️", layout="wide")
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
@@ -72,10 +74,7 @@ def main() -> None:
     summary_rows: list[dict[str, Any]] = []
     for name, report in loaded:
         meta = parse_filename(name)
-        s = report.get("summary", {})
-        total = s.get("total_cases", 0)
-        passed = s.get("passed_threshold", 0)
-        rate = (passed / total * 100) if total else 0
+        total, passed, _failed, rate = compute_report_stats(report)
         avg_score = (
             sum(c.get("score", 0) for c in report.get("cases", [])) / len(report["cases"])
             if report.get("cases") else 0

@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
-from utils import parse_filename
+
+from utils import compute_report_stats, parse_filename
 
 st.set_page_config(
     page_title="Pawly Multi-Turn Tests",
@@ -62,10 +63,7 @@ def main() -> None:
         meta = parse_filename(path.name)
         try:
             report = load_report(path)
-            summary = report.get("summary", {})
-            total = summary.get("total_cases", 0)
-            passed = summary.get("passed_threshold", 0)
-            pass_rate = (passed / total * 100) if total else 0.0
+            total, passed, _failed, pass_rate = compute_report_stats(report)
         except Exception:
             total = passed = 0
             pass_rate = 0.0

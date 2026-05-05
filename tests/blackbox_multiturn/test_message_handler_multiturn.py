@@ -179,8 +179,14 @@ def test_handle_message_multiturn_with_conversational_geval(
                 "log_path": str(log_path),
                 "llm_model": llm_name,
                 "timestamp": timestamp,
-                "total_cases": len(cases),
+                "total_cases": len(report_cases),
                 "completed_cases": len(report_cases),
+                "passed_threshold": sum(
+                    1 for item in report_cases if item["status"] == "passed_threshold"
+                ),
+                "below_threshold": sum(
+                    1 for item in report_cases if item["status"] == "below_threshold"
+                ),
                 "failed_case": case["name"],
             }
             _write_report({"summary": partial_summary, "cases": report_cases}, report_path)
