@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
 
+    # Triage Architecture v2 — defense-in-depth scenario routing with checklist-driven
+    # clarification. See src/llm/orchestrator_v2.py.
+    use_triage_v2: bool = False
+    use_unapproved_checklists: bool = False  # dev-only: route to checklists with status != approved
+
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""

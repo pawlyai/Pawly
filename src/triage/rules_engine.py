@@ -28,6 +28,7 @@ from src.db.models import Gender, LifeStage, Pet, Species, TriageLevel
 # ══════════════════════════════════════════════════════════════════════════════
 
 RED_KEYWORDS: list[str] = [
+    # ── Existing — preserved ──────────────────────────────────────────────────
     "can't breathe", "cant breathe", "not breathing", "breathing hard",
     "gasping", "labored breathing", "struggling to breathe",
     "seizure", "convulsion", "fitting", "shaking uncontrollably",
@@ -43,6 +44,63 @@ RED_KEYWORDS: list[str] = [
     "heavy bleeding", "won't stop bleeding", "wont stop bleeding",
     "eye popping", "eye out", "prolapse",
     "heatstroke", "overheating", "heat exhaustion",
+
+    # ── Additions sourced from external clinical references ──────────────────
+    # ASPCA Animal Poison Control Center Top 10 Toxins, Merck Vet Manual,
+    # AVMA Emergency Care guidelines. NOT derived from any held-out eval data.
+
+    # Human OTC/Rx — APCC #1 category
+    "ate ibuprofen", "ate advil", "ate motrin", "ate nurofen",
+    "ate naproxen", "ate aleve",
+    "ate tylenol", "ate acetaminophen", "ate paracetamol",
+    "ate aspirin",
+    "ate adderall", "ate ritalin",
+    "ate antidepressant", "ate ssri", "ate prozac", "ate zoloft",
+    "gave my pill", "gave human medication", "gave human medicine",
+    "ate my medication", "ate my pills", "ate my prescription",
+
+    # THC / cannabis — APCC fast-rising category
+    "ate weed", "ate marijuana", "ate cannabis", "ate edible",
+    "ate thc", "ate brownie", "ate gummies",
+
+    # Rodenticides / pesticides / household poisons
+    "ate rat poison", "ate rodenticide", "ate mouse bait",
+    "ate snail bait", "ate slug bait", "ate metaldehyde",
+    "drank antifreeze", "licked antifreeze",
+    "ate insecticide", "ate pesticide", "ate fertilizer",
+    "ate mothball", "ate detergent pod", "ate tide pod",
+
+    # Foreign body / linear / GI obstruction risk
+    "ate sock", "ate string", "ate yarn", "ate ribbon", "ate dental floss",
+    "swallowed needle", "swallowed bone", "ate cooked bone",
+    "ate corn cob", "ate peach pit", "ate fish hook",
+
+    # Respiratory red flags — Merck Vet Manual Respiratory Emergencies
+    "open mouth breathing", "tongue blue", "tongue purple",
+    "panting won't stop", "nonstop panting",
+
+    # Anaphylaxis — AVMA Emergency Care
+    "swollen face", "swollen muzzle", "face swelling",
+    "hives all over", "covered in hives",
+    "anaphylaxis", "anaphylactic",
+
+    # Body temperature emergencies — Merck Vet Manual
+    "temperature 105", "temp 105", "temperature 106", "fever 105",
+    "feels burning hot", "extremely hot to touch",
+    "freezing cold", "body cold to touch",
+
+    # Trauma — AVMA + Merck
+    "hit by car", "hit by a car", "got hit by",
+    "fell from balcony", "fell from window", "fell down stairs", "fell from height",
+    "attacked by dog", "dog attack", "attacked by another animal",
+    "deep wound", "puncture wound", "open wound", "wound bleeding",
+
+    # Ophthalmologic (filling gaps)
+    "eye injury", "scratched eye", "eye bleeding", "eye out of socket",
+
+    # Chinese equivalents (Pawly internationalization)
+    "误食", "中毒", "抽搐", "呼吸困难", "尿不出来",
+    "胃扭转", "翻胃", "意识不清", "牙龈发紫",
 ]
 
 ORANGE_KEYWORDS: list[str] = [

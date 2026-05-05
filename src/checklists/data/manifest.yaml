@@ -1,0 +1,111 @@
+# Checklist Registry / Manifest
+#
+# Authoritative list of all checklist scenarios for Pawly.
+# Each entry maps to a YAML in this directory.
+#
+# Wave 1 (P0 — life-safety, pre-launch blocker):
+#   CL-OWNERMH-001        Owner mental health / suicide
+#   CL-INGESTION-001      Toxin / poisoning ingestion
+#   CL-DYSPNEA-001        Respiratory distress
+#   CL-SEIZURE-001        Seizure / convulsion
+#   CL-COLLAPSE-001       Collapse / unresponsive
+#   CL-BLEEDING-001       Major bleeding / trauma
+#   CL-CHOKING-001        Choking / airway obstruction
+#   CL-HEATSTROKE-001     Heat stroke
+#   CL-EUTHANASIA-001     Euthanasia decision support
+#
+# Wave 2 (P0 — high frequency / acute):
+#   CL-VOMIT-001          Vomiting
+#   CL-DIARRHEA-001       Diarrhea
+#   CL-ANOREXIA-001       Loss of appetite
+#   CL-LETHARGY-001       Lethargy
+#   CL-LIMPING-001        Limping / acute pain
+#   CL-COUGH-001          Cough
+#   CL-FEVER-001          Fever / temperature abnormality
+#   CL-ALLERGIC-001       Acute allergic reaction
+#   CL-URINARY-001        Urinary issues (incl. male cat blockage)
+#
+# Wave 3 (P1 — subacute / behavioral):
+#   CL-ITCH-001           Itching / dermatitis
+#   CL-BOWEL-001          Constipation / bowel issues
+#   CL-EYE-001            Ocular issues
+#   CL-EAR-001            Ear issues
+#   CL-DENTAL-001         Dental / oral
+#   CL-WEIGHT-001         Weight changes
+#   CL-PUPD-001           Polyuria / polydipsia
+#   CL-BEHAVIOR-001       Sudden behavior change
+#   CL-AGGRESSION-001     Aggression
+#   CL-ANXIETY-001        Anxiety / separation anxiety
+#   CL-PICA-001           Pica
+#   CL-GRIEF-001          Pet death / grief
+#   CL-FINANCIAL-001      Financial hardship
+#   CL-PREGNANCY-001      Pregnancy / labor
+#
+# Status legend:
+#   draft       — schema valid, content not vet-reviewed → does NOT route in production
+#   vet_review  — vet is actively reviewing
+#   approved    — vet signed off → routes in production
+#   deprecated  — superseded by a newer version
+#
+# Currently scaffolded (this commit):
+#   CL-OWNERMH-001    [draft]
+#   CL-VOMIT-001      [draft]
+#   CL-EUTHANASIA-001 [draft]
+#
+# All other 29 scenarios in the manifest above need their YAML files created
+# from the Pawly Vet-Reviewed Clarification Checklist Templates v0 source.
+#
+# Routing precedence (when multiple checklists trigger on same message):
+#   - CL-OWNERMH-001 wins over everything
+#   - CL-INGESTION-001 wins over symptom-specific (vomit/lethargy etc) when
+#     "ate something" co-occurs
+#   - Higher routing_priority field wins
+#   - Tie-break by score desc, then routing_priority desc, then keyword hits desc
+
+manifest_version: "0.1"
+last_updated: "2026-05-06"
+
+waves:
+  wave_1:
+    description: P0 life-safety scenarios — must complete before launch
+    scenarios:
+      - CL-OWNERMH-001
+      - CL-INGESTION-001
+      - CL-DYSPNEA-001
+      - CL-SEIZURE-001
+      - CL-COLLAPSE-001
+      - CL-BLEEDING-001
+      - CL-CHOKING-001
+      - CL-HEATSTROKE-001
+      - CL-EUTHANASIA-001
+
+  wave_2:
+    description: P0 high-frequency acute scenarios
+    scenarios:
+      - CL-VOMIT-001
+      - CL-DIARRHEA-001
+      - CL-ANOREXIA-001
+      - CL-LETHARGY-001
+      - CL-LIMPING-001
+      - CL-COUGH-001
+      - CL-FEVER-001
+      - CL-ALLERGIC-001
+      - CL-URINARY-001
+
+  wave_3:
+    description: P1 subacute / behavioral / sensitive
+    scenarios:
+      - CL-ITCH-001
+      - CL-BOWEL-001
+      - CL-EYE-001
+      - CL-EAR-001
+      - CL-DENTAL-001
+      - CL-WEIGHT-001
+      - CL-PUPD-001
+      - CL-BEHAVIOR-001
+      - CL-AGGRESSION-001
+      - CL-ANXIETY-001
+      - CL-PICA-001
+      - CL-GRIEF-001
+      - CL-FINANCIAL-001
+      - CL-PREGNANCY-001
