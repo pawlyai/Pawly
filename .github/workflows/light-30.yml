@@ -1,0 +1,97 @@
+name: Light 30 Regression
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'release/**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model to evaluate'
+        required: false
+        default: 'deepseek-chat'
+        type: choice
+        options:
+          - deepseek-chat
+          - deepseek-reasoner
+
+concurrency:
+  group: light-30-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  light-30:
+    name: Light 30 (${{ inputs.model || 'deepseek-chat' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PAWLY_MODEL: ${{ inputs.model || 'deepseek-chat' }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Stage light-30 dataset under conventional topic name
+        run: |
+          cp tests/blackbox_multiturn/test_data/multiturn_pawly_regression_cases-light-30.json \
+             tests/blackbox_multiturn/test_data/multiturn_pawly_regression_light30_cases.json
+
+      - name: Run light-30 regression
+        run: |
+          python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
+            --multiturn-topic=multiturn_pawly_regression_light30 \
+            --model="$PAWLY_MODEL" \
+            -s -v
+
+      - name: Upload reports as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: light-30-reports-${{ github.run_id }}
+          path: |
+            tests/blackbox_multiturn/results/*.json
+            tests/blackbox_multiturn/logs/*.jsonl
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Publish reports to VPS
+        if: always()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "$VPS_HOST" ] || [ -z "$VPS_USER" ] || [ -z "$VPS_PATH" ] || [ -z "$VPS_SSH_KEY" ]; then
+            echo "VPS secrets not configured — skipping upload."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          STAMP=$(date -u +%Y%m%d_%H%M%SZ)
+          SAFE_REF=$(echo "${GITHUB_REF_NAME}" | tr '/' '_')
+          REMOTE_DIR="${VPS_PATH%/}/${SAFE_REF}/${STAMP}_run-${GITHUB_RUN_ID}_${PAWLY_MODEL}"
+          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" "mkdir -p '$REMOTE_DIR'"
+          scp -i ~/.ssh/id_ed25519 -r \
+            tests/blackbox_multiturn/results/. \
+            tests/blackbox_multiturn/logs/. \
+            "$VPS_USER@$VPS_HOST:$REMOTE_DIR/"
+          echo "Uploaded reports to $VPS_USER@$VPS_HOST:$REMOTE_DIR"
