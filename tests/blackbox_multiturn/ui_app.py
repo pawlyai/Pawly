@@ -69,10 +69,17 @@ def main() -> None:
         except Exception:
             total = passed = 0
             pass_rate = 0.0
+        # Prefer git_ref from report content (authoritative) but fall back to
+        # the parsed filename so legacy reports still display something.
+        try:
+            git_ref = report.get("summary", {}).get("git_ref", "") or meta.get("git_ref", "")
+        except Exception:
+            git_ref = meta.get("git_ref", "")
         rows.append(
             {
                 "Topic": meta["topic"],
                 "Model": meta["model"],
+                "Branch/Tag": git_ref or "—",
                 "Timestamp": meta["timestamp"],
                 "Cases": total,
                 "Passed": passed,

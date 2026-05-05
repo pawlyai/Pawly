@@ -79,6 +79,14 @@ def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -
     failed = summary.get("below_threshold", 0)
     pass_rate = (passed / total * 100) if total > 0 else 0
 
+    git_ref = summary.get("git_ref", "")
+    if not git_ref:
+        # Fall back to the filename-encoded suffix for legacy reports.
+        meta = parse_filename(selected)
+        git_ref = meta.get("git_ref", "")
+    if git_ref:
+        st.caption(f"🔖 **Branch/Tag:** `{git_ref}`")
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(t("total_cases"), total)
     c2.metric(t("passed"), passed)

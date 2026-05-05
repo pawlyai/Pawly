@@ -36,11 +36,14 @@ def parse_filename(name: str) -> dict[str, str]:
     parts = stem.split("_report_")
     topic = parts[0] if parts else ""
     rest = parts[1] if len(parts) > 1 else ""
+    git_ref = ""
+    if "__" in rest:
+        rest, git_ref = rest.rsplit("__", 1)
     if "_v" in rest:
         model, ts = rest.rsplit("_v", 1)
     else:
         model, ts = rest, ""
-    return {"topic": topic, "model": model, "timestamp": ts}
+    return {"topic": topic, "model": model, "timestamp": ts, "git_ref": git_ref}
 
 
 def main() -> None:
@@ -80,10 +83,12 @@ def main() -> None:
             sum(c.get("score", 0) for c in report.get("cases", [])) / len(report["cases"])
             if report.get("cases") else 0
         )
+        git_ref = s.get("git_ref", "") or meta.get("git_ref", "")
         summary_rows.append({
             t("col_report"): name,
             t("col_topic"): meta["topic"],
             t("col_model"): meta["model"],
+            "Branch/Tag": git_ref or "—",
             t("col_cases"): total,
             t("col_passed"): passed,
             t("col_pass_rate"): round(rate, 1),
@@ -138,8 +143,13 @@ def main() -> None:
     for col, (filename, report) in zip(cols, loaded):
         meta = parse_filename(filename)
         case = next((c for c in report.get("cases", []) if c.get("name") == case_pick), None)
+        ref = (
+            report.get("summary", {}).get("git_ref", "")
+            or meta.get("git_ref", "")
+        )
         with col:
-            st.markdown(f"**{meta['model']}**  \n_{meta['timestamp']}_")
+            ref_line = f"  \n🔖 _{ref}_" if ref else ""
+            st.markdown(f"**{meta['model']}**  \n_{meta['timestamp']}_{ref_line}")
             if not case:
                 st.caption(t("not_in_report"))
                 continue

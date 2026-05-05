@@ -26,6 +26,7 @@ CSV_HEADERS = [
     "pet_id",
     "provider",
     "model",
+    "git_ref",
     "test_time",
     "score",
     "threshold",
@@ -285,6 +286,11 @@ def generate_csv(
         model = summary.get("llm_model", "unknown")
         provider = _provider_for_model(model)
         test_time = _fmt_timestamp(summary.get("timestamp", ""))
+        git_ref = summary.get("git_ref", "") or ""
+        # Fall back to filename-encoded git_ref for legacy reports whose
+        # summary block predates the field. report_name is the stem.
+        if not git_ref and "__" in report_name:
+            git_ref = report_name.rsplit("__", 1)[1]
 
         for case in report_data.get("cases", []):
             case_name = case.get("name", "")
@@ -320,6 +326,7 @@ def generate_csv(
                         "pet_id": pet_id,
                         "provider": provider,
                         "model": model,
+                        "git_ref": git_ref,
                         "test_time": test_time,
                         "score": score,
                         "threshold": threshold,
@@ -374,6 +381,7 @@ def generate_csv(
                 row["pet_id"],
                 row["provider"],
                 row["model"],
+                row["git_ref"],
                 row["test_time"],
                 row["score"],
                 row["threshold"],

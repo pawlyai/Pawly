@@ -47,18 +47,22 @@ def test_handle_message_multiturn_with_conversational_geval(
     build_router_runtime,
     deepeval_model,
     multiturn_topic,
+    git_ref,
 ) -> None:
     pytest.importorskip("deepeval")
     from deepeval.metrics import ConversationalGEval
     from deepeval.test_case import ConversationalTestCase, Turn
     from deepeval.test_case.conversational_test_case import TurnParams
 
-    # Generate report filename with LLM name and datetime
+    # Generate report filename with LLM name, datetime, and (optional) branch/tag.
+    # Branch/tag is appended after a double-underscore so legacy filenames keep
+    # parsing cleanly while new ones can be filtered by code revision.
     llm_name = _resolve_model_name(deepeval_model)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_filename = f"{multiturn_topic}_report_{llm_name}_v{timestamp}.json"
+    ref_suffix = f"__{git_ref}" if git_ref else ""
+    report_filename = f"{multiturn_topic}_report_{llm_name}_v{timestamp}{ref_suffix}.json"
     report_path = RESULTS_DIR / report_filename
-    log_filename = f"{multiturn_topic}_run_{llm_name}_v{timestamp}.jsonl"
+    log_filename = f"{multiturn_topic}_run_{llm_name}_v{timestamp}{ref_suffix}.jsonl"
     log_path = LOGS_DIR / log_filename
 
     cases = load_test_cases(f"{multiturn_topic}_cases.json")
@@ -69,6 +73,7 @@ def test_handle_message_multiturn_with_conversational_geval(
             "event": "test_started",
             "topic": multiturn_topic,
             "llm_model": llm_name,
+            "git_ref": git_ref,
             "case_count": len(cases),
             "report_path": str(report_path),
         },
@@ -178,6 +183,7 @@ def test_handle_message_multiturn_with_conversational_geval(
                 "report_path": str(report_path),
                 "log_path": str(log_path),
                 "llm_model": llm_name,
+                "git_ref": git_ref,
                 "timestamp": timestamp,
                 "total_cases": len(cases),
                 "completed_cases": len(report_cases),
@@ -190,6 +196,7 @@ def test_handle_message_multiturn_with_conversational_geval(
         "report_path": str(report_path),
         "log_path": str(log_path),
         "llm_model": llm_name,
+        "git_ref": git_ref,
         "timestamp": timestamp,
         "total_cases": len(report_cases),
         "passed_threshold": sum(1 for item in report_cases if item["status"] == "passed_threshold"),

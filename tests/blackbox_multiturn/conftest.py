@@ -540,11 +540,32 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="LLM model to evaluate (e.g. gemini-2.0-flash, claude-sonnet-4-6, gpt-4o-mini).",
     )
+    parser.addoption(
+        "--git-ref",
+        action="store",
+        default="",
+        help="Free-form code branch/tag/version label to stamp on the report "
+             "(e.g. main, release-1.2, abcdef0). Used for triage and comparison "
+             "of runs from different code revisions.",
+    )
 
 
 @pytest.fixture(scope="session")
 def multiturn_topic(request: pytest.FixtureRequest) -> str:
     return request.config.getoption("--multiturn-topic")
+
+
+@pytest.fixture(scope="session")
+def git_ref(request: pytest.FixtureRequest) -> str:
+    """Sanitized branch/tag label for this run; empty string when not provided."""
+    raw = request.config.getoption("--git-ref") or ""
+    return _sanitize_git_ref(raw)
+
+
+def _sanitize_git_ref(value: str) -> str:
+    """Make a branch/tag label safe for filenames: keep [A-Za-z0-9._-], replace others with '-'."""
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-")
+    return cleaned[:64]
 
 
 @pytest.fixture(scope="session")

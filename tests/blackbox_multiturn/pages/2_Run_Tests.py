@@ -69,6 +69,16 @@ def main() -> None:
             default=topics[:1] if topics else [],
         )
 
+        st.subheader("Code branch / tag")
+        git_ref_input = st.text_input(
+            "Branch, tag, or version label",
+            value="",
+            placeholder="e.g. main, release-1.2, v0.4.0, abcdef0",
+            help="Free-form label stamped on the report so you can triage and "
+                 "compare runs from different code revisions. Stored in the "
+                 "report filename and summary content.",
+        )
+
         st.subheader("Options")
         verbose = st.checkbox("Verbose output (-vv)", value=True)
 
@@ -105,6 +115,7 @@ def main() -> None:
                 TEST_FILE,
                 f"--multiturn-topic={topic}",
                 f"--model={model}",
+                f"--git-ref={git_ref_input}",
                 "-s",
                 "-vv" if verbose else "-v",
             ]
