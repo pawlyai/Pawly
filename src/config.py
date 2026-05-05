@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     main_model: str = "gemini-2.0-flash"
     extraction_model: str = "gemini-2.0-flash"
     fallback_model: str = "gemini-2.0-flash"  # used when main_model exhausts retries
+    # Production chat model for the orchestrator. When unset, the orchestrator
+    # falls back to main_model (preserves the previous Gemini-only path).
+    chat_model: str = ""
     max_turns_in_context: int = 5
     max_messages_per_minute: int = 30
     webhook_host: str = ""  # e.g. "api.pawly.app" - required in production

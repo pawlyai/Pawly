@@ -63,6 +63,11 @@ SUPPORTED_MODELS: dict[str, list[str]] = {
     "DeepSeek": [
         "deepseek-chat",
         "deepseek-reasoner",
+        # V4 driver wiring. DeepSeek's public v4 id is not yet finalised; this
+        # entry is the placeholder the orchestrator dispatches to. Update the
+        # actual id PM has access to (e.g. "deepseek-v4") in DEEPSEEK_API_KEY's
+        # account; the dispatch path matches any "deepseek-*" prefix.
+        "deepseek-v4",
     ],
 }
 

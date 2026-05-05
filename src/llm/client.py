@@ -8,62 +8,15 @@ extract()         -> structured extraction (Gemini Flash)
 Singleton: get_gemini_client()
 """
 
-import asyncio
 import json
-import random
-from collections.abc import Callable
 from typing import Any
 
 from src.config import settings
+from src.llm.retry import run_sync_with_retry
 from src.observability.tracing import observe_generation, update_generation
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
-
-_TRANSIENT_CODES = (429, 503, 504)
-_MAX_ATTEMPTS = 4
-_BASE_BACKOFF = 1.5
-
-
-def _is_transient(exc: BaseException) -> bool:
-    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
-    if isinstance(code, int) and code in _TRANSIENT_CODES:
-        return True
-    msg = str(exc)
-    return any(str(c) in msg for c in _TRANSIENT_CODES) or "UNAVAILABLE" in msg
-
-
-async def _run_with_retry(fn: Callable[..., Any], *args: Any) -> Any:
-    """Retry transient errors, then fall back to FALLBACK_MODEL if still failing."""
-    backoff = _BASE_BACKOFF
-    for attempt in range(1, _MAX_ATTEMPTS + 1):
-        try:
-            return await asyncio.to_thread(fn, *args)
-        except Exception as exc:
-            if not _is_transient(exc):
-                raise
-            if attempt >= _MAX_ATTEMPTS:
-                # All retries on primary model exhausted — try fallback once.
-                fallback = settings.fallback_model
-                # args[0] is always the model name in our sync call signatures.
-                primary = args[0] if args else ""
-                if fallback and fallback != primary:
-                    logger.warning(
-                        "primary model exhausted — trying fallback",
-                        primary=primary,
-                        fallback=fallback,
-                    )
-                    return await asyncio.to_thread(fn, fallback, *args[1:])
-                raise
-            delay = backoff + random.uniform(0, 0.5)
-            logger.warning(
-                "gemini transient error — retrying",
-                attempt=attempt,
-                delay=round(delay, 1),
-                error=str(exc)[:120],
-            )
-            await asyncio.sleep(delay)
-            backoff *= 2
 
 
 # ── Structured response schema ────────────────────────────────────────────────
@@ -137,23 +90,27 @@ class GeminiClient:
         """Call Gemini synchronously via asyncio.to_thread."""
         if self._sdk_mode == "genai":
             contents = self._build_contents(messages)
-            response = await _run_with_retry(
+            response = await run_sync_with_retry(
                 self._sync_call_genai,
-                model,
                 system_prompt,
                 contents,
                 max_tokens,
                 temperature,
+                primary_model=model,
+                fallback_model=settings.fallback_model,
+                label="gemini",
             )
             result = self._format_response_genai(response)
         else:
             payload = self._build_legacy_messages(system_prompt, messages)
-            response = await _run_with_retry(
+            response = await run_sync_with_retry(
                 self._sync_call_legacy,
-                model,
                 payload,
                 max_tokens,
                 temperature,
+                primary_model=model,
+                fallback_model=settings.fallback_model,
+                label="gemini",
             )
             result = self._format_response_legacy(response)
 
@@ -323,14 +280,16 @@ class GeminiClient:
         """Call Gemini with JSON response_schema enforcement."""
         if self._sdk_mode == "genai":
             contents = self._build_contents(messages)
-            response = await _run_with_retry(
+            response = await run_sync_with_retry(
                 self._sync_call_genai_structured,
-                model,
                 system_prompt,
                 contents,
                 max_tokens,
                 temperature,
                 response_schema,
+                primary_model=model,
+                fallback_model=settings.fallback_model,
+                label="gemini",
             )
             raw = self._format_response_genai(response)
             # Parse the JSON text into a dict and merge with token counts

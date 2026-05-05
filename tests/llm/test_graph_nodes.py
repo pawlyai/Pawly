@@ -103,7 +103,7 @@ async def test_generate_response_node_structured_output() -> None:
         "input_tokens": 50,
         "output_tokens": 30,
     }
-    with patch("src.llm.graph.nodes.get_gemini_client") as mock_get:
+    with patch("src.llm.graph.nodes.get_chat_client") as mock_get:
         mock_client = MagicMock()
         mock_client.chat_structured = AsyncMock(return_value=mock_raw)
         mock_get.return_value = mock_client
@@ -127,7 +127,7 @@ async def test_generate_response_node_returns_symptom_tags() -> None:
         "input_tokens": 40,
         "output_tokens": 25,
     }
-    with patch("src.llm.graph.nodes.get_gemini_client") as mock_get:
+    with patch("src.llm.graph.nodes.get_chat_client") as mock_get:
         mock_client = MagicMock()
         mock_client.chat_structured = AsyncMock(return_value=mock_raw)
         mock_get.return_value = mock_client
@@ -139,7 +139,7 @@ async def test_generate_response_node_returns_symptom_tags() -> None:
 
 
 async def test_generate_response_node_fallback_on_exception() -> None:
-    with patch("src.llm.graph.nodes.get_gemini_client") as mock_get:
+    with patch("src.llm.graph.nodes.get_chat_client") as mock_get:
         mock_client = MagicMock()
         mock_client.chat_structured = AsyncMock(side_effect=Exception("API down"))
         mock_get.return_value = mock_client
@@ -229,7 +229,7 @@ async def test_full_graph_green_path() -> None:
     with (
         patch("src.llm.graph.nodes.load_pet_context", new_callable=AsyncMock, return_value={}),
         patch("src.llm.graph.nodes.load_related_memories", new_callable=AsyncMock, return_value=[]),
-        patch("src.llm.graph.nodes.get_gemini_client") as mock_get,
+        patch("src.llm.graph.nodes.get_chat_client") as mock_get,
         patch("src.llm.graph.nodes._store_triage_record", new_callable=AsyncMock),
     ):
         mock_client = MagicMock()
@@ -287,7 +287,7 @@ async def test_full_graph_red_path_triggers_override() -> None:
     with (
         patch("src.llm.graph.nodes.load_pet_context", new_callable=AsyncMock, return_value={}),
         patch("src.llm.graph.nodes.load_related_memories", new_callable=AsyncMock, return_value=[]),
-        patch("src.llm.graph.nodes.get_gemini_client") as mock_get,
+        patch("src.llm.graph.nodes.get_chat_client") as mock_get,
         patch("src.llm.graph.nodes._store_triage_record", new_callable=AsyncMock),
     ):
         mock_client = MagicMock()
