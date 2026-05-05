@@ -73,8 +73,9 @@ def main() -> None:
     for name, report in loaded:
         meta = parse_filename(name)
         s = report.get("summary", {})
-        total = s.get("total_cases", 0)
-        passed = s.get("passed_threshold", 0)
+        cases = report.get("cases", [])
+        passed = sum(1 for c in cases if c.get("status") == "passed_threshold")
+        total = s.get("total_cases") or len(cases)
         rate = (passed / total * 100) if total else 0
         avg_score = (
             sum(c.get("score", 0) for c in report.get("cases", [])) / len(report["cases"])

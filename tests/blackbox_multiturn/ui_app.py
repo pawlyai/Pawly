@@ -63,8 +63,11 @@ def main() -> None:
         try:
             report = load_report(path)
             summary = report.get("summary", {})
-            total = summary.get("total_cases", 0)
-            passed = summary.get("passed_threshold", 0)
+            cases = report.get("cases", [])
+            # Derive from cases so partial reports (crashed mid-run, missing
+            # passed_threshold/below_threshold in summary) still report correctly.
+            passed = sum(1 for c in cases if c.get("status") == "passed_threshold")
+            total = summary.get("total_cases") or len(cases)
             pass_rate = (passed / total * 100) if total else 0.0
         except Exception:
             total = passed = 0

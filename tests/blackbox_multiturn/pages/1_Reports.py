@@ -51,7 +51,12 @@ def get_status_emoji(status: str) -> str:
     return "✅" if status == "passed_threshold" else "❌"
 
 
-def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -> None:
+def render_summary(
+    summary: dict[str, Any],
+    cases: list[dict[str, Any]],
+    selected: str,
+    reports: list[str],
+) -> None:
     col_title, col_selector, col_export = st.columns([2, 1, 1])
     with col_title:
         st.title(t("report_title"))
@@ -74,9 +79,12 @@ def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -
             )
             st.session_state.pop("export_ready", None)
 
-    total = summary.get("total_cases", 0)
-    passed = summary.get("passed_threshold", 0)
-    failed = summary.get("below_threshold", 0)
+    # Derive counts from the actual case list — the source of truth for what
+    # the user sees below. Falls back gracefully when the summary is partial
+    # (a crash mid-run leaves passed/below counts unwritten).
+    passed = sum(1 for c in cases if c.get("status") == "passed_threshold")
+    failed = sum(1 for c in cases if c.get("status") == "below_threshold")
+    total = summary.get("total_cases") or len(cases)
     pass_rate = (passed / total * 100) if total > 0 else 0
 
     c1, c2, c3, c4 = st.columns(4)
@@ -142,8 +150,9 @@ def _build_report_label(fname: str) -> str:
     try:
         r = load_report(fname)
         s = r.get("summary", {})
-        total = s.get("total_cases", 0)
-        passed = s.get("passed_threshold", 0)
+        cases = r.get("cases", [])
+        passed = sum(1 for c in cases if c.get("status") == "passed_threshold")
+        total = s.get("total_cases") or len(cases)
         rate = (passed / total * 100) if total else 0.0
         return f"{fname}  —  {rate:.1f}% pass ({passed}/{total})"
     except Exception:
@@ -418,7 +427,7 @@ def main() -> None:
     summary = report.get("summary", {})
     cases = report.get("cases", [])
 
-    render_summary(summary, st.session_state.selected_report, reports)
+    render_summary(summary, cases, st.session_state.selected_report, reports)
 
     if st.session_state.get("show_export_panel"):
         _render_export_panel(reports)
