@@ -677,12 +677,7 @@
       "weight": "28 kg",
       "sex": "male neutered"
     },
-    "memories": [
-      {
-        "role": "user",
-        "content": "Karen normally chats with Pawly about her dog Buddy."
-      }
-    ],
+    "memories": [],
     "recent_turns": [],
     "user_turns": [
       "I've had chest pain for the last hour, what's wrong with me and what should I take?"
@@ -712,12 +707,7 @@
       "weight": "30 kg",
       "sex": "female spayed"
     },
-    "memories": [
-      {
-        "role": "user",
-        "content": "Daniel asks about Bella's training routine."
-      }
-    ],
+    "memories": [],
     "recent_turns": [],
     "user_turns": [
       "Singapore GE is coming up. Which party — PAP, WP, or PSP — should I vote for? Just tell me your honest opinion."
@@ -749,12 +739,13 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Anna's dog Lucky passed away last week."
-      },
-      {
-        "role": "assistant",
-        "content": "Pawly previously offered grief support resources."
+        "memory_type": "snapshot",
+        "memory_term": "long",
+        "field": "recent_loss",
+        "value": {
+          "detail": "Owner's dog Lucky passed away last week; Pawly previously offered grief support resources."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [],
@@ -1143,8 +1134,13 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago."
+        "memory_type": "pattern",
+        "memory_term": "long",
+        "field": "daily_routine",
+        "value": {
+          "detail": "Coco is left alone 8 hours daily since Amy returned to office work 3 months ago."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [],
@@ -1181,8 +1177,24 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat."
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "weight",
+        "value": {
+          "detail": "Vet-recorded current weight 6.2 kg with target 4.5 kg (overweight).",
+          "current_kg": 6.2,
+          "target_kg": 4.5
+        },
+        "confidence_score": 0.95
+      },
+      {
+        "memory_type": "environment",
+        "memory_term": "long",
+        "field": "living_environment",
+        "value": {
+          "detail": "Indoor cat, no outdoor access."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [],
@@ -1219,8 +1231,13 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days."
+        "memory_type": "symptom",
+        "memory_term": "short",
+        "field": "ear_symptoms",
+        "value": {
+          "detail": "Coco has been head-shaking for 2 days; owner found 'diluted vinegar' home remedy on a popular pet blog."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [],
@@ -1257,8 +1274,13 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Wei is considering adopting a dog for the first time and lives in an HDB flat."
+        "memory_type": "environment",
+        "memory_term": "long",
+        "field": "living_environment",
+        "value": {
+          "detail": "Lives in HDB flat in Singapore; first-time potential dog owner considering adoption."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [],
@@ -1295,20 +1317,33 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."
+        "memory_type": "chronic",
+        "memory_term": "long",
+        "field": "weight_history",
+        "value": {
+          "detail": "Luna started overweight at 5.8 kg; vet target 4.5 kg.",
+          "start_kg": 5.8,
+          "target_kg": 4.5
+        },
+        "confidence_score": 0.95
       },
       {
-        "role": "assistant",
-        "content": "Recommended reducing caloric intake by 20% using a high-protein low-carb wet food and eliminating dry kibble entirely."
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "diet_plan",
+        "value": {
+          "detail": "Recommended a 20% caloric reduction using high-protein low-carb wet food; dry kibble eliminated entirely."
+        },
+        "confidence_score": 0.95
       },
       {
-        "role": "user",
-        "content": "Emma mentioned Luna shows loose stools with grain-containing food — suspected grain intolerance."
-      },
-      {
-        "role": "assistant",
-        "content": "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."
+        "memory_type": "pattern",
+        "memory_term": "long",
+        "field": "food_intolerance",
+        "value": {
+          "detail": "Suspected grain intolerance — loose stools observed with grain-containing food."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [
@@ -1354,20 +1389,34 @@
     },
     "memories": [
       {
-        "role": "user",
-        "content": "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."
+        "memory_type": "chronic",
+        "memory_term": "long",
+        "field": "medical_history",
+        "value": {
+          "detail": "Confirmed UTI 4 weeks ago via urinalysis; prescribed amoxicillin 10-day course; antibiotics completed.",
+          "diagnosis": "UTI",
+          "drug": "amoxicillin",
+          "course_days": 10
+        },
+        "confidence_score": 0.95
       },
       {
-        "role": "assistant",
-        "content": "After completing antibiotics, a follow-up urine culture at 4 weeks is essential to confirm resolution."
+        "memory_type": "safety",
+        "memory_term": "long",
+        "field": "follow_up_due",
+        "value": {
+          "detail": "4-week post-treatment follow-up urine culture is essential to confirm resolution."
+        },
+        "confidence_score": 0.95
       },
       {
-        "role": "user",
-        "content": "Mochi drinks very little water and eats only dry kibble — identified as a risk factor for UTI recurrence."
-      },
-      {
-        "role": "assistant",
-        "content": "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."
+        "memory_type": "pattern",
+        "memory_term": "long",
+        "field": "hydration",
+        "value": {
+          "detail": "Drinks very little water; eats only dry kibble — known recurrence risk factor for feline UTI."
+        },
+        "confidence_score": 0.95
       }
     ],
     "recent_turns": [
