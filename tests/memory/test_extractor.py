@@ -63,10 +63,19 @@ async def test_extract_memories_filters_low_confidence_and_bad_items(monkeypatch
     ]
 
     class FakeClient:
-        async def extract(self, system_prompt: str, messages: list[dict]) -> dict:
+        async def chat(
+            self,
+            system_prompt: str,
+            messages: list[dict],
+            model: str | None = None,
+            max_tokens: int = 2048,
+            temperature: float = 0.2,
+        ) -> dict:
             return {"text": f"```json\n{json.dumps(payload)}\n```"}
 
-    monkeypatch.setattr("src.memory.extractor.get_gemini_client", lambda: FakeClient())
+    monkeypatch.setattr(
+        "src.memory.extractor.get_chat_client", lambda _model: FakeClient()
+    )
 
     results = await extract_memories(
         raw_messages=[{"role": "user", "content": "He is eating less today"}],
