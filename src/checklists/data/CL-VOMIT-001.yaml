@@ -119,6 +119,29 @@ urgency_triggers:
     triage: red
     rationale: Upper GI hemorrhage — possible ulcer, NSAID toxicity, foreign body perforation.
     skip_remaining_clarification: true
+    pre_fire_keywords_en:
+      - "fresh blood"
+      - "bright red blood"
+      - "blood in vomit"
+      - "blood in the vomit"
+      - "blood in his vomit"
+      - "blood in her vomit"
+      - "vomited blood"
+      - "vomiting blood"
+      - "throwing up blood"
+      - "threw up blood"
+      - "puking blood"
+      - "coffee grounds"
+      - "coffee colored"
+      - "coffee-colored"
+      - "dark brown vomit"
+    pre_fire_keywords_zh:
+      - "吐血"
+      - "呕血"
+      - "吐出血"
+      - "咖啡色"
+      - "咖啡渣"
+      - "暗红色呕吐"
 
   - id: U2
     condition: "M1 contains 'fecal_material'"
@@ -126,6 +149,16 @@ urgency_triggers:
     triage: red
     rationale: Fecal vomitus suggests intestinal obstruction.
     skip_remaining_clarification: true
+    pre_fire_keywords_en:
+      - "fecal vomit"
+      - "vomit smells like poop"
+      - "vomit smells like feces"
+      - "poop-smelling vomit"
+      - "feces-smelling vomit"
+    pre_fire_keywords_zh:
+      - "粪样"
+      - "吐出大便"
+      - "呕吐物像大便"
 
   - id: U3
     condition: "M2 == '>5_per_day'"
@@ -133,6 +166,22 @@ urgency_triggers:
     triage: red
     rationale: Severe dehydration risk from frequency alone.
     skip_remaining_clarification: true
+    pre_fire_keywords_en:
+      - "vomited 6 times"
+      - "vomited 7 times"
+      - "vomited 8 times"
+      - "vomited 10 times"
+      - "throwing up nonstop"
+      - "throwing up constantly"
+      - "can't stop vomiting"
+      - "won't stop vomiting"
+    pre_fire_keywords_zh:
+      - "吐了六次"
+      - "吐了七次"
+      - "吐了八次"
+      - "吐个不停"
+      - "一直在吐"
+      - "停不下来"
 
   - id: U4
     condition: "M3 == 'refusing_water' OR M4 == 'unable_to_stand' OR M4 == 'very_weak'"
@@ -140,6 +189,23 @@ urgency_triggers:
     triage: red
     rationale: Severe dehydration / pre-shock signs.
     skip_remaining_clarification: true
+    pre_fire_keywords_en:
+      - "won't drink water"
+      - "refusing water"
+      - "can't stand up"
+      - "cant stand up"
+      - "won't stand"
+      - "very weak"
+      - "extremely weak"
+      - "barely moves"
+      - "barely moving"
+    pre_fire_keywords_zh:
+      - "不喝水"
+      - "拒绝喝水"
+      - "站不起来"
+      - "非常虚弱"
+      - "极度虚弱"
+      - "几乎不动"
 
 hard_limits:
   forbidden:

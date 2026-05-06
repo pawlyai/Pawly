@@ -50,6 +50,14 @@ class UrgencyTriggerSpec(BaseModel):
     rationale: str
     skip_remaining_clarification: bool = True
 
+    # Natural-language phrases that, if present in the user's first message,
+    # fire this trigger pre-routing — before slot filling starts. These are
+    # vet-curated paraphrases of the slot enum codes referenced in `condition`.
+    # Example: condition "M1 contains 'fresh_blood'" → pre_fire_keywords_en
+    #   ["fresh blood", "bright red blood", "vomited blood", ...]
+    pre_fire_keywords_en: list[str] = Field(default_factory=list)
+    pre_fire_keywords_zh: list[str] = Field(default_factory=list)
+
 
 class HardLimitSpec(BaseModel):
     forbidden: list[str] = Field(default_factory=list)

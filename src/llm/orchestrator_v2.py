@@ -224,12 +224,20 @@ async def generate_response_v2(
     # Combine Python and LLM urgency scores — take max for safety
     urgency_score = max(urgency_python, llm_signals.get("urgency_soft_score", 0.0))
 
-    # 1f. Checklist routing
+    # 1f. Checklist routing + pre-fire U-trigger scan
     intent_hint = llm_signals.get("intent")
     scenario_scores = llm_signals.get("scenario_scores", {})
 
     # In dev / shadow mode, allow unapproved checklists for plumbing testing.
     use_unapproved = bool(getattr(settings, "use_unapproved_checklists", False))
+
+    # Pre-fire scan: if any checklist's U-trigger has a natural-language
+    # phrase that matches the raw user message, escalate immediately.
+    pre_fire = checklist_router.pre_fire_scan(
+        user_message=user_message,
+        use_unapproved=use_unapproved,
+    )
+
     router_result = checklist_router.route(
         user_message=user_message,
         intent_hint=intent_hint,
@@ -247,6 +255,7 @@ async def generate_response_v2(
         urgency_soft_score=urgency_score,
         router_checklist_id=router_result.checklist_id,
         router_confidence=router_result.confidence,
+        pre_fire=pre_fire,
         pet_has_chronic_condition=_pet_has_chronic_condition(pet, memory_context),
         pet_is_juvenile=_pet_is_juvenile(pet),
     )
@@ -267,6 +276,9 @@ async def generate_response_v2(
 
     if decision.branch == "abc_screen":
         return _branch_abc_screen(decision, locale, llm_signals)
+
+    if decision.branch == "checklist_prefire":
+        return _branch_checklist_prefire(decision, locale, llm_signals)
 
     if decision.branch == "checklist":
         return await _branch_checklist(
@@ -372,6 +384,45 @@ def _branch_abc_screen(
         intent="symptom_report",
         input_tokens=int(llm_signals.get("input_tokens", 0)),
         output_tokens=int(llm_signals.get("output_tokens", 0)),
+    )
+
+
+def _branch_checklist_prefire(
+    decision: MergeDecision,
+    locale: str,
+    llm_signals: dict,
+) -> OrchestratorResultV2:
+    """A pre-fire U-trigger fired on the user's first message.
+
+    Render the matched trigger's escalation_template directly. Skip ABC and
+    slot filling — the U-trigger's purpose is exactly this kind of
+    deterministic immediate escalation.
+    """
+    spec = checklist_loader.get(decision.checklist_id)
+    if spec is None:
+        # Fallback to generic escalation if spec is missing
+        from src.checklists.advice import render_escalation as _generic
+        return OrchestratorResultV2(
+            response_text=(
+                "🚨 What you're describing needs an emergency vet now. "
+                "Please go straight to the ER."
+            ),
+            branch="checklist",
+            triage_level=TriageLevel.RED,
+            rationale=decision.rationale,
+            input_tokens=int(llm_signals.get("input_tokens", 0)),
+            output_tokens=int(llm_signals.get("output_tokens", 0)),
+        )
+
+    return OrchestratorResultV2(
+        response_text=checklist_advice.render_escalation(spec, locale=locale),
+        branch="checklist",
+        triage_level=TriageLevel.RED,
+        checklist_id=decision.checklist_id,
+        rationale=decision.rationale,
+        input_tokens=int(llm_signals.get("input_tokens", 0)),
+        output_tokens=int(llm_signals.get("output_tokens", 0)),
+        is_clarification=False,
     )
 
 
