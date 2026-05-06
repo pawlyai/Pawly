@@ -27,11 +27,12 @@ from src.db.models import (
     User,
 )
 from src.llm.client import get_gemini_client
-from src.observability.tracing import observe_span, update_span, update_trace
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
+from src.llm.providers import get_chat_client
 from src.memory.reader import load_pet_context, load_related_memories
+from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
     classify_by_rules,
     compare_and_resolve,
@@ -40,6 +41,16 @@ from src.triage.rules_engine import (
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def _active_chat_model() -> str:
+    """Resolve the model to send chat traffic to.
+
+    ``settings.chat_model`` opts production into a non-Gemini provider
+    (e.g. ``deepseek-v4``). When unset, fall back to ``main_model`` so
+    behaviour is identical to the previous Gemini-only path.
+    """
+    return settings.chat_model or settings.main_model
 
 # Lazy-built graph to avoid circular import (graph.nodes imports from this module)
 _graph = None
@@ -338,10 +349,11 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL GEMINI ────────────────────────────────────────────────────────
-    client = get_gemini_client()
+    # ── 4. CALL CHAT MODEL ────────────────────────────────────────────────────
+    chat_model = _active_chat_model()
+    client = get_chat_client(chat_model)
     try:
-        raw = await client.chat(system_prompt=system, messages=messages)
+        raw = await client.chat(system_prompt=system, messages=messages, model=chat_model)
         response_text = raw["text"]
         in_tok = raw["input_tokens"]
         out_tok = raw["output_tokens"]
@@ -365,7 +377,9 @@ async def _generate_response_classic(
             "Do not suggest home treatment."
         )
         try:
-            raw2 = await client.chat(system_prompt=override_system, messages=messages)
+            raw2 = await client.chat(
+                system_prompt=override_system, messages=messages, model=chat_model
+            )
             response_text = raw2["text"]
             in_tok += raw2["input_tokens"]
             out_tok += raw2["output_tokens"]

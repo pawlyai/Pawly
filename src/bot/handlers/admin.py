@@ -16,7 +16,18 @@ from src.utils.logger import get_logger
 router = Router(name="admin")
 logger = get_logger(__name__)
 _PROMPT_FILE = pathlib.Path(__file__).parents[2] / "llm" / "prompts" / "prompts_config.yaml"
-_SECTION_ORDER = ("identity", "conversation_rules", "hard_rules", "medical_format")
+# Mirrors src.llm.prompts.system.SECTION_KEYS (9 DeepSeek V4 v0 XML-tag sections).
+_SECTION_ORDER = (
+    "role",
+    "persona",
+    "response_format",
+    "continuity_rules",
+    "pet_health_consultation",
+    "pet_behavior_consultation",
+    "followup_reminder_support",
+    "knowledge_safety",
+    "final_reminders",
+)
 
 
 def _is_admin(telegram_id: str) -> bool:
@@ -69,7 +80,7 @@ async def cmd_prompt_sections(message: Message) -> None:
         return
 
     await message.answer(
-        "Editable sections: identity, conversation_rules, hard_rules, medical_format",
+        "Editable sections: " + ", ".join(_SECTION_ORDER),
         parse_mode=None,
     )
 
@@ -84,8 +95,7 @@ async def cmd_prompt_show(message: Message) -> None:
     parts = (message.text or "").split(maxsplit=1)
     if len(parts) < 2 or parts[1].strip() not in _SECTION_ORDER:
         await message.answer(
-            "Usage: /prompt_show <section>\n"
-            "Sections: identity, conversation_rules, hard_rules, medical_format",
+            "Usage: /prompt_show <section>\nSections: " + ", ".join(_SECTION_ORDER),
             parse_mode=None,
         )
         return

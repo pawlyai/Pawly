@@ -7,15 +7,18 @@ unchanged. Structured output uses tool-use to enforce the JSON schema.
 
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
+from src.config import settings
 from src.llm.client import RESPONSE_SCHEMA
+from src.llm.retry import run_with_retry
 from src.observability.tracing import observe_generation, update_generation
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
 class AnthropicClient:
@@ -39,12 +42,22 @@ class AnthropicClient:
         **_: Any,
     ) -> dict[str, Any]:
         msgs = self._format_messages(messages)
-        resp = await self._client.messages.create(
-            model=model or "claude-sonnet-4-6",
-            system=system_prompt or "",
-            messages=msgs,
-            max_tokens=max_tokens,
-            temperature=temperature,
+        primary = model or DEFAULT_MODEL
+
+        async def _do(m: str) -> Any:
+            return await self._client.messages.create(
+                model=m,
+                system=system_prompt or "",
+                messages=msgs,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+        resp = await run_with_retry(
+            _do,
+            primary_model=primary,
+            fallback_model=settings.fallback_model,
+            label="anthropic",
         )
         text = "".join(
             block.text for block in resp.content if getattr(block, "type", "") == "text"
@@ -55,7 +68,7 @@ class AnthropicClient:
             "output_tokens": resp.usage.output_tokens,
         }
         update_generation(
-            model=model,
+            model=primary,
             input=messages,
             output=text,
             usage_details={"input": result["input_tokens"], "output": result["output_tokens"]},
@@ -77,14 +90,24 @@ class AnthropicClient:
             "description": "Return the structured response.",
             "input_schema": _strip_response_mime(RESPONSE_SCHEMA),
         }
-        resp = await self._client.messages.create(
-            model=model or "claude-sonnet-4-6",
-            system=system_prompt or "",
-            messages=msgs,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            tools=[tool],
-            tool_choice={"type": "tool", "name": "respond"},
+        primary = model or DEFAULT_MODEL
+
+        async def _do(m: str) -> Any:
+            return await self._client.messages.create(
+                model=m,
+                system=system_prompt or "",
+                messages=msgs,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                tools=[tool],
+                tool_choice={"type": "tool", "name": "respond"},
+            )
+
+        resp = await run_with_retry(
+            _do,
+            primary_model=primary,
+            fallback_model=settings.fallback_model,
+            label="anthropic",
         )
         payload: dict[str, Any] = {}
         for block in resp.content:

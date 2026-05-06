@@ -14,18 +14,23 @@ Graph flow (parallel branches):
 import uuid
 from typing import Any
 
+from src.config import settings
 from src.db.models import Sentiment, SubscriptionTier, TriageLevel
-from src.llm.client import get_gemini_client
 from src.llm.graph.state import PawlyState
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
+from src.llm.providers import get_chat_client
 from src.memory.reader import load_pet_context, load_related_memories
 from src.triage.rules_engine import (
     classify_by_rules,
     compare_and_resolve,
 )
 from src.utils.logger import get_logger
+
+
+def _active_chat_model() -> str:
+    return settings.chat_model or settings.main_model
 
 logger = get_logger(__name__)
 
@@ -156,11 +161,13 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
     Returns response_text + LLM-classified triage, intent, sentiment,
     symptom_tags — all from a single LLM call.
     """
-    client = get_gemini_client()
+    chat_model = _active_chat_model()
+    client = get_chat_client(chat_model)
     try:
         raw = await client.chat_structured(
             system_prompt=state["system_prompt"],
             messages=state["messages"],
+            model=chat_model,
         )
         return {
             "response_text": raw.get("response_text", ""),
@@ -227,11 +234,13 @@ async def critical_override_node(state: PawlyState) -> dict[str, Any]:
         "by the safety system. You MUST treat this as URGENT. Set triage_level to RED. "
         "Push immediate vet visit. Do not suggest home treatment."
     )
-    client = get_gemini_client()
+    chat_model = _active_chat_model()
+    client = get_chat_client(chat_model)
     try:
         raw = await client.chat_structured(
             system_prompt=override_system,
             messages=state["messages"],
+            model=chat_model,
         )
         logger.warning(
             "triage RED override re-call issued",

@@ -510,10 +510,23 @@ def patch_blackbox_gemini_client(
     resilient_gemini_client: ResilientGeminiClient,
 ) -> None:
     monkeypatch.setattr("src.llm.client.get_gemini_client", lambda: resilient_gemini_client)
-    monkeypatch.setattr("src.llm.graph.nodes.get_gemini_client", lambda: resilient_gemini_client)
-    monkeypatch.setattr("src.llm.orchestrator.get_gemini_client", lambda: resilient_gemini_client)
     monkeypatch.setattr("src.memory.extractor.get_gemini_client", lambda: resilient_gemini_client)
     monkeypatch.setattr("src.memory.summarizer.get_gemini_client", lambda: resilient_gemini_client)
+    # Orchestrator + LangGraph now dispatch through get_chat_client; route every
+    # provider lookup at the resilient wrapper so the multiturn runner can keep
+    # swapping models via the PAWLY_MODEL env var.
+    monkeypatch.setattr(
+        "src.llm.providers.get_chat_client",
+        lambda model=None: resilient_gemini_client,
+    )
+    monkeypatch.setattr(
+        "src.llm.orchestrator.get_chat_client",
+        lambda model=None: resilient_gemini_client,
+    )
+    monkeypatch.setattr(
+        "src.llm.graph.nodes.get_chat_client",
+        lambda model=None: resilient_gemini_client,
+    )
 
 
 @pytest.fixture(scope="session")

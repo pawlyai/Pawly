@@ -11,6 +11,8 @@ import json
 import os
 from typing import Any
 
+from src.config import settings
+from src.llm.retry import run_with_retry
 from src.observability.tracing import observe_generation, update_generation
 from src.utils.logger import get_logger
 
@@ -47,11 +49,21 @@ class DeepSeekClient:
             role = "user" if m.get("role") == "user" else "assistant"
             msgs.append({"role": role, "content": str(m.get("content", ""))})
 
-        resp = await self._client.chat.completions.create(
-            model=model or DEFAULT_MODEL,
-            messages=msgs,
-            max_tokens=max_tokens,
-            temperature=temperature,
+        primary = model or DEFAULT_MODEL
+
+        async def _do(m: str) -> Any:
+            return await self._client.chat.completions.create(
+                model=m,
+                messages=msgs,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+        resp = await run_with_retry(
+            _do,
+            primary_model=primary,
+            fallback_model=settings.fallback_model,
+            label="deepseek",
         )
         text = resp.choices[0].message.content or ""
         result = {
@@ -60,7 +72,7 @@ class DeepSeekClient:
             "output_tokens": resp.usage.completion_tokens,
         }
         update_generation(
-            model=model,
+            model=primary,
             input=messages,
             output=text,
             usage_details={"input": result["input_tokens"], "output": result["output_tokens"]},
@@ -82,12 +94,22 @@ class DeepSeekClient:
             role = "user" if m.get("role") == "user" else "assistant"
             msgs.append({"role": role, "content": str(m.get("content", ""))})
 
-        resp = await self._client.chat.completions.create(
-            model=model or DEFAULT_MODEL,
-            messages=msgs,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            response_format={"type": "json_object"},
+        primary = model or DEFAULT_MODEL
+
+        async def _do(m: str) -> Any:
+            return await self._client.chat.completions.create(
+                model=m,
+                messages=msgs,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                response_format={"type": "json_object"},
+            )
+
+        resp = await run_with_retry(
+            _do,
+            primary_model=primary,
+            fallback_model=settings.fallback_model,
+            label="deepseek",
         )
         text = resp.choices[0].message.content or "{}"
         payload = json.loads(text) if text else {}

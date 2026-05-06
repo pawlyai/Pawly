@@ -83,7 +83,7 @@ class TestLangfuseMetadataCaptured:
             patch("src.llm.orchestrator.load_pet_context", new_callable=AsyncMock, return_value={}),
             patch("src.llm.orchestrator.load_related_memories", new_callable=AsyncMock, return_value=[]),
             patch("src.llm.orchestrator._store_triage_record", new_callable=AsyncMock),
-            patch("src.llm.orchestrator.get_gemini_client") as mock_client_factory,
+            patch("src.llm.orchestrator.get_chat_client") as mock_client_factory,
             patch("src.llm.orchestrator.update_span"),
             patch("src.llm.orchestrator.update_trace", side_effect=lambda **kw: trace_calls.append(kw)),
         ):
@@ -115,7 +115,7 @@ class TestLangfuseMetadataCaptured:
             patch("src.llm.orchestrator.load_pet_context", new_callable=AsyncMock, return_value={}),
             patch("src.llm.orchestrator.load_related_memories", new_callable=AsyncMock, return_value=[]),
             patch("src.llm.orchestrator._store_triage_record", new_callable=AsyncMock),
-            patch("src.llm.orchestrator.get_gemini_client") as mock_client_factory,
+            patch("src.llm.orchestrator.get_chat_client") as mock_client_factory,
             patch("src.llm.orchestrator.update_span"),
             patch("src.llm.orchestrator.update_trace", side_effect=lambda **kw: trace_calls.append(kw)),
         ):
@@ -143,7 +143,7 @@ class TestLangfuseMetadataCaptured:
             patch("src.llm.orchestrator.load_pet_context", new_callable=AsyncMock, return_value={}),
             patch("src.llm.orchestrator.load_related_memories", new_callable=AsyncMock, return_value=[]),
             patch("src.llm.orchestrator._store_triage_record", new_callable=AsyncMock),
-            patch("src.llm.orchestrator.get_gemini_client") as mock_client_factory,
+            patch("src.llm.orchestrator.get_chat_client") as mock_client_factory,
             patch("src.llm.orchestrator.update_span", side_effect=lambda **kw: span_calls.append(kw)),
             patch("src.llm.orchestrator.update_trace"),
         ):
@@ -229,7 +229,7 @@ class TestLangfuseFailureIsolation:
             patch("src.llm.orchestrator.load_pet_context", new_callable=AsyncMock, return_value={}),
             patch("src.llm.orchestrator.load_related_memories", new_callable=AsyncMock, return_value=[]),
             patch("src.llm.orchestrator._store_triage_record", new_callable=AsyncMock),
-            patch("src.llm.orchestrator.get_gemini_client") as mock_client_factory,
+            patch("src.llm.orchestrator.get_chat_client") as mock_client_factory,
             patch("src.observability.tracing.langfuse_context", failing_ctx),
             patch("src.observability.tracing._LANGFUSE_ENABLED", True),
         ):
@@ -295,7 +295,7 @@ class TestLangfuseFailureIsolation:
             patch("src.llm.orchestrator.load_pet_context", new_callable=AsyncMock, return_value={}),
             patch("src.llm.orchestrator.load_related_memories", new_callable=AsyncMock, return_value=[]),
             patch("src.llm.orchestrator._store_triage_record", new_callable=AsyncMock),
-            patch("src.llm.orchestrator.get_gemini_client") as mock_client_factory,
+            patch("src.llm.orchestrator.get_chat_client") as mock_client_factory,
             # Simulate Langfuse being fully disabled — update_span is a no-op
             patch("src.llm.orchestrator.update_span", return_value=None),
         ):
