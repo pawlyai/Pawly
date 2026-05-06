@@ -55,6 +55,25 @@ RESPONSE_SCHEMA: dict[str, Any] = {
 }
 
 
+# Plain-language description of RESPONSE_SCHEMA for adapters that cannot enforce
+# JSON schemas natively (DeepSeek / OpenAI ``response_format=json_object`` only
+# guarantees parseable JSON, not field shape). Append to the system prompt so
+# the model knows what to produce.
+STRUCTURED_SCHEMA_INSTRUCTION = (
+    "\n\nYou MUST respond with a single JSON object (no prose around it) "
+    "containing exactly these fields:\n"
+    '  - "response_text" (string): the user-facing reply.\n'
+    '  - "triage_level" (string, one of "RED" | "ORANGE" | "GREEN"): RED for emergencies, '
+    'ORANGE for concerning, GREEN for routine.\n'
+    '  - "intent" (string, one of "symptom_report" | "nutrition" | "exercise" | '
+    '"grooming" | "behavior" | "question" | "general"): primary intent of the user message.\n'
+    '  - "sentiment" (string, one of "CALM" | "ANXIOUS" | "PANIC"): owner emotional state.\n'
+    '  - "symptom_tags" (array of strings): symptom keywords mentioned or implied; '
+    "use [] when none.\n"
+    "All five fields are REQUIRED. Output JSON only — no markdown fences, no commentary."
+)
+
+
 class GeminiClient:
     def __init__(self, api_key: str) -> None:
         try:

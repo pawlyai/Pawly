@@ -53,6 +53,16 @@ def is_transient(exc: BaseException) -> bool:
     return False
 
 
+def _provider_prefix(model: str) -> str:
+    """Return the vendor prefix used for adapter routing (`gemini`, `deepseek`,
+    `claude`, `gpt`). Each adapter's `call()` only knows how to talk to its own
+    provider's API, so the fallback model must share the same prefix as the
+    primary — otherwise we would feed e.g. ``gemini-2.0-flash`` into the
+    DeepSeek SDK and 400 immediately.
+    """
+    return model.split("-", 1)[0].lower() if model else ""
+
+
 async def run_with_retry(
     call: Callable[[str], Awaitable[T]],
     *,
@@ -62,9 +72,10 @@ async def run_with_retry(
 ) -> T:
     """Invoke ``call(model)``; retry transient failures with exponential backoff.
 
-    On the final attempt, swap to *fallback_model* if it is set and different
-    from *primary_model* and try once more. Non-transient exceptions propagate
-    immediately.
+    On the final attempt, swap to *fallback_model* if it is set, distinct from
+    *primary_model*, and shares the same provider prefix. Cross-provider
+    fallbacks are skipped because *call* is bound to a single adapter.
+    Non-transient exceptions propagate immediately.
     """
     backoff = BASE_BACKOFF
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -74,7 +85,11 @@ async def run_with_retry(
             if not is_transient(exc):
                 raise
             if attempt >= MAX_ATTEMPTS:
-                if fallback_model and fallback_model != primary_model:
+                if (
+                    fallback_model
+                    and fallback_model != primary_model
+                    and _provider_prefix(fallback_model) == _provider_prefix(primary_model)
+                ):
                     logger.warning(
                         "primary model exhausted - trying fallback",
                         provider=label,
@@ -82,6 +97,13 @@ async def run_with_retry(
                         fallback=fallback_model,
                     )
                     return await call(fallback_model)
+                if fallback_model and fallback_model != primary_model:
+                    logger.warning(
+                        "fallback skipped - cross-provider",
+                        provider=label,
+                        primary=primary_model,
+                        fallback=fallback_model,
+                    )
                 raise
             delay = backoff + random.uniform(0, 0.5)
             logger.warning(
