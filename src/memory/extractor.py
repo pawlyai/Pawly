@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
+from src.config import settings
 from src.db.models import MemoryTerm, MemoryType, Pet, PetMemory
-from src.llm.client import get_gemini_client
+from src.llm.providers import get_chat_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -140,11 +141,18 @@ async def extract_memories(
         messages=_format_messages(raw_messages),
     )
 
-    client = get_gemini_client()
+    extraction_model = settings.extraction_model
+    client = get_chat_client(extraction_model)
     try:
-        raw = await client.extract(
+        # Use chat() with explicit model so the call works across providers.
+        # max_tokens=2048 leaves headroom for reasoning-style models (V4) that
+        # spend tokens on chain-of-thought before producing JSON.
+        raw = await client.chat(
             system_prompt=filled_prompt,
             messages=[{"role": "user", "content": "Extract facts from the conversation above."}],
+            model=extraction_model,
+            max_tokens=2048,
+            temperature=0.2,
         )
         data = json.loads(_strip_fences(raw["text"]))
         if not isinstance(data, list):
