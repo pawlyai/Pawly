@@ -26,7 +26,6 @@ from src.db.models import (
     TriageRecord,
     User,
 )
-from src.llm.client import get_gemini_client
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
@@ -155,11 +154,13 @@ async def generate_opening(
 
     user_prompt = " ".join(parts)
 
-    client = get_gemini_client()
+    chat_model = _active_chat_model()
+    client = get_chat_client(chat_model)
     try:
         raw = await client.chat(
             system_prompt=system,
             messages=[{"role": "user", "content": user_prompt}],
+            model=chat_model,
             max_tokens=256,
             temperature=0.8,
         )
@@ -556,13 +557,15 @@ async def generate_followup_message(
         f"{'No emoji — the situation was serious.' if triage_level.lower() == 'red' else 'One emoji is fine.'}"
     )
 
-    client = get_gemini_client()
+    chat_model = _active_chat_model()
+    client = get_chat_client(chat_model)
     raw = await client.chat(
         system_prompt=(
             "You are Pawly, an AI pet care assistant. "
             "Output only the follow-up message text — no preamble, no quotes."
         ),
         messages=[{"role": "user", "content": prompt}],
+        model=chat_model,
         max_tokens=120,
         temperature=0.7,
     )

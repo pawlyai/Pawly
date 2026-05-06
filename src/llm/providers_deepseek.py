@@ -12,6 +12,7 @@ import os
 from typing import Any
 
 from src.config import settings
+from src.llm.client import STRUCTURED_SCHEMA_INSTRUCTION
 from src.llm.retry import run_with_retry
 from src.observability.tracing import observe_generation, update_generation
 from src.utils.logger import get_logger
@@ -19,7 +20,7 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
-DEFAULT_MODEL = "deepseek-chat"
+DEFAULT_MODEL = "deepseek-v4-flash"
 
 
 class DeepSeekClient:
@@ -87,9 +88,10 @@ class DeepSeekClient:
         max_tokens: int = 2048,
         temperature: float = 0.3,
     ) -> dict[str, Any]:
-        msgs: list[dict[str, str]] = []
-        if system_prompt:
-            msgs.append({"role": "system", "content": system_prompt})
+        # DeepSeek's response_format=json_object does not enforce a schema, so we
+        # append explicit field instructions to the system prompt.
+        augmented_system = (system_prompt or "") + STRUCTURED_SCHEMA_INSTRUCTION
+        msgs: list[dict[str, str]] = [{"role": "system", "content": augmented_system}]
         for m in messages:
             role = "user" if m.get("role") == "user" else "assistant"
             msgs.append({"role": role, "content": str(m.get("content", ""))})
