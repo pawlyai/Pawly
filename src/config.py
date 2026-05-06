@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
 
+    # Triage v2 — defense-in-depth scenario routing with vet-reviewed checklists.
+    # When False (default), generate_response uses the v1 single-pass path.
+    use_triage_v2: bool = False
+    # Dev-only: route to checklists with approval.status != "approved" so unfinished
+    # YAML drafts can be exercised on staging before vet sign-off.
+    use_unapproved_checklists: bool = False
+
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
