@@ -530,17 +530,6 @@ def patch_blackbox_gemini_client(
         "src.memory.extractor.get_chat_client",
         lambda model=None: resilient_gemini_client,
     )
-    # v2 orchestrator imports get_gemini_client at module load time (`from
-    # src.llm.client import get_gemini_client`), so the binding is local. The
-    # client.py-level patch above doesn't reach it — patch the v2 module's
-    # bound reference too. Same applies for chat_structured_v2: when the v2
-    # orchestrator calls `client.chat_structured_v2(...)`, the resilient
-    # wrapper must forward through __getattr__ → underlying GeminiClient.
-    if settings.use_triage_v2:
-        monkeypatch.setattr(
-            "src.llm.orchestrator_v2.get_gemini_client",
-            lambda: resilient_gemini_client,
-        )
 
 
 @pytest.fixture(scope="session")
@@ -691,16 +680,6 @@ def mock_multiturn_runtime(
         monkeypatch.setattr(orchestrator, "load_pet_context", _fake_load_pet_context)
         monkeypatch.setattr(orchestrator, "load_related_memories", _fake_load_related_memories)
         monkeypatch.setattr(orchestrator, "_store_triage_record", _fake_store_triage_record)
-
-        # v2 orchestrator imports load_pet_context directly from src.memory.reader,
-        # so the patch on src.llm.orchestrator above does not reach it. When
-        # USE_TRIAGE_V2=true the unpatched DB call would raise and v2's try/except
-        # would return the fallback "I'm having trouble processing..." string,
-        # tanking DeepEval scores.
-        if settings.use_triage_v2:
-            from src.llm import orchestrator_v2
-            monkeypatch.setattr(orchestrator_v2, "load_pet_context", _fake_load_pet_context)
-
         monkeypatch.setattr(message_handler, "load_user_pets", _fake_load_user_pets)
         monkeypatch.setattr(message_handler, "store_raw_message", _fake_store_raw_message)
         monkeypatch.setattr(message_handler, "get_or_create_session", _fake_get_or_create_session)

@@ -420,32 +420,6 @@ class GeminiClient:
             response_schema=RESPONSE_SCHEMA,
         )
 
-    async def chat_structured_v2(
-        self,
-        system_prompt: str,
-        messages: list[dict[str, Any]],
-        response_schema: dict[str, Any],
-        model: str | None = None,
-        max_tokens: int = 2048,
-        temperature: float = 0.3,
-    ) -> dict[str, Any]:
-        """Structured conversation call with caller-provided schema.
-
-        Used by the v2 orchestrator (see ``src/llm/orchestrator_v2.py``) which
-        defines ``RESPONSE_SCHEMA_V2`` with multi-label scenario scores, soft
-        urgency score, distress signals, etc. Pinned to Gemini for native
-        ``response_schema`` enforcement — DeepSeek's ``json_object`` mode is
-        too loose for this many nested fields.
-        """
-        return await self._call_structured(
-            model=model or settings.main_model,
-            system_prompt=system_prompt,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            response_schema=response_schema,
-        )
-
     async def extract(
         self,
         system_prompt: str,

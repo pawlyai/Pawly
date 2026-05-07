@@ -198,90 +198,15 @@ async def generate_response(
     """
     Generate a response to a user message.
 
-    When ``USE_TRIAGE_V2=true`` delegates to the v2 defense-in-depth
-    pipeline (crisis_gate + scenario routing + checklist slot filling).
-    Otherwise when ``USE_LANGGRAPH=true`` delegates to the LangGraph pipeline.
-    Otherwise uses the classic sequential orchestration path.
+    When USE_LANGGRAPH=true, delegates to the LangGraph pipeline.
+    Otherwise, uses the classic sequential orchestration path.
     """
-    if settings.use_triage_v2:
-        return await _generate_response_v2_compat(
-            user, pet, dialogue_id, user_message, message_type, session, raw_message_id,
-        )
     if settings.use_langgraph:
         return await _generate_response_graph(
             user, pet, dialogue_id, user_message, message_type, session,
         )
     return await _generate_response_classic(
         user, pet, dialogue_id, user_message, message_type, session, raw_message_id,
-    )
-
-
-# ── v2 path (USE_TRIAGE_V2=true) ─────────────────────────────────────────────
-
-
-async def _generate_response_v2_compat(
-    user: User,
-    pet: Optional[Pet],
-    dialogue_id: str,
-    user_message: str,
-    message_type: MessageType,
-    session: Optional[dict[str, Any]],
-    raw_message_id: Optional[str],
-) -> OrchestratorResult:
-    """Delegate to ``orchestrator_v2`` and adapt its result back to the
-    v1 ``OrchestratorResult`` shape so bot/handlers/message.py keeps working
-    unchanged.
-    """
-    # Lazy import — orchestrator_v2 pulls in the checklists package, which
-    # eagerly loads YAML files at import time. We only want that cost when
-    # the flag is actually on.
-    from src.llm.orchestrator_v2 import generate_response_v2
-
-    dialogue_state: Optional[dict[str, Any]] = (session or {}).get("dialogue_state")
-    v2 = await generate_response_v2(
-        user=user,
-        pet=pet,
-        dialogue_id=dialogue_id,
-        user_message=user_message,
-        message_type=message_type,
-        session=session,
-        raw_message_id=raw_message_id,
-        dialogue_state=dialogue_state,
-    )
-
-    # Persist v2's clarification state back into the bot session so the next
-    # turn (resume_abc / resume_slot_fill) can pick up where we left off.
-    if session is not None and v2.is_clarification:
-        session["dialogue_state"] = {
-            "branch": v2.branch,
-            "checklist_id": v2.checklist_id,
-            "awaiting": v2.awaiting,
-        }
-    elif session is not None and "dialogue_state" in session:
-        session.pop("dialogue_state", None)
-
-    triage_result = {
-        "rule": v2.triage_level.value,
-        "llm": v2.triage_level.value,
-        "final": v2.triage_level.value,
-        "overridden": False,
-        "override_direction": "",
-        "matched_patterns": [],
-        "confidence": 0.5,
-        "branch": v2.branch,
-        "checklist_id": v2.checklist_id,
-        "rationale": v2.rationale,
-    }
-
-    return OrchestratorResult(
-        response_text=v2.response_text,
-        triage_result=triage_result,
-        intent=v2.intent,
-        symptom_tags=v2.symptom_tags,
-        risk_level=v2.risk_level,
-        sentiment_user=v2.sentiment_user,
-        input_tokens=v2.input_tokens,
-        output_tokens=v2.output_tokens,
     )
 
 
