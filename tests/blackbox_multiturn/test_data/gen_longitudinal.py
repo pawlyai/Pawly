@@ -7,10 +7,39 @@ Three groups, 3 cases each:
 
 These cases test whether Pawly recalls details across multiple past sessions
 (stored in memories[]) and integrates them into coherent advice.
+
+Shared rubric rules: see ../RUBRIC_DESIGN.md.
+
+Citation grading (Shared Rule 2): the longitudinal rubric measures
+**contextual coherence**, not literal citation phrasing. The grader scores
+explicit and implicit citation separately and takes the max:
+
+  - explicit: stock phrases like "as you mentioned", "as we discussed",
+    "remembering Luna's allergy"
+  - implicit: demonstrably uses prior session content without a stock phrase,
+    e.g. "Based on the weight gain you described...", "Continuing the
+    grain-free plan that worked for her"
+
+A faux-longitudinal reply that fabricates references or contradicts prior
+session content still fails. Replies that completely ignore prior session
+content also fail.
 """
 import json, pathlib
 
 OUT = pathlib.Path(__file__).parent / "multiturn_pawly_regression_test_longitudinal.json"
+
+# Inserted into every longitudinal criteria so the grader scores explicit and
+# implicit citation separately and takes the max. This is the fix for the
+# "didn't say 'as you mentioned'" false-fail pattern from May 2026.
+CITATION_PREAMBLE = (
+    "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. "
+    "Score two sub-signals separately and take their max as the citation score: "
+    "(a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; "
+    "(b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, "
+    "e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. "
+    "An implicit-only reply that uses prior content correctly passes citation. "
+    "A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. "
+)
 
 def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_turns, user_turns, persona):
     return {
@@ -19,7 +48,7 @@ def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_
         "scenario": scenario,
         "expected_outcome": outcome,
         "chatbot_role": role,
-        "criteria": criteria,
+        "criteria": CITATION_PREAMBLE + criteria,
         "threshold": 0.90,
         "pet_profile": pet,
         "memories": memories,
@@ -51,7 +80,7 @@ CASES.append(lon(
     scenario="Emma returns weeks after discussing Luna's weight management plan. She asks whether Luna's current weight is on track given the diet changes she implemented.",
     outcome="Pawly recalls Luna's previous weight (5.8 kg), the recommended calorie-reduction plan, and Luna's grain-intolerance note. It calculates progress toward the 4.5 kg target and adjusts advice accordingly.",
     role="Provide continuity-aware weight management follow-up for a cat seen in prior sessions.",
-    criteria="Must reference Luna's previous weight of 5.8 kg from memory; must reference the earlier dietary plan; must provide progress-oriented advice toward 4.5 kg target.",
+    criteria="Must demonstrate coherent use of Luna's previous weight of 5.8 kg (explicit or implicit citation acceptable per Shared Rule 2); must build on the earlier dietary plan; must provide progress-oriented advice toward the 4.5 kg target.",
     pet=LUNA,
     memories=[
         mem("user", "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."),
@@ -78,7 +107,7 @@ CASES.append(lon(
     scenario="Emma returns after Luna had an allergic reaction 6 weeks ago. She asks whether it's safe to introduce a new protein source now.",
     outcome="Pawly recalls the allergic episode (hives, face swelling after chicken protein), the elimination trial in progress, and correctly advises extending the trial before introducing a new protein.",
     role="Provide continuity-aware allergy management advice referencing previous allergic episode details.",
-    criteria="Must recall the chicken-protein allergic reaction from prior session; must recommend completing the full 8-week elimination trial; must not advise introducing new protein mid-trial.",
+    criteria="Must demonstrate coherent use of the chicken-protein allergic reaction from prior session (explicit or implicit citation acceptable per Shared Rule 2); must recommend completing the full 8-week elimination trial; must not advise introducing new protein mid-trial.",
     pet=LUNA,
     memories=[
         mem("user", "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."),
@@ -138,7 +167,7 @@ CASES.append(lon(
     scenario="David returns 2 months after starting Rex on a joint supplement plan. He reports Rex's mobility has improved but asks whether to continue.",
     outcome="Pawly recalls Rex's prior hip dysplasia diagnosis, the supplement protocol (glucosamine/chondroitin), and correctly advises long-term continuation and maintenance exercise.",
     role="Provide continuity-aware joint management follow-up for a dog with diagnosed hip dysplasia.",
-    criteria="Must recall prior hip dysplasia diagnosis and supplement protocol from memory; must recommend long-term continuation; must discuss maintenance exercise.",
+    criteria="Must demonstrate coherent use of the prior hip dysplasia diagnosis and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must recommend long-term continuation; must discuss maintenance exercise.",
     pet=REX,
     memories=[
         mem("user", "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."),
@@ -165,7 +194,7 @@ CASES.append(lon(
     scenario="David returns concerned that Rex growled at a neighbour's child last week. He asks if this is related to the pain management discussions.",
     outcome="Pawly recalls Rex's hip pain history and connects pain-related irritability as a potential factor in the growling, recommends a veterinary pain assessment, and advises professional behaviourist evaluation.",
     role="Connect chronic pain history to new behavioural changes in a dog, and recommend appropriate professional support.",
-    criteria="Must reference Rex's hip dysplasia and pain history from memory; must raise pain-induced aggression as a plausible contributing factor; must recommend both vet reassessment and behaviourist.",
+    criteria="Must demonstrate coherent use of Rex's hip dysplasia and pain history (explicit or implicit citation acceptable per Shared Rule 2); must raise pain-induced aggression as a plausible contributing factor; must recommend both vet reassessment and behaviourist.",
     pet=REX,
     memories=[
         mem("user", "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."),
@@ -192,7 +221,7 @@ CASES.append(lon(
     scenario="David asks whether Rex should transition to senior food soon and what changes to expect in Rex's health needs over the next few years.",
     outcome="Pawly acknowledges Rex's hip dysplasia, current supplement protocol, and his age (5 years for GSD = approaching senior range), and provides a 1–3-year health preparation roadmap.",
     role="Provide proactive health planning for a large-breed dog nearing senior status with existing orthopaedic issues.",
-    criteria="Must reference Rex's existing hip dysplasia and supplement protocol; must explain senior-range onset for large breeds (around 7 years); must provide a forward-looking health roadmap.",
+    criteria="Must demonstrate coherent use of Rex's existing hip dysplasia and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must explain senior-range onset for large breeds (around 7 years); must provide a forward-looking health roadmap.",
     pet=REX,
     memories=[
         mem("user", "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."),
@@ -224,7 +253,7 @@ CASES.append(lon(
     scenario="Sarah returns after Mochi completed a course of antibiotics for a UTI 3 weeks ago. She asks how to prevent recurrence.",
     outcome="Pawly recalls Mochi's prior UTI, the antibiotic course, and recommends increased hydration strategies, wet food transition, and follow-up urine culture at 4 weeks post-treatment.",
     role="Provide post-UTI follow-up care and recurrence prevention for a cat.",
-    criteria="Must reference the prior UTI episode and antibiotic treatment from memory; must recommend post-treatment urine culture; must address hydration strategies.",
+    criteria="Must demonstrate coherent use of the prior UTI episode and antibiotic treatment (explicit or implicit citation acceptable per Shared Rule 2); must recommend post-treatment urine culture; must address hydration strategies.",
     pet=MOCHI,
     memories=[
         mem("user", "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."),
@@ -251,7 +280,7 @@ CASES.append(lon(
     scenario="Sarah is moving apartments in 2 weeks and asks for help managing Mochi's stress, recalling that Mochi has had health issues linked to stress before.",
     outcome="Pawly recalls Mochi's stress-linked UTI history, her sensitivity to environmental change, and advises a step-by-step low-stress moving protocol with Feliway use.",
     role="Create a cat-specific moving plan accounting for prior stress-induced health issues.",
-    criteria="Must reference Mochi's stress-linked UTI history from memory; must recommend Feliway pheromone diffuser; must provide a structured pre/during/post-move protocol.",
+    criteria="Must demonstrate coherent use of Mochi's stress-linked UTI history (explicit or implicit citation acceptable per Shared Rule 2); must recommend Feliway pheromone diffuser; must provide a structured pre/during/post-move protocol.",
     pet=MOCHI,
     memories=[
         mem("user", "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."),
@@ -278,7 +307,7 @@ CASES.append(lon(
     scenario="Sarah asks whether Mochi needs a dental cleaning this year given that Mochi had one last year and had two teeth extracted.",
     outcome="Pawly recalls the prior dental procedure and tooth extractions, notes cats with prior extractions are at higher risk of further dental disease, and recommends annual dental exams.",
     role="Advise on dental care frequency for a cat with prior dental disease history.",
-    criteria="Must recall the prior dental cleaning and tooth extractions from memory; must explain elevated recurrence risk; must recommend annual dental assessment.",
+    criteria="Must demonstrate coherent use of the prior dental cleaning and tooth extractions (explicit or implicit citation acceptable per Shared Rule 2); must explain elevated recurrence risk; must recommend annual dental assessment.",
     pet=MOCHI,
     memories=[
         mem("user", "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."),

@@ -5,7 +5,7 @@
     "scenario": "Emma returns weeks after discussing Luna's weight management plan. She asks whether Luna's current weight is on track given the diet changes she implemented.",
     "expected_outcome": "Pawly recalls Luna's previous weight (5.8 kg), the recommended calorie-reduction plan, and Luna's grain-intolerance note. It calculates progress toward the 4.5 kg target and adjusts advice accordingly.",
     "chatbot_role": "Provide continuity-aware weight management follow-up for a cat seen in prior sessions.",
-    "criteria": "Must reference Luna's previous weight of 5.8 kg from memory; must reference the earlier dietary plan; must provide progress-oriented advice toward 4.5 kg target.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of Luna's previous weight of 5.8 kg (explicit or implicit citation acceptable per Shared Rule 2); must build on the earlier dietary plan; must provide progress-oriented advice toward the 4.5 kg target.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Luna",
@@ -64,7 +64,7 @@
     "scenario": "Emma returns after Luna had an allergic reaction 6 weeks ago. She asks whether it's safe to introduce a new protein source now.",
     "expected_outcome": "Pawly recalls the allergic episode (hives, face swelling after chicken protein), the elimination trial in progress, and correctly advises extending the trial before introducing a new protein.",
     "chatbot_role": "Provide continuity-aware allergy management advice referencing previous allergic episode details.",
-    "criteria": "Must recall the chicken-protein allergic reaction from prior session; must recommend completing the full 8-week elimination trial; must not advise introducing new protein mid-trial.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of the chicken-protein allergic reaction from prior session (explicit or implicit citation acceptable per Shared Rule 2); must recommend completing the full 8-week elimination trial; must not advise introducing new protein mid-trial.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Luna",
@@ -123,7 +123,7 @@
     "scenario": "Emma asks Pawly to help her prepare a complete health-summary list to bring to Luna's annual vet checkup.",
     "expected_outcome": "Pawly draws on the full history (overweight → diet intervention → weight loss success, allergic reaction → elimination trial, grain intolerance) to produce a structured vet-visit checklist.",
     "chatbot_role": "Synthesize multi-session pet health history into a structured vet visit summary.",
-    "criteria": "Must incorporate weight history, allergy history, and grain intolerance from across multiple sessions; must produce a structured checklist format; must not omit any known health issue.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must incorporate weight history, allergy history, and grain intolerance from across multiple sessions; must produce a structured checklist format; must not omit any known health issue.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Luna",
@@ -186,7 +186,7 @@
     "scenario": "David returns 2 months after starting Rex on a joint supplement plan. He reports Rex's mobility has improved but asks whether to continue.",
     "expected_outcome": "Pawly recalls Rex's prior hip dysplasia diagnosis, the supplement protocol (glucosamine/chondroitin), and correctly advises long-term continuation and maintenance exercise.",
     "chatbot_role": "Provide continuity-aware joint management follow-up for a dog with diagnosed hip dysplasia.",
-    "criteria": "Must recall prior hip dysplasia diagnosis and supplement protocol from memory; must recommend long-term continuation; must discuss maintenance exercise.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of the prior hip dysplasia diagnosis and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must recommend long-term continuation; must discuss maintenance exercise.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Rex",
@@ -245,7 +245,7 @@
     "scenario": "David returns concerned that Rex growled at a neighbour's child last week. He asks if this is related to the pain management discussions.",
     "expected_outcome": "Pawly recalls Rex's hip pain history and connects pain-related irritability as a potential factor in the growling, recommends a veterinary pain assessment, and advises professional behaviourist evaluation.",
     "chatbot_role": "Connect chronic pain history to new behavioural changes in a dog, and recommend appropriate professional support.",
-    "criteria": "Must reference Rex's hip dysplasia and pain history from memory; must raise pain-induced aggression as a plausible contributing factor; must recommend both vet reassessment and behaviourist.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of Rex's hip dysplasia and pain history (explicit or implicit citation acceptable per Shared Rule 2); must raise pain-induced aggression as a plausible contributing factor; must recommend both vet reassessment and behaviourist.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Rex",
@@ -304,7 +304,7 @@
     "scenario": "David asks whether Rex should transition to senior food soon and what changes to expect in Rex's health needs over the next few years.",
     "expected_outcome": "Pawly acknowledges Rex's hip dysplasia, current supplement protocol, and his age (5 years for GSD = approaching senior range), and provides a 1–3-year health preparation roadmap.",
     "chatbot_role": "Provide proactive health planning for a large-breed dog nearing senior status with existing orthopaedic issues.",
-    "criteria": "Must reference Rex's existing hip dysplasia and supplement protocol; must explain senior-range onset for large breeds (around 7 years); must provide a forward-looking health roadmap.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of Rex's existing hip dysplasia and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must explain senior-range onset for large breeds (around 7 years); must provide a forward-looking health roadmap.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Rex",
@@ -363,7 +363,7 @@
     "scenario": "Sarah returns after Mochi completed a course of antibiotics for a UTI 3 weeks ago. She asks how to prevent recurrence.",
     "expected_outcome": "Pawly recalls Mochi's prior UTI, the antibiotic course, and recommends increased hydration strategies, wet food transition, and follow-up urine culture at 4 weeks post-treatment.",
     "chatbot_role": "Provide post-UTI follow-up care and recurrence prevention for a cat.",
-    "criteria": "Must reference the prior UTI episode and antibiotic treatment from memory; must recommend post-treatment urine culture; must address hydration strategies.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of the prior UTI episode and antibiotic treatment (explicit or implicit citation acceptable per Shared Rule 2); must recommend post-treatment urine culture; must address hydration strategies.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Mochi",
@@ -422,7 +422,7 @@
     "scenario": "Sarah is moving apartments in 2 weeks and asks for help managing Mochi's stress, recalling that Mochi has had health issues linked to stress before.",
     "expected_outcome": "Pawly recalls Mochi's stress-linked UTI history, her sensitivity to environmental change, and advises a step-by-step low-stress moving protocol with Feliway use.",
     "chatbot_role": "Create a cat-specific moving plan accounting for prior stress-induced health issues.",
-    "criteria": "Must reference Mochi's stress-linked UTI history from memory; must recommend Feliway pheromone diffuser; must provide a structured pre/during/post-move protocol.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of Mochi's stress-linked UTI history (explicit or implicit citation acceptable per Shared Rule 2); must recommend Feliway pheromone diffuser; must provide a structured pre/during/post-move protocol.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Mochi",
@@ -481,7 +481,7 @@
     "scenario": "Sarah asks whether Mochi needs a dental cleaning this year given that Mochi had one last year and had two teeth extracted.",
     "expected_outcome": "Pawly recalls the prior dental procedure and tooth extractions, notes cats with prior extractions are at higher risk of further dental disease, and recommends annual dental exams.",
     "chatbot_role": "Advise on dental care frequency for a cat with prior dental disease history.",
-    "criteria": "Must recall the prior dental cleaning and tooth extractions from memory; must explain elevated recurrence risk; must recommend annual dental assessment.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Luna's allergy'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Based on the weight gain you described...', 'Continuing the grain-free plan that worked for her'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must demonstrate coherent use of the prior dental cleaning and tooth extractions (explicit or implicit citation acceptable per Shared Rule 2); must explain elevated recurrence risk; must recommend annual dental assessment.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Mochi",
