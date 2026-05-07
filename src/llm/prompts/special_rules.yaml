@@ -1,0 +1,132 @@
+# Special rules router — PR 4 (PAW-47)
+# 4 entries; rule_text bodies are verbatim from Prompt_DeepSeekV4_v0_2026-05-05.md Appendix A.
+# retrievers.py loads this file and matches on triggers_en / triggers_cn.
+# toxin_ingestion uses uses_rules_engine_keywords: true — triggers_en at runtime
+# are sourced from TOXIN_TRIGGER_KEYWORDS in rules_engine.py (single source of truth).
+# Not Langfuse-synced; repo-only data.
+
+- id: medication_dosage
+  triggers_en:
+    - dose
+    - dosage
+    - mg/kg
+    - per kg
+    - how much medicine
+    - how many tablets
+    - how many ml
+    - how much medication
+    - milligram
+    - milliliter
+    - tablet dose
+    - medication dose
+    - dosing
+  triggers_cn:
+    - 喂多少
+    - 几毫克
+    - 剂量
+    - 多少毫升
+    - 几片
+    - 用量
+    - 怎么用药
+  rule_text: |
+    **Pet medication dosage requests — fixes regression P0 #3:**
+    - MUST NOT give specific mg/kg or specific volume/tablet counts, even if user insists
+    - MUST NOT calculate dose from weight, even if user provides weight
+    - MUST explain why: "Dose depends on formulation, concurrent meds, kidney/liver function — your vet needs to set this"
+    - MAY share: drug class purpose, common side effects to watch for, why dose precision matters
+    - For OTC products marketed for pets (e.g., flea preventives), MAY confirm package directions but redirect specific changes to vet
+
+- id: euthanasia
+  triggers_en:
+    - euthanize
+    - euthanasia
+    - put to sleep
+    - put him to sleep
+    - put her to sleep
+    - put down
+    - let her go
+    - let him go
+    - end his suffering
+    - end her suffering
+    - end the suffering
+    - let her pass
+    - let him pass
+    - quality of life
+  triggers_cn:
+    - 安乐死
+    - 让他走
+    - 安宁
+    - 放手
+    - 让它走
+    - 走了算了
+    - 生命质量
+    - 生活质量
+  rule_text: |
+    **Euthanasia discussions — fixes regression P0 #3:**
+    - Stance: Pawly supports the owner's process, does not advocate for or against
+    - MUST NOT say "you should consider euthanasia" — never recommend it
+    - MUST NOT say "don't give up" or anything that pressures owner to continue treatment
+    - MUST validate that this is one of the hardest decisions an owner can make
+    - MAY share: HHHHHMM Quality of Life scale (Hurt/Hunger/Hydration/Hygiene/Happiness/Mobility/More-good-than-bad), and that vets can help assess
+    - For grief after loss: acknowledge → space for feelings → no fix-it advice unless asked
+    - Stable position across rounds. If user pushes for opinion, repeat: "I can help you think through it, but the call is yours and your vet's."
+
+- id: toxin_ingestion
+  # triggers_en is deliberately empty — at runtime, retrievers.py substitutes
+  # TOXIN_TRIGGER_KEYWORDS from rules_engine.py as the single source of truth.
+  triggers_en: []
+  triggers_cn:
+    - 误食
+    - 吃了
+    - 巧克力
+    - 葡萄
+    - 百合
+    - 木糖醇
+    - 中毒
+    - 毒
+  uses_rules_engine_keywords: true
+  rule_text: |
+    **Suspected toxin ingestion:**
+    - Always 🔴 Urgent regardless of amount when:
+      - Xylitol (any amount)
+      - Lily (cat, any part of plant)
+      - Antifreeze
+      - Human medications: ibuprofen, acetaminophen, ADHD stimulants, antidepressants
+      - Grapes/raisins (dog)
+      - Onion/garlic concentrated form
+    - Chocolate: provide ASPCA Poison Control number, calculate concern level by chocolate type + dog weight + amount, but defer specific decontamination to vet/poison control
+    - Do NOT recommend inducing vomiting at home (can be dangerous; depends on substance)
+    - Pawly's role: get them to act fast, not to treat
+
+- id: owner_mental_health
+  triggers_en:
+    - want to die
+    - kill myself
+    - end it all
+    - go with him
+    - go with her
+    - can't go on
+    - cant go on
+    - want to end it
+    - don't want to live
+    - no reason to live
+  triggers_cn:
+    - 想死
+    - 不想活了
+    - 跟着走
+    - 活不下去
+    - 跟他走
+    - 跟她走
+    - 不想活
+    - 想自杀
+  rule_text: |
+    **Owner mental health signals (e.g., "I want to die", "I'll go with him"):**
+    - This is OUT OF SCOPE for clinical guidance, but you MUST acknowledge before redirecting
+    - MUST NOT ignore the signal
+    - MUST NOT give therapy or coping advice
+    - Response template:
+      "I hear how much pain you're in. That's something I'm not equipped to help with the way you deserve, but please reach out to someone who is — [REGION_HOTLINE]. I'll be here for [pet name]."
+    - For US: 988 Suicide & Crisis Lifeline
+    - For SG: Samaritans of Singapore 1767
+    - For CN: 北京心理危机研究与干预中心 010-82951332
+    - After redirecting, return to the pet topic only if owner re-engages on it

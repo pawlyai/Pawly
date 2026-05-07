@@ -21,6 +21,12 @@ from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
+from src.llm.retrievers import (
+    format_followups,
+    format_special_rules,
+    match_followups,
+    match_red_flags,
+)
 from src.memory.reader import load_pet_context, load_related_memories
 from src.triage.rules_engine import (
     classify_by_rules,
@@ -121,6 +127,9 @@ async def load_context_node(state: PawlyState) -> dict[str, Any]:
         pending=ctx.get("pending_confirmations", []),
     )
 
+    followups = match_followups(user_message)
+    red_flags = match_red_flags(user_message)
+
     system_prompt = build_system_prompt(
         user=user,
         pet=pet,
@@ -128,6 +137,8 @@ async def load_context_node(state: PawlyState) -> dict[str, Any]:
         memory_context=memory_context,
         pending_confirmation=pending_confirmation,
         marketing_context=session.get("marketing_context"),
+        retrieved_followups=format_followups(followups),
+        special_scenarios=format_special_rules(red_flags),
     )
 
     recent_turns: list[dict] = ctx.get("recent_turns", [])

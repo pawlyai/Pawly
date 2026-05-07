@@ -1,0 +1,245 @@
+# Symptom followup KB — PR 3 (PAW-47)
+# Covers the 9 symptom categories from 交付包 §2.1.
+# retrievers.py loads this file and matches on keywords_en / keywords_cn.
+# Not Langfuse-synced; repo-only data.
+
+- id: vomiting
+  system: gi
+  keywords_en:
+    - vomit
+    - vomiting
+    - vomits
+    - throw up
+    - threw up
+    - throwing up
+    - puked
+    - puke
+    - puking
+  keywords_cn:
+    - 吐
+    - 呕吐
+    - 吐了
+    - 在吐
+    - 一直吐
+    - 呕
+  questions:
+    - "What does it look like — undigested food, yellow bile, white foam, or any blood (red or coffee-colored)?"
+    - "How many times, over what period?"
+    - "Still alert and drinking?"
+    - "Any chance of eating something unusual?"
+  escalation_hint: "[Blood OR fecal-smelling OR >5x in 24h OR refusing water OR puppy <6mo + persistent] → Immediate ER."
+
+- id: diarrhea
+  system: gi
+  keywords_en:
+    - diarrhea
+    - loose stool
+    - watery stool
+    - runny poop
+    - loose poop
+    - soft stool
+    - bloody stool
+  keywords_cn:
+    - 拉稀
+    - 腹泻
+    - 稀便
+    - 拉肚子
+    - 软便
+    - 便血
+  questions:
+    - "Any blood or mucus in the stool?"
+    - "How many times in the last 24 hours?"
+    - "Still drinking and active?"
+    - "Any dietary changes or new treats recently?"
+  escalation_hint: "[Blood in stool OR >5x in 24h OR lethargy/not drinking OR puppy/kitten] → Vet today."
+
+- id: urinary
+  system: urinary
+  keywords_en:
+    - straining to urinate
+    - blood in urine
+    - can't pee
+    - cant pee
+    - not peeing
+    - peeing blood
+    - litter box issues
+    - urinary
+    - urinate
+    - urine
+  keywords_cn:
+    - 尿血
+    - 排尿困难
+    - 尿不出来
+    - 撒不出尿
+    - 尿频
+    - 血尿
+  questions:
+    - "Is there any blood in the urine, or is it an unusual color?"
+    - "Is your pet straining or crying when trying to go?"
+    - "When did they last urinate successfully?"
+    - "Is this a male cat? (Higher risk of urinary blockage)"
+  escalation_hint: "[Male cat + straining + no urine OR blood in urine] → Immediate ER — potential blockage."
+
+- id: respiratory
+  system: respiratory
+  keywords_en:
+    - breathing hard
+    - labored breathing
+    - struggling to breathe
+    - breathing fast
+    - rapid breathing
+    - gasping
+    - wheezing
+    - shortness of breath
+    - open mouth breathing
+    - panting heavily
+    - respiratory
+  keywords_cn:
+    - 呼吸急促
+    - 喘气
+    - 呼吸困难
+    - 喘不上来
+    - 气促
+    - 呼吸
+    - 喘
+  questions:
+    - "Is the breathing fast, labored, or noisy (wheezing/crackling)?"
+    - "Any change in gum or tongue color (pale, blue, or grey)?"
+    - "Is this continuous or does it come and go?"
+    - "Did anything happen before this started (exercise, stress, eating)?"
+  escalation_hint: "[Blue/pale gums OR open-mouth breathing in a cat OR continuous distress] → Immediate ER."
+
+- id: lethargy
+  system: systemic
+  keywords_en:
+    - lethargic
+    - lethargy
+    - no energy
+    - sluggish
+    - not moving
+    - very tired
+    - weak
+    - weakness
+    - won't move
+    - wont move
+    - limp and tired
+  keywords_cn:
+    - 没精神
+    - 萎靡
+    - 没力气
+    - 不动了
+    - 虚弱
+    - 无力
+    - 精神差
+    - 蔫
+  questions:
+    - "How long has this been going on?"
+    - "Any other symptoms — vomiting, not eating, or abnormal bathroom habits?"
+    - "Any possibility of ingesting something unusual?"
+    - "Still drinking water?"
+  escalation_hint: "[Sudden severe lethargy + any other symptom OR young animal] → Vet same day."
+
+- id: seizure
+  system: neurological
+  keywords_en:
+    - seizure
+    - convulsion
+    - fitting
+    - shaking uncontrollably
+    - spasm
+    - twitching
+    - epilepsy
+  keywords_cn:
+    - 抽搐
+    - 惊厥
+    - 癫痫
+    - 痉挛
+    - 抖动
+  questions:
+    - "How long did it last?"
+    - "First time, or has this happened before?"
+    - "Any possibility of toxin ingestion before this?"
+    - "Is the pet conscious and responsive now?"
+  escalation_hint: "[>2 min OR repeated episodes OR not recovered in 15 min OR toxin suspected] → Immediate ER."
+
+- id: ingestion
+  system: toxicology
+  keywords_en:
+    - ate something
+    - ingested
+    - swallowed
+    - chewed on
+    - licked
+    - accidentally ate
+    - ate a
+    - might have eaten
+  keywords_cn:
+    - 误食
+    - 吃了
+    - 吞了
+    - 咬了
+    - 舔了
+    - 不小心吃了
+  questions:
+    - "What exactly did they eat, and how much (estimate)?"
+    - "How long ago?"
+    - "What is the pet's approximate weight?"
+    - "Any symptoms already (vomiting, shaking, lethargy)?"
+  escalation_hint: "[Known toxin (xylitol/grapes/lily/chocolate/medications) OR any symptoms present] → Immediate ER."
+
+- id: bleeding
+  system: trauma
+  keywords_en:
+    - bleeding
+    - blood
+    - bleed
+    - cut
+    - wound
+    - laceration
+    - hemorrhage
+    - won't stop bleeding
+    - wont stop bleeding
+    - heavy bleeding
+  keywords_cn:
+    - 出血
+    - 流血
+    - 血
+    - 受伤
+    - 伤口
+    - 割伤
+    - 止不住血
+  questions:
+    - "Where is the bleeding coming from?"
+    - "Is it actively bleeding, or has it slowed/stopped?"
+    - "Is the bleeding from an injury, or appearing spontaneously (e.g. from body openings)?"
+    - "How much blood — a few drops, or more substantial?"
+  escalation_hint: "[Won't stop bleeding with pressure OR blood from mouth/nose/anus without injury OR large wound] → Immediate ER."
+
+- id: pain
+  system: systemic
+  keywords_en:
+    - pain
+    - painful
+    - hurts
+    - hurt
+    - yelping
+    - crying out
+    - whimpering
+    - limping
+    - won't let me touch
+    - guarding
+    - wincing
+  keywords_cn:
+    - 疼
+    - 痛
+    - 疼痛
+    - 叫唤
+    - 跛行
+    - 不让碰
+    - 哼哼
+  questions:
+    - "Where does it seem to be coming from — abdomen, legs, back, or head?"
+    - "Is the pet vocalizing (yelping/crying) or just showing behavioral signs?"
+    - "Any recent trauma, fall, or unusual activity?"
+    - "Can they bear weight on the affected limb (if a leg)?"
+  escalation_hint: "[Abdominal pain + distension OR trauma + can't bear weight OR sudden severe pain] → Vet same day."

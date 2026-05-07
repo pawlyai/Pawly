@@ -205,6 +205,59 @@ def test_truncate_recent_episodes_history_truncated_when_one_entry_overflows() -
     assert truncated == MEMORY_HISTORY_TRUNCATED
 
 
+# ── KB slot snapshot tests (PR 3 + PR 4) ──────────────────────────────────────
+
+
+def test_vomiting_input_produces_retrieved_followups_block() -> None:
+    """Snapshot: vomiting message -> build_system_prompt emits <retrieved_followups> with questions."""
+    from src.llm.retrievers import format_followups, match_followups
+
+    followups = match_followups("my dog has been vomiting all morning")
+    assert followups, "match_followups must return at least one result"
+    prompt = build_system_prompt(
+        user=_user(),
+        pet=_pet(),
+        retrieved_followups=format_followups(followups),
+    )
+    assert "</retrieved_followups>" in prompt
+    assert "Vomiting" in prompt or "vomiting" in prompt
+    assert "?" in prompt
+
+
+def test_dosage_only_input_contains_medication_dosage_rule_not_all_four() -> None:
+    """Snapshot: dosage query -> <special_scenarios> has medication_dosage only, not all 4 rules."""
+    from src.llm.retrievers import format_special_rules, match_red_flags
+
+    red_flags = match_red_flags("what dosage of metacam should I give my dog?")
+    assert red_flags, "match_red_flags must return at least one result"
+    prompt = build_system_prompt(
+        user=_user(),
+        pet=_pet(),
+        special_scenarios=format_special_rules(red_flags),
+    )
+    assert "</special_scenarios>" in prompt
+    assert 'rule id="medication_dosage"' in prompt
+    assert 'rule id="euthanasia"' not in prompt
+    assert 'rule id="toxin_ingestion"' not in prompt
+    assert 'rule id="owner_mental_health"' not in prompt
+
+
+def test_no_match_drops_kb_tags() -> None:
+    """Non-symptom message -> no <retrieved_followups> or <special_scenarios> tags emitted."""
+    from src.llm.retrievers import format_followups, format_special_rules, match_followups, match_red_flags
+
+    followups = match_followups("what food is good for dogs?")
+    red_flags = match_red_flags("what food is good for dogs?")
+    prompt = build_system_prompt(
+        user=_user(),
+        pet=_pet(),
+        retrieved_followups=format_followups(followups),
+        special_scenarios=format_special_rules(red_flags),
+    )
+    assert "</retrieved_followups>" not in prompt
+    assert "</special_scenarios>" not in prompt
+
+
 def test_token_budget_triggers_truncation_in_build_system_prompt() -> None:
     """build_system_prompt actually invokes the truncation path when over the hard cap."""
     # Build a memory blob big enough to push the prompt over the hard cap.
