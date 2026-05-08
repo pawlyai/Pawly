@@ -1,245 +1,314 @@
-# Symptom followup KB — PR 3 (PAW-47)
-# Covers the 9 symptom categories from 交付包 §2.1.
-# retrievers.py loads this file and matches on keywords_en / keywords_cn.
-# Not Langfuse-synced; repo-only data.
+# Symptom followup KB — source: Pawly_急诊分诊SOP_兽医审阅版_v2.0.md
+# Trigger phrases (keywords_cn / keywords_en) extracted verbatim from the
+# 症状触发 column of each SOP entry. Questions adapted from 关键追问 Q1-Q5.
+# Escalation hints condense the 红旗信号 column into a single actionable line.
+# 9 symptom entries matching the 交付包 §2.1 symptom set.
 
 - id: vomiting
   system: gi
   keywords_en:
     - vomit
     - vomiting
-    - vomits
-    - throw up
     - threw up
+    - throw up
     - throwing up
-    - puked
-    - puke
-    - puking
+    - white foam
+    - yellow bile
+    - blood in vomit
+    - retching
   keywords_cn:
+    - 吐了
+    - 吐了好几次
+    - 吐黄水
+    - 吐血
+    - 吐白沫
     - 吐
     - 呕吐
-    - 吐了
-    - 在吐
-    - 一直吐
-    - 呕
+    - 干呕
   questions:
-    - "What does it look like — undigested food, yellow bile, white foam, or any blood (red or coffee-colored)?"
-    - "How many times, over what period?"
-    - "Still alert and drinking?"
-    - "Any chance of eating something unusual?"
-  escalation_hint: "[Blood OR fecal-smelling OR >5x in 24h OR refusing water OR puppy <6mo + persistent] → Immediate ER."
+    - "How many times in the last few hours, and over what time period?"
+    - "What did it look like — undigested food, yellow-green bile, white foam, blood or coffee-grounds, or a foreign object?"
+    - "Any of these too: diarrhea, not eating, lethargic, unproductive retching (heaving with nothing coming up), or a visibly bloated belly?"
+    - "In the past 24 h, did they get into anything — garbage, new food, medication, chemicals, or plants?"
+    - "Weight, age, and breed? And gum color — pink, white/pale, blue/purple, or yellow?"
+  escalation_hint: "→ ER if: blood/coffee-grounds in vomit OR unproductive retching + bloated belly (GDV) OR 3+ episodes/2 h OR gums pale/purple/yellow OR puppy under 6 mo + lethargic OR suspected ingestion."
 
 - id: diarrhea
   system: gi
   keywords_en:
     - diarrhea
     - loose stool
-    - watery stool
     - runny poop
-    - loose poop
-    - soft stool
     - bloody stool
+    - watery stool
+    - jelly stool
+    - mucus stool
+    - soft stool
+    - blood in stool
   keywords_cn:
-    - 拉稀
+    - 拉肚子了
+    - 水样便
+    - 血便
+    - 果冻样便
+    - 拉了好几次
     - 腹泻
-    - 稀便
-    - 拉肚子
     - 软便
-    - 便血
+    - 黏液便
+    - 便便有血
   questions:
-    - "Any blood or mucus in the stool?"
-    - "How many times in the last 24 hours?"
-    - "Still drinking and active?"
-    - "Any dietary changes or new treats recently?"
-  escalation_hint: "[Blood in stool OR >5x in 24h OR lethargy/not drinking OR puppy/kitten] → Vet today."
+    - "How many times in the past 12 hours?"
+    - "What does it look like — soft, watery, bloody, jelly-like/mucus, black tarry, or any visible parasites?"
+    - "Anything else going on: vomiting, not eating, lethargic, possible fever, or signs of dehydration?"
+    - "Are vaccines up to date? Any recent diet change, new pets in the house, or outdoor walks somewhere new?"
+    - "Weight, age, and breed? Is this a puppy or an unspayed female?"
+  escalation_hint: "→ ER if: black tarry stool (upper GI bleed) OR bloody stool + lethargic OR unvaccinated puppy + bloody stool OR 6+ episodes/12 h OR persists more than 48 h OR gums pale."
 
 - id: urinary
-  system: urinary
+  system: urogenital
   keywords_en:
     - straining to urinate
+    - cannot urinate
     - blood in urine
-    - can't pee
-    - cant pee
-    - not peeing
-    - peeing blood
-    - litter box issues
-    - urinary
-    - urinate
-    - urine
+    - not urinating
+    - crying in litter box
+    - frequent urination
+    - peeing outside box
+    - licking private area
+    - no urine
+    - cannot pee
   keywords_cn:
-    - 尿血
-    - 排尿困难
-    - 尿不出来
-    - 撒不出尿
-    - 尿频
+    - 频繁进出猫砂盆
+    - 蹲很久没尿出来
+    - 叫
+    - 舔下腹
     - 血尿
+    - 在外面尿
+    - 进猫砂
+    - 没尿
+    - 尿不出来
+    - 一直进猫砂盆
   questions:
-    - "Is there any blood in the urine, or is it an unusual color?"
-    - "Is your pet straining or crying when trying to go?"
-    - "When did they last urinate successfully?"
-    - "Is this a male cat? (Higher risk of urinary blockage)"
-  escalation_hint: "[Male cat + straining + no urine OR blood in urine] → Immediate ER — potential blockage."
+    - "First — is this a male or female? Age? Neutered or spayed? (Critical: uneutered male cat + not urinating = ER)"
+    - "Has there been any urine produced in the past 12 hours? What color and how much?"
+    - "Which of these: straining with nothing coming out, crying in pain, licking genitals, repeatedly in/out of litter, urinating outside the box?"
+    - "Does the lower belly feel hard or painful when gently pressed?"
+    - "Any other signs: vomiting, not eating, or suddenly very quiet and still?"
+  escalation_hint: "→ Immediate ER if: male cat + no urine today (fatal within 12 h from hyperkalemia) OR any pet 24+ h no urine OR hard/painful belly OR blood in urine + lethargic."
 
 - id: respiratory
   system: respiratory
   keywords_en:
     - breathing hard
     - labored breathing
-    - struggling to breathe
-    - breathing fast
     - rapid breathing
-    - gasping
-    - wheezing
-    - shortness of breath
     - open mouth breathing
-    - panting heavily
-    - respiratory
+    - blue tongue
+    - purple tongue
+    - panting
+    - coughing
+    - gasping
+    - breathing fast
+    - wheezing
+    - noisy breathing
+    - struggling to breathe
   keywords_cn:
-    - 呼吸急促
-    - 喘气
-    - 呼吸困难
-    - 喘不上来
-    - 气促
-    - 呼吸
+    - 呼吸怪
+    - 呼吸重
+    - 呼吸快
+    - 呼吸费力
     - 喘
+    - 鼻子哼哼
+    - 打呼噜变了
+    - 张嘴呼吸
+    - 舌头蓝紫
+    - 咳嗽
+    - 运动后倒下
+    - 喘不过气
+    - 呼吸困难
+    - 呼吸急促
   questions:
-    - "Is the breathing fast, labored, or noisy (wheezing/crackling)?"
-    - "Any change in gum or tongue color (pale, blue, or grey)?"
-    - "Is this continuous or does it come and go?"
-    - "Did anything happen before this started (exercise, stress, eating)?"
-  escalation_hint: "[Blue/pale gums OR open-mouth breathing in a cat OR continuous distress] → Immediate ER."
+    - "Short-circuit check first: is a cat breathing with mouth open, or are tongue/gums blue-purple? If yes, go to ER immediately."
+    - "Which do you see: belly heaving visibly, nostrils flaring, mouth open, neck stretched with elbows splayed out, or wheeze/cough?"
+    - "Resting respiratory rate — count chest rises for 30 seconds, multiply by 2. What number?"
+    - "Gum/tongue color: pink (normal), white/pale, blue/purple, grey, or yellow?"
+    - "Flat-faced breed (French Bulldog, Pug, Persian, British Shorthair)? Any recent heavy exercise, heat, chest injury, or known heart disease?"
+  escalation_hint: "→ ER if: cat open-mouth breathing OR gums blue/purple/grey/white OR resting RR over 40/min (cat) or over 30/min (dog) OR flat-faced breed + any breathing change after heat/exercise OR neck extended with elbows out."
 
 - id: lethargy
   system: systemic
   keywords_en:
-    - lethargic
-    - lethargy
-    - no energy
-    - sluggish
+    - hiding
     - not moving
-    - very tired
-    - weak
-    - weakness
-    - won't move
-    - wont move
-    - limp and tired
+    - lethargic
+    - not eating
+    - no appetite
+    - just lying there
+    - unusually quiet
+    - not responding
+    - seems off
+    - out of character
   keywords_cn:
-    - 没精神
-    - 萎靡
+    - 躲衣柜不出来
+    - 一直趴着不动
+    - 叫不出来玩
+    - 今天没吃饭
+    - 拒绝吃所有东西
+    - 水也不喝
+    - 不精神
+    - 躲起来
+    - 没活力
+    - 不对劲
+    - 蔫了
     - 没力气
-    - 不动了
-    - 虚弱
-    - 无力
-    - 精神差
-    - 蔫
+    - 一直睡觉
   questions:
     - "How long has this been going on?"
-    - "Any other symptoms — vomiting, not eating, or abnormal bathroom habits?"
-    - "Any possibility of ingesting something unusual?"
-    - "Still drinking water?"
-  escalation_hint: "[Sudden severe lethargy + any other symptom OR young animal] → Vet same day."
+    - "Of these, which apply: not eating, not drinking, moving less, strange posture, different breathing, abnormal urination/defecation, visible wounds or discharge?"
+    - "In the past 7 days: food change, vaccine, new medication, new pet in the house, or stressful event?"
+    - "Gum color (lift the lip) — pink, white/pale, blue/purple, or yellow? Does their belly feel hard, tense, or painful when gently pressed?"
+    - "Resting respiratory rate: count chest rises for 30 seconds times 2. What number?"
+  escalation_hint: "→ ER if: gums pale/purple/yellow OR unproductive retching + bloated belly (GDV) OR painful belly on touch OR 3+ symptoms from Q2 at once OR senior/chronic-disease pet with any new symptom OR getting visibly worse."
 
 - id: seizure
   system: neurological
   keywords_en:
     - seizure
-    - convulsion
+    - convulsing
     - fitting
-    - shaking uncontrollably
-    - spasm
+    - trembling all over
+    - shaking all over
+    - eyes rolled back
+    - foaming at mouth
+    - unconscious
+    - collapsed and shaking
     - twitching
-    - epilepsy
+    - muscle spasms
   keywords_cn:
     - 抽搐
-    - 惊厥
     - 癫痫
-    - 痉挛
-    - 抖动
+    - 全身僵直抖动
+    - 眼睛翻白
+    - 口吐白沫
+    - 失去意识
+    - 抽了
+    - 发作
+    - 全身抖
+    - 突然倒地抖动
   questions:
-    - "How long did it last?"
-    - "First time, or has this happened before?"
-    - "Any possibility of toxin ingestion before this?"
-    - "Is the pet conscious and responsive now?"
-  escalation_hint: "[>2 min OR repeated episodes OR not recovered in 15 min OR toxin suspected] → Immediate ER."
+    - "Short-circuit check: Is the seizure still happening? More than 5 minutes, or more than one in the past 24 hours? If yes — ER immediately."
+    - "First episode ever, or does this pet have a known seizure history?"
+    - "How long did this episode last?"
+    - "What happened just before, during, and after (alert, confused, or sleepy after)?"
+    - "Any chance they ate something unusual recently, had a head injury, or have been running a high fever?"
+  escalation_hint: "→ ER if: still seizing OR lasted over 5 min (status epilepticus) OR 2+ episodes in 24 h OR not fully conscious between episodes OR first-ever seizure (must rule out toxin/brain/metabolic cause)."
 
 - id: ingestion
   system: toxicology
   keywords_en:
     - ate something
-    - ingested
+    - got into
     - swallowed
-    - chewed on
     - licked
-    - accidentally ate
-    - ate a
-    - might have eaten
+    - chewed on
+    - found and ate
+    - counter-surfed
+    - ate a plant
+    - toxic food
+    - can dogs eat
+    - can cats eat
+    - is it safe
+    - poisonous
+    - ate xylitol
+    - ate chocolate
+    - ate grapes
   keywords_cn:
     - 误食
-    - 吃了
-    - 吞了
     - 咬了
     - 舔了
-    - 不小心吃了
+    - 打翻了
+    - 能不能吃
+    - 它捡了
+    - 偷吃了
+    - 吞了
+    - 吃到了
+    - 喝了
+    - 啃了
+    - 吃了东西
   questions:
-    - "What exactly did they eat, and how much (estimate)?"
-    - "How long ago?"
-    - "What is the pet's approximate weight?"
-    - "Any symptoms already (vomiting, shaking, lethargy)?"
-  escalation_hint: "[Known toxin (xylitol/grapes/lily/chocolate/medications) OR any symptoms present] → Immediate ER."
+    - "What specifically did they eat or lick? Be as precise as possible — product name or ingredient if known."
+    - "Roughly how much? (Number of pieces, grams/ml, or portion size — even an estimate helps.)"
+    - "Weight, breed, and age?"
+    - "Approximately how long ago did this happen?"
+    - "Any symptoms right now: vomiting, drooling more than usual, stumbling, seizure, or extremely agitated/extremely sleepy?"
+    - "Can you find any leftover substance or packaging? A photo will help the vet enormously."
+  escalation_hint: "→ ER if: known high-toxicity item (xylitol, grapes/raisins, lily [cats], onion/garlic concentrate, ibuprofen, acetaminophen, antidepressants, rodenticides, antifreeze, pyrethrin flea products on cats) OR any symptom now regardless of amount OR unknown ingestion + pet already showing signs."
 
 - id: bleeding
   system: trauma
   keywords_en:
     - bleeding
-    - blood
-    - bleed
-    - cut
-    - wound
-    - laceration
-    - hemorrhage
-    - won't stop bleeding
-    - wont stop bleeding
-    - heavy bleeding
+    - blood in stool
+    - blood in urine
+    - nosebleed
+    - spurting blood
+    - wound bleeding
+    - dark tarry stool
+    - coughing up blood
   keywords_cn:
-    - 出血
+    - 流血止不住
+    - 喷射状出血
+    - 血便
+    - 血尿
+    - 鼻血
     - 流血
-    - 血
-    - 受伤
-    - 伤口
-    - 割伤
+    - 出血
     - 止不住血
+    - 流了很多血
+    - 黑便
+    - 吐血
   questions:
-    - "Where is the bleeding coming from?"
-    - "Is it actively bleeding, or has it slowed/stopped?"
-    - "Is the bleeding from an injury, or appearing spontaneously (e.g. from body openings)?"
-    - "How much blood — a few drops, or more substantial?"
-  escalation_hint: "[Won't stop bleeding with pressure OR blood from mouth/nose/anus without injury OR large wound] → Immediate ER."
+    - "Where is the blood coming from — surface cut, deep wound, spurting, nosebleed, in the urine, or in the stool?"
+    - "How long has this been going on? Is it still actively bleeding right now?"
+    - "What color: bright red, dark red, or black and tarry?"
+    - "Any known injury? Is this pet on any medications (especially anti-inflammatories)? Any possible rat poison exposure at home or outdoors?"
+    - "What color are the gums? Is the pet alert and responding?"
+  escalation_hint: "→ ER if: bleeding does not stop after 5 min of firm pressure OR spurting (arterial) OR black tarry stool (upper GI bleed) OR blood in urine + lethargic OR nosebleed + gum bleeding together (possible rodenticide) OR any bleeding + pale/white gums."
 
 - id: pain
-  system: systemic
+  system: musculoskeletal
   keywords_en:
-    - pain
-    - painful
-    - hurts
-    - hurt
-    - yelping
-    - crying out
-    - whimpering
     - limping
-    - won't let me touch
-    - guarding
-    - wincing
+    - crying in pain
+    - yelping
+    - bearing weight
+    - dragging leg
+    - holding leg up
+    - difficulty walking
+    - leg dangling
+    - back legs not working
+    - hind legs weak
+    - lameness
+    - paralysis
   keywords_cn:
+    - 痛叫
+    - 哭叫
+    - 跛
+    - 走路不敢踩地
+    - 不敢动
+    - 腿耷拉着
+    - 拖腿
     - 疼
-    - 痛
-    - 疼痛
-    - 叫唤
-    - 跛行
-    - 不让碰
-    - 哼哼
+    - 站不起来
+    - 后腿无力
+    - 腿使不上力
+    - 走路一瘸一拐
+    - 抬着腿走
+    - 突然站不起来
+    - 后腿瘫
   questions:
-    - "Where does it seem to be coming from — abdomen, legs, back, or head?"
-    - "Is the pet vocalizing (yelping/crying) or just showing behavioral signs?"
-    - "Any recent trauma, fall, or unusual activity?"
-    - "Can they bear weight on the affected limb (if a leg)?"
-  escalation_hint: "[Abdominal pain + distension OR trauma + can't bear weight OR sudden severe pain] → Vet same day."
+    - "Short-circuit check: Is the bone visible, or is the leg at a clearly abnormal angle? Completely unable to touch the ground at all? If yes to either — ER immediately."
+    - "When did this start, and was there a triggering event (jump, fall, collision, slip)?"
+    - "How severe: completely not touching the ground, occasionally touching, or bearing some weight but limping?"
+    - "Can you see anything — swelling, an abnormal angle, blood, or exposed tissue?"
+    - "Which leg(s)? Which area (paw/wrist/elbow/shoulder or hindleg/hip/knee/ankle)? Breed, weight, and age?"
+  escalation_hint: "→ ER if: open fracture or visible bone OR leg at abnormal angle OR completely non-weight-bearing + crying OR hit by car/fallen from height (even if looks fine) OR sudden hindlimb dragging/paralysis in dachshund/French Bulldog/Beagle/Basset (IVDD — 24 h surgical window)."
