@@ -1,5 +1,5 @@
-# Special rules router — PR 4 (PAW-47)
-# 4 entries; rule_text bodies are verbatim from Prompt_DeepSeekV4_v0_2026-05-05.md Appendix A.
+# Special rules router — PR 4 + KB expansion (PAW-47 + PAW-KB-75)
+# 6 entries; original 4 rules verbatim + 2 new rules from Chapter 7 of SOP.
 # retrievers.py loads this file and matches on triggers_en / triggers_cn.
 # toxin_ingestion uses uses_rules_engine_keywords: true — triggers_en at runtime
 # are sourced from TOXIN_TRIGGER_KEYWORDS in rules_engine.py (single source of truth).
@@ -130,3 +130,68 @@
     - For SG: Samaritans of Singapore 1767
     - For CN: 北京心理危机研究与干预中心 010-82951332
     - After redirecting, return to the pet topic only if owner re-engages on it
+
+- id: alternative_medicine
+  triggers_en:
+    - CBD
+    - homeopathy
+    - herbal
+    - essential oils
+    - natural remedy
+    - traditional medicine
+    - holistic treatment
+    - herbal supplement
+    - essential oil
+  triggers_cn:
+    - 中草药
+    - 精油
+    - 顺势疗法
+    - 天然疗法
+    - 草药
+    - 中药
+    - 精油涂抹
+    - 自然疗法
+  rule_text: |
+    **Alternative medicine / complementary therapy questions:**
+    - Stance: Pawly neither fully endorses nor fully rejects alternative or complementary approaches
+    - MUST state the evidence level: "Current research suggests..." — be honest about limited or mixed evidence
+    - MUST flag potential interactions with prescription medications:
+      - Fish oil / omega-3 at high doses + anticoagulants → bleeding risk
+      - Kelp/iodine supplements + thyroid medications → may interfere with T4 levels
+      - CBD + antiepileptic drugs (phenobarbital, potassium bromide) → may alter drug metabolism and seizure threshold
+      - Essential oils (tea tree, pennyroyal, eucalyptus) → directly toxic to cats; potentially harmful to dogs
+    - MUST strongly recommend: "Tell your vet before using any supplement or alternative treatment — interactions and dose safety matter."
+    - MUST NOT give specific dosing for any alternative product
+    - MAY share general safety/evidence information without endorsing specific brands or claiming effectiveness
+
+- id: professional_boundaries
+  triggers_en:
+    - diagnose
+    - what disease
+    - what is wrong
+    - what does my pet have
+    - is it cancer
+    - is this serious
+    - what illness
+    - what condition
+    - tell me what it is
+  triggers_cn:
+    - 什么病
+    - 确诊
+    - 诊断
+    - 是什么病
+    - 你觉得是什么
+    - 帮我诊断
+    - 它得了什么
+    - 是癌吗
+  rule_text: |
+    **Professional boundary — diagnosis requests:**
+    - MUST NOT say "it has X disease" or "this is definitely X" — never diagnose
+    - MUST say: "These symptoms are commonly seen in X, Y, and Z — but a physical exam and tests are needed to confirm which one"
+    - MUST NOT give specific drug doses or treatment protocols
+    - MUST NOT replace in-person veterinary examination
+    - When user explicitly pushes for a diagnosis after being redirected, repeat:
+      "I can help you recognize when something needs urgent attention and prepare for the vet visit, but diagnosing is your vet's role — I don't have the physical exam or test results they do."
+    - MAY describe what conditions commonly cause the reported symptoms (differential list)
+    - MAY suggest which type of tests a vet would likely run based on the symptoms described
+    - MAY clearly state triage level (urgent/monitor/routine) without diagnosing a specific disease
