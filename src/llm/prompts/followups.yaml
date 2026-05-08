@@ -2,205 +2,9 @@
 # Trigger phrases (keywords_cn / keywords_en) extracted verbatim from the
 # 症状触发 column of each SOP entry. Questions adapted from 关键追问 Q1-Q5.
 # Escalation hints condense the 红旗信号 column into a single actionable line.
-# 9 symptom entries matching the 交付包 §2.1 symptom set.
+# 75 symptom entries covering all SOP categories T01-T75.
 
-- id: vomiting
-  system: gi
-  keywords_en:
-    - vomit
-    - vomiting
-    - threw up
-    - throw up
-    - throwing up
-    - white foam
-    - yellow bile
-    - blood in vomit
-    - retching
-  keywords_cn:
-    - 吐了
-    - 吐了好几次
-    - 吐黄水
-    - 吐血
-    - 吐白沫
-    - 吐
-    - 呕吐
-    - 干呕
-  questions:
-    - "How many times in the last few hours, and over what time period?"
-    - "What did it look like — undigested food, yellow-green bile, white foam, blood or coffee-grounds, or a foreign object?"
-    - "Any of these too: diarrhea, not eating, lethargic, unproductive retching (heaving with nothing coming up), or a visibly bloated belly?"
-    - "In the past 24 h, did they get into anything — garbage, new food, medication, chemicals, or plants?"
-    - "Weight, age, and breed? And gum color — pink, white/pale, blue/purple, or yellow?"
-  escalation_hint: "→ ER if: blood/coffee-grounds in vomit OR unproductive retching + bloated belly (GDV) OR 3+ episodes/2 h OR gums pale/purple/yellow OR puppy under 6 mo + lethargic OR suspected ingestion."
-
-- id: diarrhea
-  system: gi
-  keywords_en:
-    - diarrhea
-    - loose stool
-    - runny poop
-    - bloody stool
-    - watery stool
-    - jelly stool
-    - mucus stool
-    - soft stool
-    - blood in stool
-  keywords_cn:
-    - 拉肚子了
-    - 水样便
-    - 血便
-    - 果冻样便
-    - 拉了好几次
-    - 腹泻
-    - 软便
-    - 黏液便
-    - 便便有血
-  questions:
-    - "How many times in the past 12 hours?"
-    - "What does it look like — soft, watery, bloody, jelly-like/mucus, black tarry, or any visible parasites?"
-    - "Anything else going on: vomiting, not eating, lethargic, possible fever, or signs of dehydration?"
-    - "Are vaccines up to date? Any recent diet change, new pets in the house, or outdoor walks somewhere new?"
-    - "Weight, age, and breed? Is this a puppy or an unspayed female?"
-  escalation_hint: "→ ER if: black tarry stool (upper GI bleed) OR bloody stool + lethargic OR unvaccinated puppy + bloody stool OR 6+ episodes/12 h OR persists more than 48 h OR gums pale."
-
-- id: urinary
-  system: urogenital
-  keywords_en:
-    - straining to urinate
-    - cannot urinate
-    - blood in urine
-    - not urinating
-    - crying in litter box
-    - frequent urination
-    - peeing outside box
-    - licking private area
-    - no urine
-    - cannot pee
-  keywords_cn:
-    - 频繁进出猫砂盆
-    - 蹲很久没尿出来
-    - 叫
-    - 舔下腹
-    - 血尿
-    - 在外面尿
-    - 进猫砂
-    - 没尿
-    - 尿不出来
-    - 一直进猫砂盆
-  questions:
-    - "First — is this a male or female? Age? Neutered or spayed? (Critical: uneutered male cat + not urinating = ER)"
-    - "Has there been any urine produced in the past 12 hours? What color and how much?"
-    - "Which of these: straining with nothing coming out, crying in pain, licking genitals, repeatedly in/out of litter, urinating outside the box?"
-    - "Does the lower belly feel hard or painful when gently pressed?"
-    - "Any other signs: vomiting, not eating, or suddenly very quiet and still?"
-  escalation_hint: "→ Immediate ER if: male cat + no urine today (fatal within 12 h from hyperkalemia) OR any pet 24+ h no urine OR hard/painful belly OR blood in urine + lethargic."
-
-- id: respiratory
-  system: respiratory
-  keywords_en:
-    - breathing hard
-    - labored breathing
-    - rapid breathing
-    - open mouth breathing
-    - blue tongue
-    - purple tongue
-    - panting
-    - coughing
-    - gasping
-    - breathing fast
-    - wheezing
-    - noisy breathing
-    - struggling to breathe
-  keywords_cn:
-    - 呼吸怪
-    - 呼吸重
-    - 呼吸快
-    - 呼吸费力
-    - 喘
-    - 鼻子哼哼
-    - 打呼噜变了
-    - 张嘴呼吸
-    - 舌头蓝紫
-    - 咳嗽
-    - 运动后倒下
-    - 喘不过气
-    - 呼吸困难
-    - 呼吸急促
-  questions:
-    - "Short-circuit check first: is a cat breathing with mouth open, or are tongue/gums blue-purple? If yes, go to ER immediately."
-    - "Which do you see: belly heaving visibly, nostrils flaring, mouth open, neck stretched with elbows splayed out, or wheeze/cough?"
-    - "Resting respiratory rate — count chest rises for 30 seconds, multiply by 2. What number?"
-    - "Gum/tongue color: pink (normal), white/pale, blue/purple, grey, or yellow?"
-    - "Flat-faced breed (French Bulldog, Pug, Persian, British Shorthair)? Any recent heavy exercise, heat, chest injury, or known heart disease?"
-  escalation_hint: "→ ER if: cat open-mouth breathing OR gums blue/purple/grey/white OR resting RR over 40/min (cat) or over 30/min (dog) OR flat-faced breed + any breathing change after heat/exercise OR neck extended with elbows out."
-
-- id: lethargy
-  system: systemic
-  keywords_en:
-    - hiding
-    - not moving
-    - lethargic
-    - not eating
-    - no appetite
-    - just lying there
-    - unusually quiet
-    - not responding
-    - seems off
-    - out of character
-  keywords_cn:
-    - 躲衣柜不出来
-    - 一直趴着不动
-    - 叫不出来玩
-    - 今天没吃饭
-    - 拒绝吃所有东西
-    - 水也不喝
-    - 不精神
-    - 躲起来
-    - 没活力
-    - 不对劲
-    - 蔫了
-    - 没力气
-    - 一直睡觉
-  questions:
-    - "How long has this been going on?"
-    - "Of these, which apply: not eating, not drinking, moving less, strange posture, different breathing, abnormal urination/defecation, visible wounds or discharge?"
-    - "In the past 7 days: food change, vaccine, new medication, new pet in the house, or stressful event?"
-    - "Gum color (lift the lip) — pink, white/pale, blue/purple, or yellow? Does their belly feel hard, tense, or painful when gently pressed?"
-    - "Resting respiratory rate: count chest rises for 30 seconds times 2. What number?"
-  escalation_hint: "→ ER if: gums pale/purple/yellow OR unproductive retching + bloated belly (GDV) OR painful belly on touch OR 3+ symptoms from Q2 at once OR senior/chronic-disease pet with any new symptom OR getting visibly worse."
-
-- id: seizure
-  system: neurological
-  keywords_en:
-    - seizure
-    - convulsing
-    - fitting
-    - trembling all over
-    - shaking all over
-    - eyes rolled back
-    - foaming at mouth
-    - unconscious
-    - collapsed and shaking
-    - twitching
-    - muscle spasms
-  keywords_cn:
-    - 抽搐
-    - 癫痫
-    - 全身僵直抖动
-    - 眼睛翻白
-    - 口吐白沫
-    - 失去意识
-    - 抽了
-    - 发作
-    - 全身抖
-    - 突然倒地抖动
-  questions:
-    - "Short-circuit check: Is the seizure still happening? More than 5 minutes, or more than one in the past 24 hours? If yes — ER immediately."
-    - "First episode ever, or does this pet have a known seizure history?"
-    - "How long did this episode last?"
-    - "What happened just before, during, and after (alert, confused, or sleepy after)?"
-    - "Any chance they ate something unusual recently, had a head injury, or have been running a high fever?"
-  escalation_hint: "→ ER if: still seizing OR lasted over 5 min (status epilepticus) OR 2+ episodes in 24 h OR not fully conscious between episodes OR first-ever seizure (must rule out toxin/brain/metabolic cause)."
+# ── A. Toxin / Ingestion ──────────────────────────────────────────────────────
 
 - id: ingestion
   system: toxicology
@@ -242,6 +46,702 @@
     - "Any symptoms right now: vomiting, drooling more than usual, stumbling, seizure, or extremely agitated/extremely sleepy?"
     - "Can you find any leftover substance or packaging? A photo will help the vet enormously."
   escalation_hint: "→ ER if: known high-toxicity item (xylitol, grapes/raisins, lily [cats], onion/garlic concentrate, ibuprofen, acetaminophen, antidepressants, rodenticides, antifreeze, pyrethrin flea products on cats) OR any symptom now regardless of amount OR unknown ingestion + pet already showing signs."
+
+- id: medication_ingestion
+  system: toxicology
+  keywords_en:
+    - it swallowed my medication
+    - wrong flea product
+    - gave wrong dose
+    - wrong medication
+    - ate my pills
+    - swallowed the tablet
+    - chewed the pill
+    - flea medicine wrong species
+  keywords_cn:
+    - 吃了我的药
+    - 喂错了
+    - 跳蚤药用错了
+    - 吞了药片
+    - 药瓶打翻了
+    - 孩子掉了药片
+    - 用错了药
+  questions:
+    - "What medication exactly? Drug name + dose (mg) if you can find the packaging."
+    - "Roughly how many tablets or how much volume did they get?"
+    - "Weight, breed, and age?"
+    - "How long ago did this happen?"
+    - "Any symptoms right now: trembling, seizure, excessive drooling, agitation, unusual sleepiness, or vomiting?"
+    - "Can you photograph the medication bottle or packaging to bring to the vet?"
+  escalation_hint: "→ ER if: any dose of acetaminophen (cats especially fatal), antidepressants, ADHD meds, vitamin D, chemo drugs, insulin, or pyrethrin flea product on a cat OR NSAID above therapeutic dose OR unknown drug + any symptom OR wrong flea product species mismatch."
+
+- id: unknown_ingestion
+  system: toxicology
+  keywords_en:
+    - do not know what it ate
+    - found empty bag
+    - came home and it seems off
+    - not sure what it got into
+    - something is missing
+    - ate something unknown
+  keywords_cn:
+    - 不知道吃了什么
+    - 出门回来不对劲
+    - 桌上少了什么
+    - 发现空塑料袋
+    - 有几个空袋
+    - 不确定吃了什么
+  questions:
+    - "Any symptoms right now: vomiting, seizure, drooling, lethargy, stumbling, or extreme agitation/sedation?"
+    - "What could they have accessed? Any garbage, medications, plants, chemicals, or visitor items in reach?"
+    - "Roughly how long were they unsupervised?"
+    - "Any visible vomit or residue? What color/smell?"
+    - "Can you find any empty packages, chewed materials, or remnants? A photo helps enormously."
+  escalation_hint: "→ ER if: any symptom present (vomiting/seizure/drooling/lethargy/stumbling) OR high-risk items accessible (medications, toxic plants, chemicals) OR elderly/chronically ill pet even without symptoms."
+
+- id: foreign_body_swallowed
+  system: toxicology
+  keywords_en:
+    - swallowed string
+    - ate sock
+    - chewed toy piece
+    - chicken bone
+    - swallowed something
+    - ate a bone
+    - swallowed a toy
+    - ate fabric
+    - ate foil
+  keywords_cn:
+    - 吞了线
+    - 叼了袜子吞了
+    - 啃玩具一块掉了
+    - 吞了鸡骨头
+    - 吞了异物
+    - 卡住了一直干呕
+    - 叼着绳子吃下去
+  questions:
+    - "What exactly did they swallow? What size and material?"
+    - "Current status: completely normal, retching but breathing, unable to breathe/blue tongue, or belly distended and uncomfortable?"
+    - "How long ago?"
+    - "Is there any string/thread visible hanging from the mouth or protruding from the anus? (Do NOT pull it.)"
+    - "Weight, breed, and age?"
+  escalation_hint: "→ ER if: breathing difficulty or blue tongue OR linear foreign body (string/thread) visible OR sharp bone/glass/needle/metal OR large object OR repeated retching + drooling + can't keep water down (esophageal obstruction) OR belly distended + persistent vomiting (intestinal obstruction sign)."
+
+- id: post_home_treatment_ingestion
+  system: toxicology
+  keywords_en:
+    - I already made it vomit
+    - gave hydrogen peroxide
+    - gave milk
+    - already induced vomiting
+    - tried to make it throw up
+    - home remedy
+  keywords_cn:
+    - 我已经给它催吐了
+    - 喂了牛奶
+    - 给它喝了过氧化氢
+    - 我自己处理了
+    - 网上说可以这样
+    - 已经催吐了
+  questions:
+    - "What did you do exactly? What did you give, and how much?"
+    - "How long ago did you do this?"
+    - "What was the original substance they ingested, and roughly how much?"
+    - "Any current symptoms after your home treatment: vomiting, drooling, difficulty swallowing, or coughing?"
+    - "Weight, breed, and age?"
+  escalation_hint: "→ ER if: induced vomiting for a corrosive substance (battery, bleach, acid/alkali) OR petroleum product (gasoline/kerosene — aspiration risk) OR used incorrect hydrogen peroxide concentration OR aspiration coughing after force-feeding liquids OR original toxin was high-risk."
+
+# ── B. Digestive ──────────────────────────────────────────────────────────────
+
+- id: vomiting
+  system: gi
+  keywords_en:
+    - vomit
+    - vomiting
+    - threw up
+    - throw up
+    - throwing up
+    - white foam
+    - yellow bile
+    - blood in vomit
+    - retching
+  keywords_cn:
+    - 吐了
+    - 吐了好几次
+    - 吐黄水
+    - 吐血
+    - 吐白沫
+    - 吐
+    - 呕吐
+    - 干呕
+  questions:
+    - "How many times in the last few hours, and over what time period?"
+    - "What did it look like — undigested food, yellow-green bile, white foam, blood or coffee-grounds, or a foreign object?"
+    - "Any of these too: diarrhea, not eating, lethargic, unproductive retching (heaving with nothing coming up), or a visibly bloated belly?"
+    - "In the past 24 h, did they get into anything — garbage, new food, medication, chemicals, or plants?"
+    - "Weight, age, and breed? And gum color — pink, white/pale, blue/purple, or yellow?"
+  escalation_hint: "→ ER if: blood/coffee-grounds in vomit OR unproductive retching + bloated belly (GDV) OR 3+ episodes/2 h OR gums pale/purple/yellow OR puppy under 6 mo + lethargic OR suspected ingestion."
+
+- id: chronic_vomiting
+  system: gi
+  keywords_en:
+    - vomiting every day
+    - throws up after meals
+    - hairballs repeatedly
+    - vomiting for weeks
+    - keeps throwing up
+    - chronic vomiting
+    - recurring vomiting
+  keywords_cn:
+    - 最近经常吐
+    - 吃完不久就吐
+    - 老是吐毛球
+    - 这两周每天吐一两次
+    - 吐黄水好几天
+    - 反复呕吐
+  questions:
+    - "How long has this been going on, and how often (daily, every few days)?"
+    - "What does the vomit look like, and does it happen before or after eating?"
+    - "Any changes in appetite, weight, or energy level?"
+    - "What food are they on — any recent diet changes?"
+    - "Any prior vet workup, or known conditions like pancreatitis, IBD, or kidney disease?"
+  escalation_hint: "→ ER/urgent if: weight loss OR complete appetite loss >24 h (cat)/>48 h (dog) OR lethargy + frequent vomiting OR elderly pet + new onset OR known systemic disease history."
+
+- id: diarrhea
+  system: gi
+  keywords_en:
+    - diarrhea
+    - loose stool
+    - runny poop
+    - bloody stool
+    - watery stool
+    - jelly stool
+    - mucus stool
+    - soft stool
+    - blood in stool
+  keywords_cn:
+    - 拉肚子了
+    - 水样便
+    - 血便
+    - 果冻样便
+    - 拉了好几次
+    - 腹泻
+    - 软便
+    - 黏液便
+    - 便便有血
+  questions:
+    - "How many times in the past 12 hours?"
+    - "What does it look like — soft, watery, bloody, jelly-like/mucus, black tarry, or any visible parasites?"
+    - "Anything else going on: vomiting, not eating, lethargic, possible fever, or signs of dehydration?"
+    - "Are vaccines up to date? Any recent diet change, new pets in the house, or outdoor walks somewhere new?"
+    - "Weight, age, and breed? Is this a puppy or an unspayed female?"
+  escalation_hint: "→ ER if: black tarry stool (upper GI bleed) OR bloody stool + lethargic OR unvaccinated puppy + bloody stool OR 6+ episodes/12 h OR persists more than 48 h OR gums pale."
+
+- id: gdv_bloat
+  system: gi
+  keywords_en:
+    - retching but nothing comes up
+    - belly looks bloated
+    - large dog bloated
+    - unproductive retching
+    - stomach distended
+    - cannot vomit
+    - heaving with nothing
+    - bloat
+  keywords_cn:
+    - 一直想吐但吐不出
+    - 肚子鼓起来了
+    - 干呕
+    - 肚子硬硬的
+    - 站着不肯躺下
+    - 焦虑流涎
+    - 肚子鼓胀
+  questions:
+    - "SHORT-CIRCUIT: Is this a deep-chested large breed (Great Dane, Doberman, Boxer, German Shepherd, Standard Poodle, Rottweiler)? If yes + retching + distended belly — go to ER immediately without waiting for answers."
+    - "How is the belly: visibly swollen, hard as a drum, or resonant when tapped?"
+    - "Posture: standing and won't lie down, pacing, lying down and getting up repeatedly?"
+    - "Did this start shortly after a large meal, vigorous exercise, or drinking a lot of water?"
+    - "Gum color — pink, white/pale, or blue/purple?"
+  escalation_hint: "→ ER IMMEDIATELY if: any deep-chested large breed + unproductive retching + distended belly. GDV is fatal within hours. No yellow/green level exists for this — all cases are red."
+
+- id: constipation
+  system: gi
+  keywords_en:
+    - has not pooped in days
+    - straining to defecate
+    - hard stools
+    - struggling to defecate
+    - no bowel movement
+    - crying while trying to poop
+  keywords_cn:
+    - 好几天没拉了
+    - 便便很硬
+    - 蹲了很久没出来
+    - 拉的时候痛叫
+    - 没有大便
+  questions:
+    - "First — is this a male cat? Any chance they are straining to urinate rather than defecate? (Critical — male cat + no urine = ER)"
+    - "How many days without a bowel movement?"
+    - "When they squat and strain, is anything coming out at all? Is there blood?"
+    - "Any changes in appetite, energy, or belly tenderness on gentle palpation?"
+    - "Known history of megacolon, prostatic disease, or hernia? Senior pet?"
+  escalation_hint: "→ ER if: male cat squatting in litter — strongly suspect urinary blockage first, not constipation OR >3 days no stool + complete appetite loss OR painful belly + straining OR senior male dog + straining (prostate/hernia)."
+
+- id: anorexia
+  system: gi
+  keywords_en:
+    - not eating
+    - skipped meals
+    - refusing food
+    - will not drink water
+    - won't eat
+    - no appetite
+    - stopped eating
+  keywords_cn:
+    - 今天没吃饭
+    - 拒绝吃所有东西
+    - 水也不喝
+    - 不吃
+    - 不喝水
+    - 闻了就走开
+    - 几天没吃
+  questions:
+    - "Is this a cat or dog? Age? (Cats not eating >24 h risk hepatic lipidosis — more urgent.)"
+    - "How long since they last ate anything? Still drinking water?"
+    - "Any accompanying symptoms: vomiting, diarrhea, lethargy, hiding, or abnormal urination?"
+    - "Any recent changes: new food, vaccination, medication, stress event, or dental pain?"
+    - "Gum color — pink, white/pale, blue/purple, or yellow? Diabetic or chronically ill pet?"
+  escalation_hint: "→ ER if: cat >24 h not eating (hepatic lipidosis risk) OR puppy/kitten >12 h not eating OR diabetic pet missed meal (insulin already given → hypoglycemia risk) OR gums abnormal color OR lethargy + vomiting alongside."
+
+- id: drooling
+  system: gi
+  keywords_en:
+    - drooling excessively
+    - jaw is wet
+    - slobbering
+    - excessive drooling
+    - saliva dripping
+    - mouth very wet
+  keywords_cn:
+    - 口水流得不正常
+    - 下巴湿了一片
+    - 持续流涎
+    - 口水特别多
+    - 嘴边湿
+  questions:
+    - "Is the drooling from one side (unilateral) or both sides equally? Unilateral suggests a local problem."
+    - "Can they eat, drink, and swallow normally?"
+    - "Any associated signs: nausea, foreign body in mouth, oral burns, or trembling before a seizure?"
+    - "Any chance of contact with a toad, caterpillar, or bitter/toxic substance recently?"
+    - "Check the mouth if safe: any broken teeth, swollen gums, foreign object, or tongue injury?"
+  escalation_hint: "→ ER if: unilateral drooling (facial nerve issue or abscess) OR cannot swallow (foreign body/neurological) OR drooling + trembling/stumbling (toxin/neurological) OR contact with toad or toxic insect OR sudden massive drooling + anxiety (early GDV sign)."
+
+- id: regurgitation
+  system: gi
+  keywords_en:
+    - keeps hiccupping
+    - swallowing repeatedly
+    - reverse peristalsis without vomiting
+    - gulping repeatedly
+    - swallowing air
+    - regurgitating
+  keywords_cn:
+    - 一直打嗝
+    - 老是咽口水
+    - 反胃但没吐
+    - 胃在响
+    - 频繁吞咽
+  questions:
+    - "How long has this been going on?"
+    - "Can they eat and drink normally? Does it get worse after eating?"
+    - "Any associated vomiting, drooling, belly distension, or uncomfortable postures?"
+    - "Breed — deep-chested or brachycephalic (flat-faced)?"
+    - "Any chance of foreign body ingestion (thread, hair, toy piece)?"
+  escalation_hint: "→ ER if: persisting >24 h OR accompanied by retching + belly distension (GDV warning in large breeds) OR brachycephalic breed + repeated episodes OR possible foreign body swallow + recurrent regurgitation."
+
+# ── C. Urogenital ─────────────────────────────────────────────────────────────
+
+- id: urinary
+  system: urogenital
+  keywords_en:
+    - straining to urinate
+    - cannot urinate
+    - blood in urine
+    - not urinating
+    - crying in litter box
+    - frequent urination
+    - peeing outside box
+    - licking private area
+    - no urine
+    - cannot pee
+  keywords_cn:
+    - 频繁进出猫砂盆
+    - 蹲很久没尿出来
+    - 叫
+    - 舔下腹
+    - 血尿
+    - 在外面尿
+    - 进猫砂
+    - 没尿
+    - 尿不出来
+    - 一直进猫砂盆
+  questions:
+    - "First — is this a male or female? Age? Neutered or spayed? (Critical: uneutered male cat + not urinating = ER)"
+    - "Has there been any urine produced in the past 12 hours? What color and how much?"
+    - "Which of these: straining with nothing coming out, crying in pain, licking genitals, repeatedly in/out of litter, urinating outside the box?"
+    - "Does the lower belly feel hard or painful when gently pressed?"
+    - "Any other signs: vomiting, not eating, or suddenly very quiet and still?"
+  escalation_hint: "→ Immediate ER if: male cat + no urine today (fatal within 12 h from hyperkalemia) OR any pet 24+ h no urine OR hard/painful belly OR blood in urine + lethargic."
+
+- id: polyuria_polydipsia
+  system: urogenital
+  keywords_en:
+    - drinking a lot more
+    - water bowl empty fast
+    - urinating more
+    - drinking excessively
+    - increased thirst
+    - peeing more often
+  keywords_cn:
+    - 最近喝水变多
+    - 水盆见底快
+    - 尿盆湿得快
+    - 半夜要出去尿
+    - 喝水特别多
+    - 尿特别多
+  questions:
+    - "Roughly how much water per day? Pet's weight? (Normal is ~50 ml/kg/day.)"
+    - "How long has this been going on?"
+    - "Any weight changes, appetite changes, lethargy, or discharge from the genital area?"
+    - "Age, sex, and neutered/spayed status?"
+    - "Currently on any corticosteroids or diuretics?"
+  escalation_hint: "→ ER if: intact female + increased thirst/urination + genital discharge + lethargy (pyometra — ER) OR sudden PD/PU + lethargy + not eating (DKA/acute kidney failure) OR elderly cat + sudden PD/PU + weight loss (hyperthyroidism/CKD/diabetes)."
+
+- id: dystocia
+  system: urogenital
+  keywords_en:
+    - in labor but not delivering
+    - labor for hours
+    - fetal head showing
+    - giving birth but stuck
+    - whelping problem
+    - kitten stuck
+  keywords_cn:
+    - 它在生但生不出来
+    - 产程已经几小时
+    - 胎头悬出
+    - 生了好久没生完
+    - 大出血
+    - 生产困难
+  questions:
+    - "SHORT-CIRCUIT: Labor >2 h with no delivery, or fetal head visible >15-30 min, or heavy bleeding? → ER immediately."
+    - "How long has active labor been going on?"
+    - "How many have been born already? How many are expected?"
+    - "Is the fetal head or feet visible? How long has it been?"
+    - "Breed — brachycephalic or large-headed breeds have much higher C-section rates."
+  escalation_hint: "→ ER if: active labor >24 h with no birth OR strong contractions >30 min with no delivery OR 2-4 h between kittens/puppies OR fetal head/limb visible >15-30 min OR heavy bright-red or dark-green discharge OR brachycephalic breed."
+
+- id: reproductive_abnormality
+  system: urogenital
+  keywords_en:
+    - scrotum swollen
+    - mammary lump
+    - discharge from vulva
+    - penile discharge
+    - testicular swelling
+    - breast lump
+    - pyometra
+  keywords_cn:
+    - 阴囊肿了
+    - 乳腺有肿块
+    - 包皮流脓
+    - 假怀孕
+    - 生殖器分泌物
+    - 阴部分泌物
+  questions:
+    - "Where exactly — scrotum, mammary gland, vulva, prepuce? How large?"
+    - "How long have you noticed this? Is it growing?"
+    - "Pain, redness, swelling, heat, or foul smell?"
+    - "Age, sex, and neutered/spayed status?"
+    - "Any systemic signs: fever, not eating, lethargy?"
+  escalation_hint: "→ ER if: sudden scrotal swelling + pain (testicular torsion — time window) OR mammary abscess + systemic fever OR large amount of penile discharge + systemic illness OR any reproductive mass + rapid growth + weight loss."
+
+- id: incontinence_senior
+  system: urogenital
+  keywords_en:
+    - leaking urine while sleeping
+    - wet spot on bed
+    - cannot control bowel
+    - urinary incontinence
+    - fecal incontinence
+    - dribbling urine
+  keywords_cn:
+    - 老在睡觉时漏尿
+    - 床上有尿渍
+    - 最近不去厕所就拉了
+    - 尿不自觉
+    - 大便失禁
+    - 漏尿
+  questions:
+    - "Is this urinary leaking, urinary incontinence, or fecal incontinence? Happens while asleep or walking?"
+    - "Sex, neutered/spayed status, and age?"
+    - "How long has this been happening — gradual onset or sudden?"
+    - "Any blood or pus in the urine/stool? Pain on urination?"
+    - "Any hind limb weakness, abnormal gait, or other neurological signs?"
+  escalation_hint: "→ ER if: sudden incontinence + hind limb weakness or paralysis (IVDD/spinal emergency) OR blood/pus in discharge + fever OR fecal incontinence + gait abnormality."
+
+# ── D. Respiratory ────────────────────────────────────────────────────────────
+
+- id: respiratory
+  system: respiratory
+  keywords_en:
+    - breathing hard
+    - labored breathing
+    - rapid breathing
+    - open mouth breathing
+    - blue tongue
+    - purple tongue
+    - panting
+    - coughing
+    - gasping
+    - breathing fast
+    - wheezing
+    - noisy breathing
+    - struggling to breathe
+  keywords_cn:
+    - 呼吸怪
+    - 呼吸重
+    - 呼吸快
+    - 呼吸费力
+    - 喘
+    - 鼻子哼哼
+    - 打呼噜变了
+    - 张嘴呼吸
+    - 舌头蓝紫
+    - 咳嗽
+    - 运动后倒下
+    - 喘不过气
+    - 呼吸困难
+    - 呼吸急促
+  questions:
+    - "Short-circuit check first: is a cat breathing with mouth open, or are tongue/gums blue-purple? If yes, go to ER immediately."
+    - "Which do you see: belly heaving visibly, nostrils flaring, mouth open, neck stretched with elbows splayed out, or wheeze/cough?"
+    - "Resting respiratory rate — count chest rises for 30 seconds, multiply by 2. What number?"
+    - "Gum/tongue color: pink (normal), white/pale, blue/purple, grey, or yellow?"
+    - "Flat-faced breed (French Bulldog, Pug, Persian, British Shorthair)? Any recent heavy exercise, heat, chest injury, or known heart disease?"
+  escalation_hint: "→ ER if: cat open-mouth breathing OR gums blue/purple/grey/white OR resting RR over 40/min (cat) or over 30/min (dog) OR flat-faced breed + any breathing change after heat/exercise OR neck extended with elbows out."
+
+- id: coughing
+  system: respiratory
+  keywords_en:
+    - coughing for days
+    - dry cough like choking
+    - coughing at night
+    - sneezing
+    - nasal discharge
+    - kennel cough
+    - persistent cough
+  keywords_cn:
+    - 它咳嗽好几天
+    - 干咳像噎住
+    - 打喷嚏
+    - 鼻子流鼻涕
+    - 咳后吐白沫
+    - 夜咳
+    - 持续咳嗽
+  questions:
+    - "Character: dry choking cough, wet productive cough, night cough worse when lying down, or triggered by exercise/excitement?"
+    - "How long has this been going on?"
+    - "Any changes in energy, appetite, weight, or breathing rate?"
+    - "Vaccines current? Exposure to other animals recently?"
+    - "Breed and age — small/toy breed (tracheal collapse), brachycephalic, giant breed, senior?"
+  escalation_hint: "→ ER if: cardiac cough (night cough + worse lying down + elderly small breed + known heart disease) OR cough + open-mouth breathing/purple gums OR cough + lethargy + fever (pneumonia) OR persisting >1 week without improvement OR bloody/one-sided nasal discharge."
+
+- id: choking
+  system: respiratory
+  keywords_en:
+    - choking
+    - cannot swallow
+    - aspirated water
+    - coughing since inhaling food
+    - something stuck in throat
+    - gagging constantly
+  keywords_cn:
+    - 它噎住了
+    - 吞不下去
+    - 咳呛了好久
+    - 呛水后一直咳
+    - 喉咙里有东西
+    - 异物感
+  questions:
+    - "SHORT-CIRCUIT: Completely unable to cough, blue tongue, or cannot make any sound? → ER immediately + Heimlich procedure."
+    - "Current status: completely blocked and can't cough, coughing but making sounds and breathing, or inhaled water/food and still coughing?"
+    - "What might the foreign body be? Estimated size?"
+    - "Gum color? Still conscious and responsive?"
+    - "Brachycephalic breed eating dry kibble (high risk)?"
+  escalation_hint: "→ ER immediately if: cannot breathe/blue tongue OR post-aspiration persistent cough + worsening respiratory rate (aspiration pneumonia) OR breathing rate noticeably increased after inhaling water/food."
+
+- id: snoring_change
+  system: respiratory
+  keywords_en:
+    - snoring much louder suddenly
+    - waking from sleep gasping
+    - sleeping with mouth open
+    - sleep apnea
+    - new heavy snoring
+  keywords_cn:
+    - 最近打鼾特别响
+    - 睡着会突然喘醒
+    - 睡觉张嘴呼吸
+    - 打鼾变严重
+    - 睡眠呼吸异常
+  questions:
+    - "Breed — flat-faced (French Bulldog, Pug, Persian, British Shorthair)? Age and weight?"
+    - "How long has this change been happening?"
+    - "Daytime exercise tolerance and energy level — any reduction?"
+    - "Any episodes of waking suddenly gasping, turning over repeatedly, or blue tongue during sleep?"
+    - "Hot weather or after excitement — does it get much worse?"
+  escalation_hint: "→ ER/urgent within 48 h if: waking from sleep gasping + anxiety (obstructive sleep apnea) OR brachycephalic breed + declining daytime activity + progressive snoring (BOAS progression) OR sudden severe snoring + nasal obstruction (nasal mass/foreign body) OR significant weight gain + worsening."
+
+# ── E. Cardiovascular ─────────────────────────────────────────────────────────
+
+- id: gum_color_abnormal
+  system: cardiovascular
+  keywords_en:
+    - gums are white
+    - gums are purple
+    - gums look pale
+    - gums are yellow
+    - slow capillary refill
+    - gums are grey
+    - gums are blue
+  keywords_cn:
+    - 它牙龈白
+    - 牙龈紫
+    - 牙龈黄
+    - 按一下嘴唇变色慢
+    - 牙龈苍白
+    - 牙龈灰
+  questions:
+    - "SHORT-CIRCUIT: White/pale, purple/blue, grey, or yellow gums → ER immediately. This answer determines everything."
+    - "What color exactly: pink (normal), white, purple/blue, grey, or yellow?"
+    - "Capillary refill time — press the gum until white, how many seconds to return to pink color?"
+    - "Any accompanying signs: lethargy, breathing difficulty, collapse, known source of blood loss?"
+    - "Age, breed, any known heart disease or chronic illness?"
+  escalation_hint: "→ ER immediately for ANY abnormal color (white/pale/purple/blue/grey/yellow) — these indicate circulation failure, oxygen crisis, or liver emergency. CRT >2 s is also an ER trigger."
+
+- id: collapse_syncope
+  system: cardiovascular
+  keywords_en:
+    - suddenly collapsed
+    - fainted
+    - went limp
+    - passed out then got up
+    - syncope
+    - fell down suddenly
+    - lost consciousness briefly
+  keywords_cn:
+    - 它突然倒下了
+    - 晕了一下又起来
+    - 虚脱了
+    - 跑着跑着站不起来
+    - 突然软在地
+    - 失去意识了
+  questions:
+    - "How long ago? How long did it last before they recovered?"
+    - "What triggered it: excitement/exercise, coughing, eating/drinking, or no apparent trigger?"
+    - "Did they lose consciousness completely, or remain somewhat responsive? Any urinary incontinence or convulsive movements?"
+    - "Gum color — pink, white/pale, or blue/purple?"
+    - "Known heart disease or epilepsy history?"
+  escalation_hint: "→ ER immediately for ANY collapse episode — even if they appear recovered now. Syncope always requires cardiac/neurological/metabolic workup. Never green/yellow — all collapses are red."
+
+# ── F. Neurological ───────────────────────────────────────────────────────────
+
+- id: seizure
+  system: neurological
+  keywords_en:
+    - seizure
+    - convulsing
+    - fitting
+    - trembling all over
+    - shaking all over
+    - eyes rolled back
+    - foaming at mouth
+    - unconscious
+    - collapsed and shaking
+    - twitching
+    - muscle spasms
+  keywords_cn:
+    - 抽搐
+    - 癫痫
+    - 全身僵直抖动
+    - 眼睛翻白
+    - 口吐白沫
+    - 失去意识
+    - 抽了
+    - 发作
+    - 全身抖
+    - 突然倒地抖动
+  questions:
+    - "Short-circuit check: Is the seizure still happening? More than 5 minutes, or more than one in the past 24 hours? If yes — ER immediately."
+    - "First episode ever, or does this pet have a known seizure history?"
+    - "How long did this episode last?"
+    - "What happened just before, during, and after (alert, confused, or sleepy after)?"
+    - "Any chance they ate something unusual recently, had a head injury, or have been running a high fever?"
+  escalation_hint: "→ ER if: still seizing OR lasted over 5 min (status epilepticus) OR 2+ episodes in 24 h OR not fully conscious between episodes OR first-ever seizure (must rule out toxin/brain/metabolic cause)."
+
+- id: paralysis_hind_limb
+  system: neurological
+  keywords_en:
+    - sudden hind limb weakness
+    - dragging back legs
+    - cat suddenly cannot jump
+    - cold back legs
+    - back legs not working
+    - hind end paralysis
+    - knuckling hind feet
+  keywords_cn:
+    - 后腿突然站不起来
+    - 拖着后腿
+    - 猫突然不能跳了
+    - 后腿冰凉
+    - 后腿瘫
+    - 后腿无力
+    - 后腿拖行
+  questions:
+    - "SHORT-CIRCUIT: Any IVDD high-risk breed (Dachshund, Basset Hound, French Bulldog, Pekingese, Corgi) + sudden hind limb paralysis? → ER immediately (24 h surgical window)."
+    - "How long ago did this start — sudden or gradual?"
+    - "Both hind legs or one? Can they move the legs at all?"
+    - "Are the hind legs cold to the touch and painful? (In cats, this suggests aortic thromboembolism — ER.)"
+    - "Any history of trauma, jumping, or disc disease?"
+  escalation_hint: "→ ER immediately: any sudden paralysis/dragging (IVDD — 24 h surgery window is critical) OR cold/painful hind limbs in cats (ATE — hours until irreversible) OR both front and hind affected (high spinal lesion) OR short-legged breed + sudden immobility."
+
+- id: vestibular
+  system: neurological
+  keywords_en:
+    - head tilt
+    - walking in circles
+    - eyes flicking rapidly
+    - bumping into walls
+    - nystagmus
+    - balance problem
+    - rolling over
+  keywords_cn:
+    - 头歪到一边
+    - 不停转圈
+    - 眼睛快速抖动
+    - 撞墙撞家具
+    - 眼颤
+    - 平衡失调
+  questions:
+    - "How long ago did this start?"
+    - "Which symptoms: head tilt, circling (which direction), rapid eye movement (nystagmus), pressing head against wall, or bumping into furniture?"
+    - "Any ear discharge, odor, or scratching before this?"
+    - "Any vomiting, appetite changes, or level of alertness?"
+    - "Senior pet? (Idiopathic peripheral vestibular syndrome is common in older dogs.)"
+  escalation_hint: "→ ER if: head pressing (elevated intracranial pressure/hepatic encephalopathy) OR bumping into walls + vision loss OR vestibular signs + severe vomiting + elderly (cerebellar stroke/central lesion) OR pre-seizure signs."
+
+# ── G. Trauma ─────────────────────────────────────────────────────────────────
 
 - id: bleeding
   system: trauma
@@ -312,3 +812,1147 @@
     - "Can you see anything — swelling, an abnormal angle, blood, or exposed tissue?"
     - "Which leg(s)? Which area (paw/wrist/elbow/shoulder or hindleg/hip/knee/ankle)? Breed, weight, and age?"
   escalation_hint: "→ ER if: open fracture or visible bone OR leg at abnormal angle OR completely non-weight-bearing + crying OR hit by car/fallen from height (even if looks fine) OR sudden hindlimb dragging/paralysis in dachshund/French Bulldog/Beagle/Basset (IVDD — 24 h surgical window)."
+
+- id: chronic_lameness
+  system: musculoskeletal
+  keywords_en:
+    - struggling on stairs
+    - limping in cold weather
+    - stiff in mornings
+    - trouble getting up
+    - reluctant to exercise
+    - not jumping anymore
+  keywords_cn:
+    - 上下楼吃力
+    - 冷天明显瘸
+    - 早上起来僵
+    - 不爱跳沙发了
+    - 起身困难
+    - 运动耐受下降
+  questions:
+    - "How long has this been going on — gradual or episodic?"
+    - "Which limbs and which movements trigger it?"
+    - "Is it stiff in the mornings but better after warm-up? (Classic arthritis pattern.)"
+    - "Breed, age, weight/body condition score?"
+    - "Any prior diagnosis or medication for joint issues?"
+  escalation_hint: "→ ER/urgent if: acute worsening + cannot bear weight OR multiple joints swollen + systemic inflammation (suspected immune-mediated/Lyme) OR single limb persistent swelling + weight loss (bone tumor suspected)."
+
+- id: ivdd
+  system: musculoskeletal
+  keywords_en:
+    - dachshund suddenly cannot walk
+    - dragging hind legs
+    - yelping when touched
+    - disc disease
+    - spine problem
+    - cannot use back legs
+  keywords_cn:
+    - 腊肠突然站不起来
+    - 拖着后腿
+    - 碰它会痛叫
+    - 椎间盘
+    - 后腿突然不能动
+    - 法斗不能走路
+  questions:
+    - "SHORT-CIRCUIT: Dachshund, Basset Hound, French Bulldog, Pekingese, Beagle, or Corgi + sudden inability to use hind legs? → ER immediately — 24 h surgery window."
+    - "How long ago — sudden or gradual?"
+    - "Ability level: can stand but not walk, can move legs but can't stand, or completely immobile with no sensation?"
+    - "Bladder and bowel control intact?"
+    - "Triggered by jumping, stairs, or no apparent reason?"
+  escalation_hint: "→ ER immediately: all IVDD presentations in high-risk breeds — 24 h surgical window is critical. Fecal/urinary incontinence and absent pain sensation indicate worse prognosis. No yellow/green level."
+
+- id: hip_dysplasia
+  system: musculoskeletal
+  keywords_en:
+    - bunny hopping
+    - difficulty getting in car
+    - German Shepherd swaying gait
+    - hip problem
+    - back end weakness
+    - can not get up easily
+  keywords_cn:
+    - 德牧走路晃
+    - 兔跳
+    - 上车困难
+    - 髋关节
+    - 后躯无力
+    - 两条后腿一起跳
+  questions:
+    - "Breed and age? Large breeds (German Shepherd, Labrador, Golden Retriever, Saint Bernard) are most affected."
+    - "How long, and is it progressing?"
+    - "Which movements: bunny hopping (both hind legs moving together), difficulty rising, trouble with stairs/car, stiffness?"
+    - "Any X-rays done? Prior diagnosis?"
+    - "Body condition score and current exercise level?"
+  escalation_hint: "→ ER/urgent within 24-48 h if: acute severe worsening + cannot bear weight OR sudden unilateral lameness (suspected hip luxation)."
+
+- id: cruciate_ligament
+  system: musculoskeletal
+  keywords_en:
+    - sudden cry then limping after play
+    - sitting with leg out to side
+    - CCL injury
+    - ACL rupture
+    - rear leg suddenly lame
+    - yelped during exercise then limping
+  keywords_cn:
+    - 玩着玩着突然cry一声
+    - 后腿抬起不踩地
+    - 坐姿怪
+    - 运动后突然跛
+    - 膝盖韧带
+  questions:
+    - "Did they yelp suddenly during play/exercise and then start limping? How long ago?"
+    - "Degree: completely non-weight-bearing, three-legged hopping, or limping but touching ground?"
+    - "Breed and body weight — large/overweight breeds have higher CCL rates."
+    - "Neutered/spayed? Body condition?"
+    - "Has the other back leg ever been injured? (CCL often affects both sides.)"
+  escalation_hint: "→ Urgent within 48 h if: completely non-weight-bearing >24 h OR acute severe worsening. Otherwise, see vet this week for orthopedic exam + X-ray."
+
+- id: fracture_recovery
+  system: musculoskeletal
+  keywords_en:
+    - how to care for post surgery
+    - when to remove stitches
+    - bandage change
+    - post-op care
+    - recovery after bone surgery
+    - healing after fracture
+  keywords_cn:
+    - 术后X周怎么照顾
+    - 拆线
+    - 绷带怎么换
+    - 多久能跑
+    - 骨折术后护理
+  questions:
+    - "How many days post-surgery?"
+    - "Type of surgery and location?"
+    - "Pain, appetite, and activity levels — any changes?"
+    - "Wound appearance: dry and intact, slightly red, visibly swollen/oozing, or open?"
+    - "Is the E-collar still on? Activity restriction being followed?"
+  escalation_hint: "→ ER/urgent if: wound redness + heat + pus + fever (infection) OR sudden inability to bear weight (re-fracture or hardware failure) OR severe vomiting/not eating in early post-op period OR E-collar removed and pet licking/chewing wound."
+
+- id: hit_by_car
+  system: trauma
+  keywords_en:
+    - hit by car
+    - fell from height
+    - crushed by door
+    - run over
+    - high-rise fall
+    - blunt trauma
+    - knocked by vehicle
+  keywords_cn:
+    - 被车蹭了一下
+    - 从二楼掉下来
+    - 被门压了一下
+    - 被踢了
+    - 车撞了
+    - 高处坠落
+    - 被重物压
+  questions:
+    - "SHORT-CIRCUIT: Any car strike or fall from height → ER immediately, even if they appear normal now."
+    - "How long ago? Circumstances — vehicle speed, height of fall?"
+    - "Current state: conscious, walking, crying in pain?"
+    - "Gum color and breathing pattern?"
+    - "Any blood in urine (bladder rupture risk)?"
+  escalation_hint: "→ ER immediately for ALL car strikes and height falls, even if the pet looks completely fine — delayed complications (diaphragmatic hernia, internal bleeding, bladder rupture) are common within 24-48 h."
+
+- id: burns_electric
+  system: trauma
+  keywords_en:
+    - hot water spilled on pet
+    - chewed electric cord
+    - stepped on hot stove
+    - burn injury
+    - electric shock
+    - chemical burn
+    - scald
+  keywords_cn:
+    - 热水溅到
+    - 啃了电线触电
+    - 踩到烧热的炉子
+    - 烫伤
+    - 触电
+    - 化学品烧伤
+    - 烧伤
+  questions:
+    - "Type of injury: heat source, chemical, electrical, or sunburn?"
+    - "Body location and estimated area?"
+    - "Electric shock: consciousness, breathing, and heartbeat status? (Delayed pulmonary edema possible within 24 h.)"
+    - "Chemical: what substance? Has it been rinsed already?"
+    - "How long ago did this happen?"
+  escalation_hint: "→ ER if: any electric shock (even if appears fine — 24 h pulmonary edema risk) OR burn >5% body surface OR chemical in eyes/mouth/large skin area OR full-thickness burn (charred/black skin) OR any inhalation of hot fumes/smoke."
+
+- id: bite_sting
+  system: trauma
+  keywords_en:
+    - bitten by snake
+    - bee sting
+    - spider bite
+    - face suddenly swollen
+    - insect sting
+    - wasp sting
+    - multiple bee stings
+  keywords_cn:
+    - 被蛇咬了
+    - 被蜜蜂蛰
+    - 被蜘蛛咬
+    - 脸突然肿起来
+    - 虫咬后肿
+    - 被蜂蛰
+    - 多处蜂蛰
+  questions:
+    - "What bit them — snake (seen?), bee/wasp, spider, or unknown insect?"
+    - "How long ago, and where on the body?"
+    - "Swelling size and location — is the face swelling?"
+    - "Any systemic signs: breathing difficulty, collapse, vomiting, diarrhea, or extreme agitation?"
+    - "Geographic region — regional snake species matter enormously."
+  escalation_hint: "→ ER if: any known venomous snake — do NOT cut/suck/tourniquet, keep pet still OR multiple bee stings OR facial swelling + breathing difficulty (anaphylactic shock) OR unknown insect + systemic symptoms."
+
+# ── H. Skin/Eyes/Ears/Mouth ───────────────────────────────────────────────────
+
+- id: acute_skin_allergy
+  system: skin
+  keywords_en:
+    - face suddenly swollen
+    - hives all over
+    - swollen after vaccine
+    - allergic reaction
+    - facial swelling
+    - welts on skin
+    - swollen muzzle
+  keywords_cn:
+    - 脸突然肿了
+    - 身上起了疹子
+    - 打了疫苗后肿了
+    - 过敏反应
+    - 脸肿
+    - 全身起包
+  questions:
+    - "How quickly did this develop — minutes or hours?"
+    - "Location and appearance: facial swelling, full-body hives, localized redness, or pustules?"
+    - "Any difficulty breathing, drooling, or collapse (anaphylactic shock)?"
+    - "Likely trigger: vaccine, new food, insect bite, plant, or medication?"
+    - "Breed and age?"
+  escalation_hint: "→ ER if: facial swelling + breathing difficulty/drooling/collapse (anaphylaxis — can be fatal within minutes) OR acute progression expanding within 1 h OR cellulitis + fever."
+
+- id: chronic_skin
+  system: skin
+  keywords_en:
+    - always scratching
+    - dandruff
+    - recurring hot spots
+    - chronic itching
+    - recurrent skin infection
+    - constant scratching
+    - skin not healing
+  keywords_cn:
+    - 它老是抓
+    - 掉皮屑
+    - 反复湿疹
+    - 肚子红疙瘩
+    - 长期皮肤问题
+    - 总是抓
+  questions:
+    - "How long has this been going on — seasonal or year-round?"
+    - "Location and appearance of the skin issue?"
+    - "Food allergy exclusion tried? Environmental triggers (pollen, dust mites)? Flea control current?"
+    - "Any medications used, and how effective?"
+    - "Breed and age?"
+  escalation_hint: "→ ER/urgent if: large area of open sores + weeping (secondary bacterial infection) OR systemic weight loss + diffuse hair loss (endocrine/systemic disease) OR sudden full-body redness + uncontrollable itch (drug reaction/autoimmune)."
+
+- id: eye_abnormal
+  system: skin
+  keywords_en:
+    - red eye
+    - will not open eye
+    - eye bulging out
+    - eye discharge
+    - cloudy eye
+    - vision loss
+    - eye pawing
+  keywords_cn:
+    - 眼睛红
+    - 不睁开
+    - 分泌物多
+    - 眼球凸出来
+    - 眼瞎了
+    - 白雾覆盖眼睛
+    - 一直抓眼睛
+  questions:
+    - "SHORT-CIRCUIT: Eye bulging out of socket (proptosis) → 30-minute window, ER immediately."
+    - "Symptoms: redness, discharge (color/amount), won't open, bulging, cloudy, or apparent vision loss?"
+    - "How long has this been happening?"
+    - "Any trauma — scratch, collision, something in the eye?"
+    - "Brachycephalic breed (French Bulldog, Pug, Shih Tzu — high proptosis risk)? Any systemic symptoms?"
+  escalation_hint: "→ ER if: eye proptosis/bulging out of socket (30-min golden window) OR sudden vision loss OR corneal ulcer with green-blue discharge OR severe eye pain + tearing + won't open (acute glaucoma)."
+
+- id: ear_abnormal
+  system: skin
+  keywords_en:
+    - ear discharge
+    - head tilting
+    - scratching ear hard
+    - ear swollen
+    - aural hematoma
+    - ear infection
+    - ear odor
+  keywords_cn:
+    - 耳朵流分泌物
+    - 头歪一边
+    - 使劲抓耳朵
+    - 耳朵肿了
+    - 耳血肿
+    - 耳道异味
+    - 耳廓鼓起来
+  questions:
+    - "One ear or both? What does the discharge look like — color and smell?"
+    - "Symptoms: discharge, scratching, head tilt, swelling, or ear flap ballooned out (aural hematoma)?"
+    - "How long has this been going on?"
+    - "Any balance problems, eye twitching, or vomiting alongside (vestibular signs)?"
+    - "Breed — floppy-eared or long-coated breeds are more prone."
+  escalation_hint: "→ ER if: head tilt + rapid eye movement + vomiting/circling (vestibular — see T27/neurological) OR heavy dark/pus discharge + systemic fever OR visible ear flap hematoma (needs drainage, within 48 h)."
+
+- id: skin_lump
+  system: skin
+  keywords_en:
+    - felt a lump
+    - getting bigger
+    - mass on senior dog
+    - new growth
+    - bump on skin
+    - tumor found
+    - cyst growing
+  keywords_cn:
+    - 我摸到一个东西
+    - 最近变大了
+    - 老年狗身上越来越多
+    - 发现肿块
+    - 皮下包块
+    - 长了个东西
+  questions:
+    - "How long ago did you first notice it? How has it changed in size?"
+    - "Texture: soft and movable, hard and fixed, fluid-filled, or bleeding?"
+    - "Location and size — compare to a coin if possible."
+    - "Painful, warm, or broken open/oozing? Intact unspayed female + mammary lump?"
+    - "Breed, age, and neutered/spayed status?"
+  escalation_hint: "→ ER/urgent within 48 h if: rapidly growing (<1 month doubled) OR hard and fixed OR open/bleeding/pus OR 5+ new growths OR intact female + mammary lump (50% malignancy rate) OR lump + weight loss/lethargy."
+
+- id: hair_loss
+  system: skin
+  keywords_en:
+    - bald patch
+    - circular bald spot
+    - symmetrical hair loss
+    - alopecia
+    - fur falling out
+    - losing hair
+    - ring worm
+  keywords_cn:
+    - 身上有一块没毛
+    - 圆圈状脱毛
+    - 双侧对称脱毛
+    - 毛掉了一块
+    - 皮肤裸露
+    - 环形脱毛
+  questions:
+    - "Pattern: circular (ringworm/fungal), bilaterally symmetric (endocrine: Cushing's/hypothyroid), or single irregular area (trauma/self-licking)?"
+    - "How long has this been going on?"
+    - "Is the skin itchy? Any scaling or skin changes?"
+    - "Any concurrent signs of systemic disease: weight change, increased thirst/urination, lethargy?"
+    - "Any other pets or people in the household with skin lesions? (Ringworm is zoonotic.)"
+  escalation_hint: "→ Urgent bloodwork within a week if: bilateral symmetric hair loss + increased thirst/urination/weight change (Cushing's/hypothyroid) OR rapidly spreading + systemic symptoms OR household contacts also affected (zoonotic ringworm)."
+
+- id: dental_oral
+  system: skin
+  keywords_en:
+    - broke a tooth
+    - bleeding from mouth
+    - terrible breath
+    - loose tooth
+    - mouth pain
+    - tooth fracture
+    - drooling blood
+  keywords_cn:
+    - 啃骨头牙崩了
+    - 嘴里在流血
+    - 牙齿松了
+    - 嘴巴味道很难闻
+    - 牙疼
+    - 口腔出血
+  questions:
+    - "Symptoms: tooth visibly broken/missing, active bleeding, loose tooth, severe breath, eating only on one side, or pawing at mouth?"
+    - "How long has this been going on?"
+    - "Pain signals: head shaking, one-sided chewing, drooling, or won't let you near the mouth?"
+    - "Age and dental history — any prior cleanings?"
+    - "Any systemic signs: fever, not eating, weight loss?"
+  escalation_hint: "→ Urgent within 48 h if: acute tooth fracture with exposed pulp (red dot visible — will abscess) OR jaw/facial swelling + fever (abscess/spreading infection) OR large amount of ongoing oral bleeding OR severe bad breath + appetite loss + weight loss."
+
+- id: paw_pad
+  system: skin
+  keywords_en:
+    - licking paws constantly
+    - paw pads red or swollen
+    - nail bed discharge
+    - interdigital cyst
+    - cracked paw pads
+    - foot licking obsessively
+  keywords_cn:
+    - 老舔脚
+    - 脚垫红肿
+    - 指甲沟流脓
+    - 趾间炎
+    - 脚垫干裂
+    - 啃脚不停
+  questions:
+    - "Symptoms: redness between toes, swollen/cracked pads, nail bed discharge, or nail broke and bleeding?"
+    - "One paw or multiple?"
+    - "Limping on that foot?"
+    - "Any recent contact with chemicals, hot pavement, road salt, or foreign body?"
+    - "Breed and amount of outdoor activity?"
+  escalation_hint: "→ ER/urgent within 24-48 h if: pus + systemic fever OR multiple paws simultaneously + progressive (suspected allergy/autoimmune) OR deep nail bed infection involving toe bone OR paw pad chemical/thermal burn (hot pavement)."
+
+- id: anal_gland
+  system: skin
+  keywords_en:
+    - scooting on floor
+    - foul smell from rear
+    - lump near anus
+    - anal gland problem
+    - bottom dragging
+    - butt scooting
+  keywords_cn:
+    - 老蹭屁股
+    - 屁股有恶臭
+    - 肛门腺破了
+    - 肛门旁有鼓包
+    - 肛周肿
+    - 蹭地板
+  questions:
+    - "Symptoms: scooting, biting at rear, visible lump, rupture/discharge, or bleeding?"
+    - "How long has this been happening?"
+    - "Any recent diarrhea or parasite history?"
+    - "Location — 4-8 o'clock positions around anus usually indicate anal glands."
+    - "Breed and size — small breeds are much more prone to anal gland problems."
+  escalation_hint: "→ ER/urgent within 24-48 h if: anal gland rupture + systemic fever (sepsis risk) OR rectal prolapse (pink/red tissue protruding) OR persistent bleeding OR senior pet + perianal mass + weight loss (malignancy)."
+
+# ── I. Behavioral ─────────────────────────────────────────────────────────────
+
+- id: sudden_aggression
+  system: behavioral
+  keywords_en:
+    - suddenly aggressive
+    - biting family members
+    - personality change
+    - growling unprovoked
+    - snapping without reason
+    - temperament changed
+  keywords_cn:
+    - 最近脾气变了
+    - 咬主人
+    - 平时温柔突然咬人
+    - 突然攻击性增强
+    - 无故咬人
+    - 性格大变
+  questions:
+    - "How long has this been happening — sudden onset or gradual change?"
+    - "Context: triggered by touch on a specific area, near food, disturbed while sleeping, or completely unprovoked?"
+    - "Any pain signals alongside: limping, won't let you touch a certain spot, appetite changes?"
+    - "Age, sex, and neutered/spayed status?"
+    - "Senior pet, or known thyroid/neurological history?"
+  escalation_hint: "→ Urgent medical workup this week if: sudden-onset aggression + elderly pet + any neurological signs OR aggression triggered by specific body area touch (pain source) OR aggression + increased thirst/urination/weight change (endocrine) OR aggression + seizures/gait abnormality."
+
+- id: unusual_vocalization
+  system: behavioral
+  keywords_en:
+    - old cat crying constantly
+    - dog whimpering
+    - crying at night
+    - yowling at night
+    - constant howling
+    - vocalizing in pain
+  keywords_cn:
+    - 老猫一直叫不停
+    - 狗低声呜咽
+    - 夜里叫
+    - 一直嚎
+    - 持续哀嚎
+    - 夜间叫个不停
+  questions:
+    - "SHORT-CIRCUIT for MALE CAT: Is he still producing urine? Constant crying + in/out of litter box = ER (urinary blockage)."
+    - "Dog or cat? Age? Sex and neutered/spayed?"
+    - "How long, and what time of day is it worst — nighttime especially?"
+    - "Any context: happens during movement (pain), randomly, or when touched in a specific spot?"
+    - "Senior pet? Any known high blood pressure, hyperthyroidism (cats), or cognitive decline signs?"
+  escalation_hint: "→ ER if: male cat + crying + in/out litter box (T14 urinary blockage — immediate) OR elderly cat + constant vocalization + weight loss (hyperthyroidism) OR persistent crying + clear pain source + inability to move comfortably."
+
+- id: excessive_grooming
+  system: behavioral
+  keywords_en:
+    - licking belly bald
+    - chewing own paws
+    - biting tail
+    - over-grooming
+    - pulling own fur
+    - psychogenic alopecia
+  keywords_cn:
+    - 老舔肚子
+    - 舔到秃
+    - 啃自己脚
+    - 老咬尾巴
+    - 过度梳毛
+    - 拔毛
+  questions:
+    - "Location: paws, belly/groin, tail base, or all over the body?"
+    - "How long has this been going on?"
+    - "Any skin changes — redness, hair loss, open sores, or raw skin?"
+    - "Flea control current? Any food or environmental allergy workup done?"
+    - "Any stressful events: move, new pet, change in household?"
+  escalation_hint: "→ ER/urgent within 24-48 h if: large open areas of skin + weeping (secondary infection) OR tail base chewing + sudden bloody diarrhea (anal gland/bowel issue) OR licking to bleeding open wounds OR long-term OCD behavior unable to self-stop."
+
+- id: coprophagia_pica
+  system: behavioral
+  keywords_en:
+    - eating own poop
+    - eating rocks
+    - chewing fabric
+    - pica
+    - eating non-food items
+    - consuming garbage
+    - swallowing dirt
+  keywords_cn:
+    - 它吃自己便便
+    - 啃布啃塑料
+    - 吃土吃石头
+    - 异食癖
+    - 吃猫砂
+    - 啃毛线
+    - 吃垃圾
+  questions:
+    - "What exactly are they eating: own stool, other animals' stool, rocks, fabric, plastic, or dirt?"
+    - "How long, and how often?"
+    - "Any weight changes, appetite changes, increased thirst, or signs of anemia (pale gums)?"
+    - "Any diagnosed or suspected IBD, pancreatitis, parasites, or anemia?"
+    - "Age and breed?"
+  escalation_hint: "→ ER/urgent within 48 h if: pica + weight loss + anemia signs (pale gums) OR consistently swallowing fabric/plastic/string (foreign body obstruction risk) OR pica + sudden vomiting/abdominal distension."
+
+# ── J. Systemic/Metabolic ─────────────────────────────────────────────────────
+
+- id: lethargy
+  system: systemic
+  keywords_en:
+    - hiding
+    - not moving
+    - lethargic
+    - not eating
+    - no appetite
+    - just lying there
+    - unusually quiet
+    - not responding
+    - seems off
+    - out of character
+  keywords_cn:
+    - 躲衣柜不出来
+    - 一直趴着不动
+    - 叫不出来玩
+    - 今天没吃饭
+    - 拒绝吃所有东西
+    - 水也不喝
+    - 不精神
+    - 躲起来
+    - 没活力
+    - 不对劲
+    - 蔫了
+    - 没力气
+    - 一直睡觉
+  questions:
+    - "How long has this been going on?"
+    - "Of these, which apply: not eating, not drinking, moving less, strange posture, different breathing, abnormal urination/defecation, visible wounds or discharge?"
+    - "In the past 7 days: food change, vaccine, new medication, new pet in the house, or stressful event?"
+    - "Gum color (lift the lip) — pink, white/pale, blue/purple, or yellow? Does their belly feel hard, tense, or painful when gently pressed?"
+    - "Resting respiratory rate: count chest rises for 30 seconds times 2. What number?"
+  escalation_hint: "→ ER if: gums pale/purple/yellow OR unproductive retching + bloated belly (GDV) OR painful belly on touch OR 3+ symptoms from Q2 at once OR senior/chronic-disease pet with any new symptom OR getting visibly worse."
+
+- id: heatstroke
+  system: metabolic
+  keywords_en:
+    - collapsed after walk in summer
+    - left in hot car
+    - panting and vomiting after heat
+    - heatstroke
+    - overheating
+    - heat exhaustion
+    - collapsed in heat
+  keywords_cn:
+    - 夏天遛狗后倒下
+    - 车里待了一会儿
+    - 短鼻品种夏天发病
+    - 热射病
+    - 中暑
+    - 高温后倒下
+    - 热衰竭
+  questions:
+    - "SHORT-CIRCUIT: Left in hot car or collapsed after heat exposure → ER immediately while starting cooling."
+    - "How long ago? Ambient temperature?"
+    - "Symptoms: extreme panting + drooling, weakness/collapse, vomiting/diarrhea, seizure, or unconsciousness?"
+    - "Breed (brachycephalic/large/senior are highest risk) and weight?"
+    - "Has cooling started? (Cool water — NOT ice — wet towel, fan/AC.)"
+  escalation_hint: "→ ER immediately for all heatstroke — begin cooling NOW with cool (not ice) water while going to ER. Do NOT force water. Delayed DIC/kidney failure is common even after apparent recovery."
+
+- id: hypothermia
+  system: metabolic
+  keywords_en:
+    - shivering after being outside in cold
+    - fell in cold water
+    - cold and stiff
+    - hypothermia
+    - very cold to touch
+    - can not warm up
+  keywords_cn:
+    - 寒冬遛狗后抖
+    - 掉冰水里捞出
+    - 老年瘦狗冬天怕冷
+    - 低体温
+    - 冻僵了
+    - 浑身冰冷
+  questions:
+    - "How long were they exposed to the cold/water?"
+    - "Temperature if measurable? (Below 37°C is concerning.)"
+    - "Symptoms: shivering, cold-stiffness, confusion/disorientation, or not shivering (deep hypothermia — worse sign)?"
+    - "Breed (small/short-coat/elderly/thin are highest risk)?"
+    - "Has gentle warming started? (Blankets + body warmth, NOT hot water.)"
+  escalation_hint: "→ ER if: temperature <37°C OR confusion/disorientation/not shivering (deep hypothermia) OR any submersion in cold water OR extremity frostbite (white/black/loss of sensation). Gentle warm — NOT hot baths or direct heat."
+
+- id: metabolic_crisis
+  system: metabolic
+  keywords_en:
+    - diabetic dog seems floppy
+    - toy breed trembling
+    - kidney disease cat not eating
+    - hypoglycemia
+    - diabetic crisis
+    - DKA
+    - Addison crisis
+  keywords_cn:
+    - 糖尿病猫狗变软瘫
+    - 玩具犬抖一抖没力气
+    - 肾病猫突然不吃
+    - 低血糖
+    - 糖尿病危象
+    - 肾衰发作
+  questions:
+    - "SHORT-CIRCUIT: Diabetic pet + any sudden change → ER immediately."
+    - "Known chronic illness: diabetes, kidney disease, Cushing's, Addison's?"
+    - "Symptoms: floppy/collapse, trembling/shaking, lethargy/collapse, vomiting/not eating, seizure, or rapidly worsening polyuria/polydipsia?"
+    - "How long ago, and any recent insulin/medication changes?"
+    - "Young toy breed or very small dog + trembling + weakness?"
+  escalation_hint: "→ ER immediately: diabetic pet + seizure/floppy (hypoglycemia — honey/syrup on gums if conscious, then ER) OR diabetic pet + lethargy + vomiting + rapidly worsening thirst/urination (DKA) OR CKD cat + sudden complete anorexia (uremic crisis) OR toy breed + trembling + weakness (hypoglycemia)."
+
+# ── K. Multi-Pet ──────────────────────────────────────────────────────────────
+
+- id: multi_pet_screening
+  system: multi_pet
+  keywords_en:
+    - do not know which one ate it
+    - both cats vomiting
+    - shared food bowl
+    - multiple pets sick
+    - all pets affected
+    - which one is sick
+  keywords_cn:
+    - 不知道是哪只吃了
+    - 家里两只猫一起吐
+    - 共用食盆
+    - 好几只都不对
+    - 不知道哪只生病了
+  questions:
+    - "How many pets, and what species/ages?"
+    - "What do they share: food bowl, water, litter box, or roaming space?"
+    - "What symptoms are you seeing, and can you tell which pet has them?"
+    - "Any known recent ingestion opportunity — garbage, medication, plants, or chemicals within reach?"
+    - "Vaccination status of all pets?"
+  escalation_hint: "→ ER if: multiple pets showing acute digestive symptoms simultaneously (possible toxin source — all pets at risk) OR one pet with acute emergency while others had same exposure OR any male cat in the group showing urinary signs (T14)."
+
+- id: inter_species_attack
+  system: multi_pet
+  keywords_en:
+    - big dog bit my small dog
+    - cat attacked by dog
+    - dog fight
+    - cat bit by dog
+    - interspecies attack
+    - bite wound
+    - attacked by another animal
+  keywords_cn:
+    - 大狗咬了我的小狗
+    - 小猫被狗追扑了一下
+    - 狗打架了
+    - 被攻击了
+    - 咬伤
+    - 被大狗咬
+  questions:
+    - "SHORT-CIRCUIT: Large dog bit small dog/cat → ER immediately even if the wound looks minor."
+    - "Size difference between attacker and victim? Breed?"
+    - "How long ago? Visible wound status: intact skin, bruising, open wound, or active bleeding?"
+    - "Breathing and gum color of the injured pet?"
+    - "Attacker's rabies vaccination status?"
+  escalation_hint: "→ ER immediately for ALL large dog bites on small dogs/cats — 'no visible wound' does not rule out deep tissue damage or internal injury. CT/ultrasound needed. Also check rabies vaccination status."
+
+# ── L. Senior ─────────────────────────────────────────────────────────────────
+
+- id: senior_vision_hearing
+  system: senior
+  keywords_en:
+    - bumping into furniture
+    - not coming when called
+    - white haze over eye
+    - vision loss
+    - hearing loss
+    - cataract
+    - going blind
+  keywords_cn:
+    - 最近撞家具
+    - 叫它不来
+    - 白雾覆盖眼睛
+    - 夜视差
+    - 双侧白内障
+    - 视力下降
+    - 听力下降
+  questions:
+    - "Which symptoms: bumping into walls/furniture, not responding to calls, white clouding over eye, worse in dim light, or one eye vs both?"
+    - "How long, and gradual or sudden onset?"
+    - "Any behavioral changes: anxiety, altered routes at home, increased clinginess?"
+    - "Breed, age, and known chronic disease (especially diabetes — high cataract/retinal risk)?"
+    - "Any concurrent signs of high blood pressure or neurological issues?"
+  escalation_hint: "→ Urgent within 48 h if: SUDDEN vision loss (hypertension/SARDS/toxin — treatable if caught early) OR cloudy + red + painful eye (acute glaucoma) OR vision/hearing loss + neurological signs."
+
+- id: senior_cognitive_decline
+  system: senior
+  keywords_en:
+    - circling at night
+    - cannot find water bowl
+    - stuck in corners
+    - sundowning
+    - canine cognitive dysfunction
+    - getting confused
+    - wandering at night
+  keywords_cn:
+    - 夜里转圈
+    - 叫不停
+    - 找不到水盆
+    - 钻进角落出不来
+    - 老年痴呆
+    - 认知衰退
+    - 夜间游荡
+  questions:
+    - "DISHA checklist — which apply: Disorientation, reduced social Interaction, Sleep changes, House-soiling, Activity level change?"
+    - "How long, and is it worse at night (sundowning)?"
+    - "Rule-out checklist completed? High blood pressure, hyperthyroidism (cats), pain, or vision/hearing loss can mimic CDS."
+    - "Age and breed?"
+    - "Any sudden acute changes within 24 h?"
+  escalation_hint: "→ ER if: acute sudden behavioral change within 24 h (acute neurological cause) OR any seizure or hemiparesis OR head pressing (elevated intracranial pressure). Gradual DISHA = vet this week for blood workup."
+
+- id: senior_weight_change
+  system: senior
+  keywords_en:
+    - getting thinner
+    - eating more but still losing weight
+    - belly getting rounder
+    - senior weight loss
+    - muscle wasting
+    - unexplained weight gain
+  keywords_cn:
+    - 最近瘦了
+    - 吃多但还是瘦
+    - 胖了肚子鼓
+    - 老年消瘦
+    - 肌肉萎缩
+    - 腹围增加
+  questions:
+    - "How much weight change (kg or %) over what time period?"
+    - "Type: losing weight + eating more (hyperthyroid/diabetes), losing weight + eating less (cancer/kidney/liver), gaining weight + thirstier (Cushing's), or belly enlarging + breathing change (ascites/heart)?"
+    - "How long has this been happening?"
+    - "Any concurrent polyuria/polydipsia, vomiting, diarrhea, or lethargy?"
+    - "Breed, age, and known chronic disease?"
+  escalation_hint: "→ ER/urgent within 48 h if: weight loss >10%/month OR belly enlargement + breathing difficulty (ascites/heart failure) OR complete appetite loss + lethargy + weight loss OR elderly cat + eating more + losing weight (hyperthyroidism)."
+
+- id: senior_activity_decline
+  system: senior
+  keywords_en:
+    - struggling on stairs
+    - reluctant to go for walks
+    - slow to get up
+    - exercise intolerance
+    - decreased activity
+    - sleeping more than usual
+  keywords_cn:
+    - 上下楼吃力
+    - 跳沙发不行了
+    - 起立慢
+    - 不爱出去散步
+    - 活动减少
+    - 爬楼梯费力
+  questions:
+    - "How long has this been going on?"
+    - "More joint-related (specific limb/stiffness worse in morning) or systemic (global weakness)?"
+    - "Any pain signals, morning stiffness easing with movement?"
+    - "Weight, appetite, increased thirst/urination, or breathing changes alongside?"
+    - "Breed, age, and body condition score?"
+  escalation_hint: "→ ER/urgent if: sudden inability to rise (neurological/IVDD/severe joint) OR worsening breathing + activity decline (heart failure) OR multiple joint swelling + fever (immune-mediated/Lyme)."
+
+- id: senior_wellness_schedule
+  system: senior
+  keywords_en:
+    - how often to check
+    - senior cat checkup
+    - older dog routine
+    - annual exam
+    - wellness plan for senior
+    - how often blood work
+  keywords_cn:
+    - 我家狗8岁了多久检查一次
+    - 老猫体检该做什么
+    - 老年体检频率
+    - 几岁开始加密体检
+    - 老年宠物怎么保健
+  questions:
+    - "Breed, age, and any known health issues?"
+    - "When was the last comprehensive wellness exam?"
+    - "Any current symptoms or concerns?"
+    - "Body condition and activity level?"
+  escalation_hint: "→ No escalation for wellness question. Recommend: 7-9 yr dogs/10-12 yr cats: every 6 months (CBC + chemistry + urinalysis + T4 + blood pressure). ≥10 yr dogs/≥13 yr cats: every 3-4 months. Large breeds start at 6-7 years."
+
+# ── M. Chronic Disease Management ────────────────────────────────────────────
+
+- id: diabetes_management
+  system: chronic_disease
+  keywords_en:
+    - diagnosed with diabetes
+    - blood sugar unstable
+    - insulin dose adjustment
+    - diabetic cat
+    - diabetic dog
+    - glucose monitoring
+  keywords_cn:
+    - 刚被诊断糖尿病
+    - 血糖控制不稳
+    - 胰岛素剂量调整
+    - 糖尿病猫
+    - 糖尿病犬
+    - 血糖监测
+  questions:
+    - "Current insulin type, dose, and frequency?"
+    - "Home glucose monitoring? Current readings?"
+    - "Current status: stable, recurring hypoglycemia, recurring hyperglycemia, or DKA signs (lethargy + vomiting + worsening thirst/urination)?"
+    - "Current diet plan?"
+    - "Concurrent conditions: Cushing's, pancreatitis, or dental disease?"
+  escalation_hint: "→ ER if: DKA signs (lethargy + not eating + vomiting + rapidly worsening polyuria/polydipsia) OR recurring severe hypoglycemia (seizure/floppy) OR insulin given but pet didn't eat (→ hypoglycemia risk, give honey on gums + ER) OR acute decompensation."
+
+- id: heart_disease_management
+  system: chronic_disease
+  keywords_en:
+    - diagnosed with heart disease
+    - on heart medication
+    - coughing more lately
+    - cardiac medication
+    - CHF management
+    - heart murmur follow up
+  keywords_cn:
+    - 确诊心脏病
+    - 在吃心脏药
+    - 最近喘了
+    - 心脏药物
+    - 心衰管理
+    - 心脏杂音复查
+  questions:
+    - "Diagnosis (valve disease, DCM, HCM) and current medications?"
+    - "Current status: stable, night cough worsening, breathing rate increase, abdominal enlargement, exercise intolerance, or syncope?"
+    - "Home resting respiratory rate — recommended daily measurement. What is it?"
+    - "Appetite, weight, medication compliance?"
+  escalation_hint: "→ ER if: resting RR >30/min (dog) or >40/min (cat) OR open-mouth breathing/purple gums OR syncope/collapse OR suddenly enlarged belly (ascites/acute decompensation)."
+
+- id: ckd_management
+  system: chronic_disease
+  keywords_en:
+    - diagnosed with CKD
+    - IRIS staging
+    - kidney diet
+    - renal failure
+    - chronic kidney disease
+    - kidney disease management
+  keywords_cn:
+    - 猫被诊断慢性肾病
+    - IRIS分期
+    - 肾病饮食
+    - 慢性肾衰
+    - 肾病管理
+    - 肾病处方粮
+  questions:
+    - "IRIS stage if known?"
+    - "Current status: stable, sudden appetite loss, worsening vomiting, dehydration, or bad breath/oral ulcers?"
+    - "Current treatment: prescription diet, medications, and/or fluids?"
+    - "Water intake, urination volume, and body weight?"
+    - "Concurrent hypertension or protein-losing nephropathy?"
+  escalation_hint: "→ ER if: sudden complete appetite loss + lethargy (uremic crisis) OR persistent vomiting + not eating >24 h OR severe dehydration + pale mucous membranes OR acute blood creatinine spike (acute decompensation)."
+
+- id: thyroid_management
+  system: chronic_disease
+  keywords_en:
+    - cat on hyperthyroid treatment
+    - dog diagnosed hypothyroid
+    - T4 monitoring
+    - methimazole
+    - levothyroxine
+    - thyroid medication
+  keywords_cn:
+    - 猫甲亢治疗中
+    - 狗确诊甲减
+    - T4监测
+    - 甲巯咪唑
+    - 左旋甲状腺素
+    - 甲状腺药物
+  questions:
+    - "Diagnosis and current medication + dose?"
+    - "Hyperthyroid cat: stable, still losing weight, heart rate fast, or vomiting? Hypothyroid dog: stable, still lethargic, hair loss, or weight gaining again?"
+    - "Medication compliance?"
+    - "T4 and bloodwork — when last checked?"
+  escalation_hint: "→ ER if: hyperthyroid cat + heart rate >240/min or severe hypertension/heart failure signs OR hypothyroid dog + myxedema coma (extreme lethargy + hypothermia + slow heart rate)."
+
+- id: epilepsy_management
+  system: chronic_disease
+  keywords_en:
+    - diagnosed with epilepsy on phenobarbital
+    - seizures more frequent
+    - drug levels
+    - phenobarbital
+    - potassium bromide
+    - anti-epileptic
+  keywords_cn:
+    - 确诊癫痫在吃苯巴比妥
+    - 最近发作多
+    - 血药浓度
+    - 癫痫药物
+    - 发作频繁
+    - 抗癫痫治疗
+  questions:
+    - "Current antiepileptic drug(s), dose, and frequency?"
+    - "Status: stable, mildly increasing frequency, severe episodes, or drug side effects?"
+    - "Seizure frequency per month?"
+    - "Medication compliance — any missed doses?"
+    - "Home emergency diazepam available (prescribed by vet)?"
+  escalation_hint: "→ ER if: status epilepticus (>5 min or 2+ in 24 h without recovery between) OR sudden marked increase in frequency (control failure) OR acute drug side effects (jaundice/severe lethargy)."
+
+- id: arthritis_management
+  system: chronic_disease
+  keywords_en:
+    - arthritis on NSAID
+    - chronic pain in senior dog
+    - not walking as much
+    - joint pain management
+    - degenerative joint disease
+    - osteoarthritis management
+  keywords_cn:
+    - 关节炎在吃NSAID
+    - 老年痛
+    - 最近又不爱走
+    - 关节疼痛管理
+    - 慢性关节炎
+    - 骨关节炎用药
+  questions:
+    - "Current medication and dose?"
+    - "Change in pain/mobility indicators: limping, difficulty rising, appetite, behavior?"
+    - "Liver/kidney monitoring frequency — NSAIDs require regular blood work."
+    - "Body condition score and current exercise?"
+  escalation_hint: "→ ER if: acute severe worsening — cannot bear weight at all OR NSAID side effects: vomiting + black tarry stool + not eating (GI ulceration) OR abnormal liver/kidney values."
+
+- id: allergy_management
+  system: chronic_disease
+  keywords_en:
+    - allergy on Apoquel
+    - Cytopoint overdue
+    - switching prescription food
+    - atopic dermatitis management
+    - immunotherapy
+    - allergy medication
+  keywords_cn:
+    - 过敏在用Apoquel
+    - Cytopoint间隔到了
+    - 换处方粮
+    - 过敏管理
+    - 免疫治疗
+    - 长期过敏用药
+  questions:
+    - "Current medication/treatment and frequency?"
+    - "Itch score (0-10) and location of symptoms?"
+    - "Medication compliance? Strict flea control current?"
+    - "Any observed side effects?"
+  escalation_hint: "→ ER/urgent within 48 h if: large open sores + weeping (secondary infection) OR long-term Apoquel/cyclosporine + sudden new mass or infection (immunosuppression risk) OR accidental ingestion of suspected allergen during food elimination trial."
+
+- id: cancer_management
+  system: chronic_disease
+  keywords_en:
+    - on chemotherapy
+    - tumor removed recovering
+    - lymphoma maintenance
+    - cancer treatment
+    - oncology follow up
+    - post-tumor surgery
+  keywords_cn:
+    - 化疗中怎么照顾
+    - 肿瘤切了在恢复
+    - 淋巴瘤维持期
+    - 化疗护理
+    - 肿瘤术后恢复
+    - 肿瘤维持期
+  questions:
+    - "Diagnosis and current treatment plan (chemo/surgery/radiation)?"
+    - "Status: stable, chemo side effects (vomiting/poor appetite/neutropenic), acute deterioration, or post-op complications?"
+    - "Food intake, weight, and energy level?"
+    - "When is the next chemo session or follow-up?"
+  escalation_hint: "→ ER if: fever 7-10 days post-chemo (neutropenic fever — oncologic emergency) OR uncontrolled bleeding (thrombocytopenia) OR severe vomiting/diarrhea/not eating OR acute progression (breathing difficulty/collapse)."
+
+- id: ibd_management
+  system: chronic_disease
+  keywords_en:
+    - diagnosed IBD on medication
+    - recurring vomiting and diarrhea
+    - prescription food issues
+    - inflammatory bowel disease
+    - IBD management
+    - chronic GI disease
+  keywords_cn:
+    - 确诊IBD在吃药
+    - 反复呕吐拉肚子
+    - 处方粮换来换去
+    - 炎症性肠病
+    - IBD管理
+    - 慢性消化道病
+  questions:
+    - "Biopsy-confirmed diagnosis? Current medications (prednisone/cyclosporine/chloramphenicol) and prescription diet?"
+    - "Symptom control and weight trend?"
+    - "Side effects: increased thirst/urination (steroids), gum overgrowth (cyclosporine)?"
+    - "B12 monitoring — especially important in cats?"
+  escalation_hint: "→ ER if: acute exacerbation + dehydration OR black tarry stool + pallor (GI bleeding) OR severe immunosuppression on long-term steroids/cyclosporine + signs of infection."
+
+- id: cushings_addisons
+  system: chronic_disease
+  keywords_en:
+    - Cushing's on Vetoryl
+    - Addison's monthly injection
+    - ACTH test
+    - hyperadrenocorticism
+    - hypoadrenocorticism
+    - trilostane
+    - DOCP injection
+  keywords_cn:
+    - 库欣在吃Vetoryl
+    - 阿迪森每月打
+    - ACTH刺激试验
+    - 库欣综合征管理
+    - 阿迪森危象
+    - 肾上腺皮质功能
+  questions:
+    - "Diagnosis (Cushing's or Addison's) and current medications + frequency?"
+    - "Status: stable, Addison's crisis signs (lethargy + vomiting + collapse), or Cushing's over-treatment (sudden lethargy + not eating)?"
+    - "ACTH stimulation test frequency?"
+    - "Any stressful events recently (surgery, travel, new pets) — Addison's dogs need stress dose steroids?"
+  escalation_hint: "→ ER immediately if: Addison's crisis (lethargy + vomiting + collapse + hyperkalemia) OR Cushing's over-treatment (sudden lethargy + not eating + hypoglycemia) OR stress situation without supplemental corticosteroid coverage."
+
+# ── N. Perioperative ──────────────────────────────────────────────────────────
+
+- id: pre_surgery_prep
+  system: perioperative
+  keywords_en:
+    - surgery tomorrow
+    - how many hours to fast
+    - can I give water
+    - worried about anesthesia in older dog
+    - pre-op fasting
+    - preparing for operation
+  keywords_cn:
+    - 明天手术
+    - 禁食几小时
+    - 能不能给水
+    - 老犬麻醉怕
+    - 术前准备
+    - 手术前禁食
+  questions:
+    - "What surgery is scheduled?"
+    - "What time does it start?"
+    - "Breed, age, and known chronic conditions?"
+    - "Current medications — which to stop and which to continue?"
+    - "Any day-of red flags already: fever, vomiting, diarrhea, or severe coughing?"
+  escalation_hint: "→ Contact vet to consider postponing if: fever/vomiting/diarrhea/severe cough on the day of surgery OR cannot confirm fasting status OR acute illness onset before procedure."
+
+- id: post_surgery_care
+  system: perioperative
+  keywords_en:
+    - how is wound on post-op day
+    - when to remove stitches
+    - can I bathe
+    - post-op wound care
+    - recovery after surgery
+    - incision care
+  keywords_cn:
+    - 术后第几天伤口什么样
+    - 拆线
+    - 能不能洗澡
+    - 术后护理
+    - 手术后恢复
+    - 伤口护理
+  questions:
+    - "How many days post-surgery?"
+    - "Wound appearance: completely dry and intact, slightly pink at edges, clearly red/swollen/oozing, or open/gaping?"
+    - "E-collar still being worn at all times?"
+    - "Activity restriction being followed?"
+    - "Appetite, urination, and defecation normal?"
+  escalation_hint: "→ ER/contact surgeon urgently if: wound redness + heat + pus + fever (infection) OR wound dehiscence/opening OR sudden inability to bear weight post-orthopedic surgery (hardware failure) OR severe vomiting/complete anorexia in early post-op period."
+
+- id: post_op_complications
+  system: perioperative
+  keywords_en:
+    - still vomiting on day 2 post-op
+    - face swollen after vaccine
+    - lethargic after vaccination
+    - post-vaccine reaction
+    - anesthesia side effect
+    - surgery complication
+  keywords_cn:
+    - 术后第二天还是吐
+    - 打了疫苗后脸肿
+    - 疫苗后嗜睡
+    - 术后并发症
+    - 麻醉副作用
+    - 疫苗反应
+  questions:
+    - "How long after surgery or vaccination did this start?"
+    - "Symptoms: facial swelling, breathing difficulty, vomiting/diarrhea, lethargy, or injection site swelling?"
+    - "How severe — can they eat, drink, and move normally?"
+    - "Breed and age?"
+  escalation_hint: "→ ER immediately if: facial swelling + breathing difficulty (anaphylaxis — can be fatal in minutes) OR collapse/pale gums after procedure OR persistent vomiting + complete anorexia >24 h post-op OR injection site severe swelling/pus."
+
+# ── O. Paralysis Care ─────────────────────────────────────────────────────────
+
+- id: paralyzed_pet_care
+  system: paralysis_care
+  keywords_en:
+    - paralyzed pet at home
+    - bedsores prevention
+    - bladder management for paralyzed dog
+    - manual bladder expression
+    - nursing paralyzed cat
+    - pressure sores
+  keywords_cn:
+    - 瘫了在家护理
+    - 褥疮怎么办
+    - 膀胱要不要挤
+    - 瘫痪护理
+    - 人工排尿
+    - 防压疮
+  questions:
+    - "Cause of paralysis and duration (IVDD/neurological/senior weakness)?"
+    - "Current challenges: pressure sores, cannot empty bladder, recurring UTIs, hygiene difficulties, or passive movement?"
+    - "Current setup: waterproof pads, memory foam mattress, turn schedule, bladder expression routine?"
+    - "Any known UTI history?"
+    - "Breed and weight?"
+  escalation_hint: "→ ER if: pressure sore + systemic fever (sepsis risk) OR bladder not emptied >12 h (rupture risk) OR severe UTI (blood in urine + pain + fever) OR sudden new symptoms OR caregiver no longer able to provide adequate care (animal welfare concern)."
