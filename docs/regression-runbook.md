@@ -18,7 +18,7 @@ cd /opt/pawly
 git pull origin main          # or `git checkout <pr-branch>` for a PR
 
 # 4. Pick a target
-make regression-light         # 30 cases, ~20 min, ~$2
+make regression-lite         # 30 cases, ~20 min, ~$2
 make regression-full          # 223 cases, 1-3 hr, ~$50
 
 # 5. Compare against baseline
@@ -53,7 +53,7 @@ The `make regression-{light,full}` targets are the ONLY supported invocations. D
 `MODEL=deepseek-v4-pro` (set in the Makefile). Override with:
 
 ```bash
-make regression-light MODEL=gemini-2.0-flash
+make regression-lite MODEL=gemini-2.0-flash
 ```
 
 We picked DeepSeek V4 Pro after V4 Flash showed too many compliance regressions on dosage and euthanasia cases. Don't switch back without explicit approval.
@@ -66,7 +66,7 @@ The VPS already has these in `/opt/pawly/.env`:
 - `GOOGLE_API_KEY` — Gemini fallback + judge
 - `OPENAI_API_KEY` — embedding model for memory layer (optional for blackbox runs)
 
-If a `make regression-light` fails with "API key not set", check `.env` first.
+If a `make regression-lite` fails with "API key not set", check `.env` first.
 
 ## Reading the result
 
@@ -123,7 +123,7 @@ LLM regression is expensive ($2 light, $50 full) and most PRs (refactors,
 internal cleanups, doc changes) don't move the needle. Run it when it
 matters, skip it otherwise.
 
-- **Add `lite-regression` label to PR** → light-30 via `.github/workflows/regression-light.yml`. Takes ~20 min, ~$2. Re-runs on every commit while the label is present.
+- **Add `lite-regression` label to PR** → light-30 via `.github/workflows/regression-lite.yml`. Takes ~20 min, ~$2. Re-runs on every commit while the label is present.
 - **Add `full-regression` label to PR** → full-223 via `.github/workflows/regression-full.yml`. Takes 1-3 hours, ~$50. Fires only on label-add (not on subsequent commits) so you don't burn $50 by accident; remove + re-add the label to re-trigger.
 - **No label** → no regression runs. Author's call.
 - **Manual** (this runbook) → run on the VPS for ad-hoc experiments.
@@ -193,7 +193,7 @@ exact code state has already been measured" and skip re-running.
 |---|---|
 | PR opened, light-30 runs | Job restores baseline from cache → runs tests → diffs → caches its own report keyed by `tree-sha` |
 | Push to main (PR merged) | `refresh-baseline` job checks if `<merge-tree-sha>.json` is already in cache. **Hit**: cp to baseline, done in 5 sec. **Miss**: runs light-30, saves both as baseline and cache entry. |
-| You run `make regression-light` on the VPS | Just produces a local report. Does NOT touch the cache. |
+| You run `make regression-lite` on the VPS | Just produces a local report. Does NOT touch the cache. |
 | You run `make regression-promote-baseline` | Copies the latest local report into both `baseline-light-30.json` and `reports-light-30/<MODEL>/<tree>.json`. |
 
 ### Bootstrap (first time after VPS setup)
@@ -212,7 +212,7 @@ light-30 on the VPS once, just promote it:
 ssh root@129.212.231.81
 cd /opt/pawly
 git checkout main && git pull
-make regression-light                 # ~20 min, ~$2 — skip if already done
+make regression-lite                 # ~20 min, ~$2 — skip if already done
 make regression-promote-baseline      # 1 sec — seeds baseline + tree-SHA cache
 ```
 
@@ -249,7 +249,7 @@ Don't quietly retry > 2 times. If the third run fails, escalate to a human.
 - ❌ Don't run `pytest tests/blackbox_multiturn` directly. Use `make regression-{light,full}`.
 - ❌ Don't commit report.json files into the repo. They live under `tests/blackbox_multiturn/results/` which is gitignored.
 - ❌ Don't change `MODEL` for the same PR's baseline vs candidate runs. Apples-to-apples comparison only.
-- ❌ Don't run `regression-full` without first running `regression-light` and seeing it pass. If light fails, full will fail too — and you'll have spent $50 to confirm it.
+- ❌ Don't run `regression-full` without first running `regression-lite` and seeing it pass. If light fails, full will fail too — and you'll have spent $50 to confirm it.
 - ❌ Don't kick off `regression-full` if the VPS already has another full run going. The blackbox tests share state in the orchestrator stubs and concurrent runs corrupt each other's reports.
 
 ## For Atlas / agents specifically
@@ -258,7 +258,7 @@ If a human asks you to run regression:
 
 1. Confirm you're on the VPS (`hostname` should be `Pawly`).
 2. Confirm the branch you want (`git status; git log -1 --oneline`).
-3. Run `make regression-light` first. Wait for it to finish. Don't background it.
+3. Run `make regression-lite` first. Wait for it to finish. Don't background it.
 4. Run `make regression-diff` and paste the markdown output back to the human.
 5. If the human says "looks good, run full" → run `make regression-full`. Otherwise, stop.
 6. **Never** modify test cases or the Makefile to "make tests pass" without explicit human approval.

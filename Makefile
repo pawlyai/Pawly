@@ -6,11 +6,11 @@
 # here instead.
 
 .PHONY: help install lint test test-memory \
-        regression-light regression-full regression-diff \
+        regression-lite regression-full regression-diff \
         regression-report-latest regression-promote-baseline
 
 # Default model for regression. Override on the command line:
-#   make regression-light MODEL=gemini-2.0-flash
+#   make regression-lite MODEL=gemini-2.0-flash
 MODEL ?= deepseek-v4-pro
 
 # Where pytest writes report.json + run.jsonl files.
@@ -35,7 +35,7 @@ help:
 	@echo "  make install                       install deps (incl. dev extras)"
 	@echo "  make lint                          ruff check ."
 	@echo "  make test-memory                   fast unit tests (no LLM, no DB)"
-	@echo "  make regression-light              run 30-case regression (light, ~5-20min, ~\$$2)"
+	@echo "  make regression-lite              run 30-case regression (light, ~5-20min, ~\$$2)"
 	@echo "  make regression-full               run 223-case regression (full, ~1-3hr, ~\$$50)"
 	@echo "  make regression-diff               compare two regression runs (BASELINE=... CANDIDATE=...)"
 	@echo "  make regression-promote-baseline   VPS-only — promote latest light-30 report to CI baseline"
@@ -75,7 +75,7 @@ test-memory: _require-venv
 # Required env: DEEPSEEK_API_KEY (or whichever provider $(MODEL) needs).
 # DB / Redis are NOT required — conftest stubs them out for blackbox runs.
 
-regression-light: _require-venv
+regression-lite: _require-venv
 	@echo "==> light-30 regression on $(MODEL)"
 	$(VENV_PY) -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
 	    --multiturn-topic=multiturn_pawly_regression_light_30 \
@@ -112,7 +112,7 @@ regression-report-latest:
 	@ls -1t $(REPORTS_DIR)/multiturn_pawly_regression*_report_*.json 2>/dev/null | head -1
 
 # VPS-only — promote the most recent local light-30 report into the
-# persistent CI cache. Use when you've manually run `make regression-light`
+# persistent CI cache. Use when you've manually run `make regression-lite`
 # on the VPS and want to seed the baseline without waiting for CI.
 #
 # Writes to three places:
@@ -132,7 +132,7 @@ regression-promote-baseline:
 	@LATEST=$$(ls -1t $(REPORTS_DIR)/multiturn_pawly_regression_light_30_report_*.json 2>/dev/null | head -1); \
 	if [ -z "$$LATEST" ]; then \
 	    echo "ERROR: no light-30 report found in $(REPORTS_DIR)."; \
-	    echo "       Run \`make regression-light\` first."; \
+	    echo "       Run \`make regression-lite\` first."; \
 	    exit 1; \
 	fi; \
 	TREE=$$(git rev-parse HEAD^{tree}); \

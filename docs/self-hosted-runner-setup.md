@@ -1,6 +1,6 @@
 # GitHub Actions self-hosted runner — Pawly VPS
 
-The regression workflows (`regression-light.yml`, `regression-full.yml`)
+The regression workflows (`regression-lite.yml`, `regression-full.yml`)
 are pinned to `runs-on: [self-hosted, pawly-vps]`, meaning they execute
 on a runner installed on our deploy VPS rather than GitHub-hosted cloud
 runners. This doc gets you from "no runner" to "PR triggers actually fire".
@@ -98,7 +98,7 @@ nothing. Create both at **github.com/pawlyai/Pawly → Issues → Labels → New
 
 | Label | Suggested color | Purpose |
 |---|---|---|
-| `lite-regression` | red `#de053d` | Triggers `regression-light.yml` (30 cases, ~20 min, ~$2). Re-runs on every new commit while the label is present. |
+| `lite-regression` | red `#de053d` | Triggers `regression-lite.yml` (30 cases, ~20 min, ~$2). Re-runs on every new commit while the label is present. |
 | `full-regression` | dark red `#a01030` | Triggers `regression-full.yml` (223 cases, 1–3 hours, ~$50). Fires only on label-add (not on subsequent commits) — to re-run, remove and re-add the label. |
 
 Color is purely cosmetic; the workflows match by exact label name. Use
@@ -153,7 +153,7 @@ find /opt/pawly/regression-cache/reports-light-30 -name '*.json' -mtime +90 -del
 
 ### 8. Configure branch protection
 
-So the PR can't merge with red regression-light:
+So the PR can't merge with red regression-lite:
 
 **github.com/pawlyai/Pawly → Settings → Branches → main → Edit → Protect matching branches → Require status checks to pass before merging** → search for `light-30 / blackbox-multiturn` and add it.
 

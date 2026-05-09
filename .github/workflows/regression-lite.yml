@@ -15,7 +15,7 @@
 # Not gated by branch protection — there's no required check, so it's
 # the author's responsibility to opt in when regression matters.
 
-name: regression-light
+name: regression-lite
 
 on:
   pull_request:
@@ -40,7 +40,7 @@ on:
 concurrency:
   # Cancel in-flight runs on the same PR when a new commit arrives. Saves
   # both wall-clock and LLM dollars.
-  group: regression-light-${{ github.event.pull_request.number }}
+  group: regression-lite-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -100,7 +100,7 @@ jobs:
           # without echoing them.
           : "${DEEPSEEK_API_KEY:?missing in /opt/pawly/.env}"
           : "${GOOGLE_API_KEY:?missing in /opt/pawly/.env}"
-          make regression-light
+          make regression-lite
 
       - name: Locate latest report
         id: report
@@ -137,7 +137,7 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         if: always() && github.event_name == 'pull_request'
         with:
-          header: regression-light
+          header: regression-lite
           path: regression-summary.md
 
       - name: Save report + PR metadata to tree-SHA cache
@@ -175,7 +175,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regression-light-report
+          name: regression-lite-report
           path: |
             tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json
             regression-summary.md
@@ -234,7 +234,7 @@ jobs:
           set -a; . /opt/pawly/.env; set +a
           : "${DEEPSEEK_API_KEY:?missing in /opt/pawly/.env}"
           : "${GOOGLE_API_KEY:?missing in /opt/pawly/.env}"
-          make regression-light
+          make regression-lite
 
       - name: Save as baseline + tree-SHA cache (cache miss path)
         if: steps.cache.outputs.hit == 'false'
