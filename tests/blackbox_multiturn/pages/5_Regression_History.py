@@ -153,14 +153,29 @@ def _render_index_table(items: list[tuple[Path, dict[str, Any], dict[str, Any]]]
             "Cases": f"{passed}/{total}",
             "When": _humanize(meta, report),
             "Actor": meta.get("actor") or "—",
-            "PR URL": meta.get("pr_url") or "",
+            "PR link": meta.get("pr_url") or "",
+            "Run / detail": meta.get("run_url") or "",
         })
     st.dataframe(
         rows,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "PR URL": st.column_config.LinkColumn("PR URL", display_text="open"),
+            "PR link": st.column_config.LinkColumn(
+                "PR link",
+                display_text="open PR",
+                help="Opens the GitHub PR (if this run was PR-triggered).",
+            ),
+            "Run / detail": st.column_config.LinkColumn(
+                "Run / detail",
+                display_text="logs + artifacts",
+                help=(
+                    "Opens the GitHub Actions run page — full pytest logs, "
+                    "judge reasoning, downloadable report artifact. "
+                    "For inline case-by-case detail, pick exactly one row "
+                    "in the multiselect below."
+                ),
+            ),
             "Pass %": st.column_config.NumberColumn("Pass %", format="%.1f%%"),
         },
     )
@@ -244,6 +259,99 @@ def _render_drill_in(
             st.write(reason)
 
 
+def _render_single_detail(
+    report_path: Path,
+    report: dict[str, Any],
+    meta: dict[str, Any],
+) -> None:
+    """Inline case-by-case view for a single run — same content as 1_Reports.
+
+    Cases sort by score ascending so the worst (most-likely-to-investigate)
+    cases land at the top.
+    """
+    pr_num = meta.get("pr_number")
+    title = meta.get("pr_title") or "(no title)"
+    rate, passed, total = _pass_rate(report)
+
+    head_cols = st.columns([3, 1, 1, 1])
+    with head_cols[0]:
+        if pr_num:
+            st.markdown(f"### #{pr_num} — {title}")
+        else:
+            st.markdown(f"### {meta.get('trigger') or 'manual'} — {title}")
+        sub_bits: list[str] = []
+        if meta.get("pr_branch"):
+            sub_bits.append(f"branch `{meta['pr_branch']}`")
+        if meta.get("model"):
+            sub_bits.append(f"model `{meta['model']}`")
+        if meta.get("actor"):
+            sub_bits.append(f"by {meta['actor']}")
+        if sub_bits:
+            st.caption(" · ".join(sub_bits))
+    head_cols[1].metric(t("total_cases"), total)
+    head_cols[2].metric(t("passed"), passed)
+    head_cols[3].metric(t("pass_rate"), f"{rate:.1f}%")
+
+    # Quick links row
+    link_bits: list[str] = []
+    if meta.get("pr_url"):
+        link_bits.append(f"[PR]({meta['pr_url']})")
+    if meta.get("run_url"):
+        link_bits.append(f"[Actions run]({meta['run_url']})")
+    if meta.get("commit_sha"):
+        link_bits.append(f"`{meta['commit_sha'][:8]}`")
+    if link_bits:
+        st.markdown(" · ".join(link_bits))
+
+    st.divider()
+
+    cases = list(report.get("cases", []))
+    cases.sort(key=lambda c: c.get("score", 1.0))  # worst first
+
+    failed = [c for c in cases if c.get("status") != "passed_threshold"]
+    passed_cases = [c for c in cases if c.get("status") == "passed_threshold"]
+
+    if failed:
+        st.markdown(f"#### ❌ {len(failed)} below threshold")
+        for case in failed:
+            _render_case_expander(case)
+    if passed_cases:
+        st.markdown(f"#### ✅ {len(passed_cases)} passed")
+        for case in passed_cases:
+            _render_case_expander(case)
+
+
+def _render_case_expander(case: dict[str, Any]) -> None:
+    name = case.get("name", "?")
+    score = case.get("score", 0.0)
+    threshold = case.get("threshold", 0.7)
+    emoji = "✅" if case.get("status") == "passed_threshold" else "❌"
+    label = f"{emoji} {name}  ·  {score:.2f} / {threshold:.2f}"
+    with st.expander(label):
+        reason = case.get("reason", "—")
+        if get_lang() == "zh" and reason != "—":
+            reason = translate_for_display(reason, CACHE_PATH)
+        st.markdown(f"**{t('eval_reason')}**")
+        st.write(reason)
+        turns = case.get("turns", [])
+        if turns:
+            st.markdown(f"**{t('transcript')}**")
+            for i, turn in enumerate(turns):
+                role = turn.get("role", "unknown")
+                content = turn.get("content", "")
+                if get_lang() == "zh":
+                    content = translate_for_display(content, CACHE_PATH)
+                if role == "user":
+                    st.markdown(f"_{t('user_turn', i=i+1)}_")
+                    st.info(content)
+                else:
+                    st.markdown(f"_{t('assistant_turn', i=i+1)}_")
+                    clean = content.replace("<i>", "_").replace("</i>", "_")
+                    clean = clean.replace("<b>", "**").replace("</b>", "**")
+                    clean = clean.replace("<blockquote>", "").replace("</blockquote>", "")
+                    st.success(clean)
+
+
 def _render_topic_tab(label: str, subdir: str) -> None:
     items = _list_cached(subdir)
     if not items:
@@ -261,16 +369,23 @@ def _render_topic_tab(label: str, subdir: str) -> None:
 
     labels = [_row_label(meta, report) for _, report, meta in items]
     picked = st.multiselect(
-        f"Pick exactly 2 {label} runs to diff:",
+        f"Pick a {label} run (1 = single-report detail, 2 = diff):",
         options=list(range(len(items))),
         format_func=lambda i: labels[i],
         max_selections=2,
         key=f"hist_pick_{subdir}",
     )
 
-    if len(picked) != 2:
-        st.info("Pick exactly 2 runs above to see the diff.")
+    if not picked:
+        st.info("Pick 1 row to see its case-by-case detail, or 2 rows to see the diff.")
         return
+
+    if len(picked) == 1:
+        path, report, meta = items[picked[0]]
+        _render_single_detail(path, report, meta)
+        return
+
+    # len(picked) == 2 — diff path
 
     # Order by created_at: older = baseline, newer = candidate.
     a_idx, b_idx = sorted(
