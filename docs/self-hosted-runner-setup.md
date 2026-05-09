@@ -16,6 +16,19 @@ Cost: zero extra. Risk: a malicious PR could exec arbitrary code on the VPS via 
 
 ## One-time setup (do this once on the VPS)
 
+### 0. Install build prerequisites
+
+`make` and `python3-venv` are required by the regression Makefile targets.
+On a fresh Ubuntu/Debian VPS:
+
+```bash
+sudo apt update
+sudo apt install -y make python3 python3-venv
+```
+
+(Ubuntu 24.04+ also enforces PEP 668, which is why `make install` uses a
+project-local `.venv/` instead of pip-installing into the system Python.)
+
 ### 1. Create the runner directory
 
 ```bash

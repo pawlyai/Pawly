@@ -23,6 +23,13 @@ REPORTS_DIR = tests/blackbox_multiturn/results
 # gracefully with a clear error).
 REGRESSION_CACHE_DIR = /opt/pawly/regression-cache
 
+# Use a project-local venv. Required on Ubuntu 24.04+ (PEP 668 blocks
+# system-wide pip install) and on hosts where `python` (without suffix)
+# isn't on PATH. `make install` creates the venv; everything else uses it.
+PYTHON ?= python3
+VENV = .venv
+VENV_PY = $(VENV)/bin/python
+
 help:
 	@echo "Pawly — common targets"
 	@echo "  make install                       install deps (incl. dev extras)"
@@ -36,14 +43,28 @@ help:
 	@echo "Override: MODEL=$(MODEL)  (e.g. MODEL=gemini-2.0-flash)"
 
 install:
-	python -m pip install --upgrade pip
-	pip install -e ".[dev]"
+	@if [ ! -d $(VENV) ]; then \
+	    echo "==> creating venv at $(VENV)"; \
+	    $(PYTHON) -m venv $(VENV); \
+	fi
+	$(VENV_PY) -m pip install --upgrade pip
+	$(VENV_PY) -m pip install -e ".[dev]"
 
-lint:
-	ruff check .
+# Sanity check — fail loud with a clear message if `make install` hasn't run.
+# Without this, the targets below would silently use system python (PEP 668
+# error on Ubuntu 24.04, or wrong deps on other boxes).
+.PHONY: _require-venv
+_require-venv:
+	@if [ ! -x $(VENV_PY) ]; then \
+	    echo "ERROR: $(VENV_PY) not found — run \`make install\` first."; \
+	    exit 1; \
+	fi
 
-test-memory:
-	python -m pytest tests/memory -q
+lint: _require-venv
+	$(VENV)/bin/ruff check .
+
+test-memory: _require-venv
+	$(VENV_PY) -m pytest tests/memory -q
 
 # ── Regression ────────────────────────────────────────────────────────────
 #
@@ -54,9 +75,9 @@ test-memory:
 # Required env: DEEPSEEK_API_KEY (or whichever provider $(MODEL) needs).
 # DB / Redis are NOT required — conftest stubs them out for blackbox runs.
 
-regression-light:
+regression-light: _require-venv
 	@echo "==> light-30 regression on $(MODEL)"
-	python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
+	$(VENV_PY) -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
 	    --multiturn-topic=multiturn_pawly_regression_light_30 \
 	    --model=$(MODEL) \
 	    -s -v
@@ -64,9 +85,9 @@ regression-light:
 	@echo "==> latest report:"
 	@ls -1t $(REPORTS_DIR)/multiturn_pawly_regression_light_30_report_*.json 2>/dev/null | head -1
 
-regression-full:
+regression-full: _require-venv
 	@echo "==> full-223 regression on $(MODEL) (this takes 1-3 hours)"
-	python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
+	$(VENV_PY) -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
 	    --multiturn-topic=multiturn_pawly_regression \
 	    --model=$(MODEL) \
 	    -s -v
@@ -79,11 +100,11 @@ regression-full:
 #   make regression-diff BASELINE=results/foo.json CANDIDATE=results/bar.json
 # Or auto-pick the two most recent reports of the same topic:
 #   make regression-diff
-regression-diff:
+regression-diff: _require-venv
 	@if [ -n "$(BASELINE)" ] && [ -n "$(CANDIDATE)" ]; then \
-	    python scripts/regression-diff.py "$(BASELINE)" "$(CANDIDATE)"; \
+	    $(VENV_PY) scripts/regression-diff.py "$(BASELINE)" "$(CANDIDATE)"; \
 	else \
-	    python scripts/regression-diff.py --auto; \
+	    $(VENV_PY) scripts/regression-diff.py --auto; \
 	fi
 
 # Show path of the latest light-30 report (handy for chaining with diff).
