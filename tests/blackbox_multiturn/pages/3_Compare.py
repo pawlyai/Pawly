@@ -1,12 +1,14 @@
 """Compare regression runs — Lite-30 / Full-223 tabs.
 
-Same UX as the Regression History page, but sourced from the local
-`results/` directory (where the Run Tests page writes new reports), so
-this is the right page for "compare two of my recent runs".
+Unified view of every regression report we have:
+  - `tests/blackbox_multiturn/results/*.json`  (Streamlit Run Tests page)
+  - `/opt/pawly/regression-cache/reports-{light-30,full-223}/<MODEL>/*.json`
+    (historical CI runs; this dir doesn't grow anymore now that CI is gone,
+    but the past data stays visible.)
 
-Rows in each tab:
-  - 1 picked → single-report case-by-case detail
-  - 2 picked → diff (overall verdict + per-case matrix + drill-in)
+Per tab:
+  - 1 row picked → single-report case-by-case detail
+  - 2 rows picked → diff (overall verdict + per-case Δ matrix + drill-in)
 """
 
 from __future__ import annotations
@@ -14,13 +16,14 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import streamlit as st
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 BLACKBOX_DIR = Path(__file__).parent.parent
 RESULTS_DIR = BLACKBOX_DIR / "results"
+CACHE_DIR = Path("/opt/pawly/regression-cache")
 
 for _p in (str(REPO_ROOT), str(BLACKBOX_DIR)):
     if _p not in sys.path:
@@ -37,11 +40,12 @@ from utils.regression_view import (  # noqa: E402
 
 st.set_page_config(page_title="Compare", page_icon="⚖️", layout="wide")
 
-# (display label, filter predicate over filename)
-TOPICS: dict[str, tuple[str, callable]] = {
+# (display label, filename filter for results/, cache subdir name)
+TOPICS: dict[str, tuple[str, Callable[[str], bool], str]] = {
     "lite": (
         "Lite-30",
         lambda name: name.startswith("multiturn_pawly_regression_light_30_report_"),
+        "reports-light-30",
     ),
     "full": (
         "Full-223",
@@ -49,61 +53,103 @@ TOPICS: dict[str, tuple[str, callable]] = {
             name.startswith("multiturn_pawly_regression_report_")
             and "light_30" not in name
         ),
+        "reports-full-223",
     ),
 }
 
 
-def _load_report(path: Path) -> dict[str, Any] | None:
+def _load_json(path: Path) -> dict[str, Any] | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
 
 
-def _list_reports(filter_fn) -> list[tuple[Path, dict[str, Any], dict[str, Any]]]:
-    """Return [(path, report_dict, derived_meta)] for matching reports in
-    `results/`, sorted newest first by parsed timestamp.
+def _local_meta(path: Path, report: dict[str, Any]) -> dict[str, Any]:
+    parsed = parse_filename(path.name)
+    return {
+        "_source": "local",
+        "topic": parsed["topic"],
+        "model": parsed["model"],
+        "timestamp": parsed["timestamp"],
+        "title": path.name,
+        "created_at": (
+            report.get("summary", {}).get("timestamp", "") or parsed["timestamp"]
+        ),
+    }
 
-    Meta is derived from the filename: {topic, model, timestamp}. No PR/Actor
-    info — those columns just stay blank for local runs.
+
+def _ci_meta(path: Path, report: dict[str, Any], model_dir: str) -> dict[str, Any]:
+    """Read CI-cached report's `.meta.json` sidecar for PR/Actor metadata."""
+    sidecar = path.with_name(path.stem + ".meta.json")
+    meta: dict[str, Any] = {}
+    if sidecar.exists():
+        loaded = _load_json(sidecar) or {}
+        meta.update(loaded)
+    meta.setdefault("model", model_dir)
+    meta["_source"] = "ci"
+    if not meta.get("created_at"):
+        meta["created_at"] = report.get("summary", {}).get("timestamp", "")
+    return meta
+
+
+def _list_reports(
+    filter_fn: Callable[[str], bool],
+    cache_subdir: str,
+) -> list[tuple[Path, dict[str, Any], dict[str, Any]]]:
+    """Return [(path, report, meta)] from both sources, sorted newest first.
+
+    Sources:
+      - `results/` filtered by filename pattern (Streamlit-triggered runs)
+      - `<CACHE_DIR>/<cache_subdir>/<model>/*.json`        (CI history)
+
+    Items aren't deduped: a report present in both shows twice. The
+    `_source` field on meta lets the UI tell them apart.
     """
-    if not RESULTS_DIR.exists():
-        return []
-
     items: list[tuple[Path, dict[str, Any], dict[str, Any]]] = []
-    for path in RESULTS_DIR.glob("multiturn_pawly_regression*_report_*.json"):
-        if not filter_fn(path.name):
-            continue
-        report = _load_report(path)
-        if report is None:
-            continue
-        parsed = parse_filename(path.name)
-        meta: dict[str, Any] = {
-            "topic": parsed["topic"],
-            "model": parsed["model"],
-            "timestamp": parsed["timestamp"],
-            "title": path.name,
-            # Treat the locally-detected timestamp as `created_at` so
-            # humanize_when picks it up.
-            "created_at": (
-                report.get("summary", {}).get("timestamp", "") or parsed["timestamp"]
-            ),
-        }
-        items.append((path, report, meta))
 
-    def _key(item: tuple[Path, dict[str, Any], dict[str, Any]]) -> str:
-        _, report, meta = item
-        return meta.get("created_at") or ""
+    if RESULTS_DIR.exists():
+        for path in RESULTS_DIR.glob("multiturn_pawly_regression*_report_*.json"):
+            if not filter_fn(path.name):
+                continue
+            report = _load_json(path)
+            if report is None:
+                continue
+            items.append((path, report, _local_meta(path, report)))
 
-    items.sort(key=_key, reverse=True)
+    cache_root = CACHE_DIR / cache_subdir
+    if cache_root.exists():
+        for model_dir in sorted(cache_root.iterdir()):
+            if not model_dir.is_dir():
+                continue
+            for path in model_dir.glob("*.json"):
+                if path.name.endswith(".meta.json"):
+                    continue
+                report = _load_json(path)
+                if report is None:
+                    continue
+                items.append((path, report, _ci_meta(path, report, model_dir.name)))
+
+    items.sort(key=lambda it: it[2].get("created_at") or "", reverse=True)
     return items
+
+
+def _source_disp(meta: dict[str, Any]) -> str:
+    """One-cell label: 'local', 'PR #41', 'main', etc."""
+    if meta.get("_source") == "local":
+        return "local"
+    pr = meta.get("pr_number")
+    if pr:
+        return f"PR #{pr}"
+    return meta.get("pr_branch") or meta.get("trigger") or "ci"
 
 
 def _row_label(meta: dict[str, Any], report: dict[str, Any]) -> str:
     rate, passed, total = pass_rate(report)
+    src = _source_disp(meta)
     model = meta.get("model") or "?"
     when = humanize_when(meta, report)
-    return f"{model}  ·  {when}  ·  {rate:.1f}% ({passed}/{total})"
+    return f"{src}  ·  {model}  ·  {when}  ·  {rate:.1f}% ({passed}/{total})"
 
 
 def _render_index_table(items: list[tuple[Path, dict[str, Any], dict[str, Any]]]) -> None:
@@ -111,11 +157,13 @@ def _render_index_table(items: list[tuple[Path, dict[str, Any], dict[str, Any]]]
     for _, report, meta in items:
         rate, passed, total = pass_rate(report)
         rows.append({
+            "Source": _source_disp(meta),
             "Model": meta.get("model") or "—",
             "Pass %": round(rate, 1),
             "Cases": f"{passed}/{total}",
             "When": humanize_when(meta, report),
-            "File": meta.get("title") or "—",
+            "Actor": meta.get("actor") or "—",
+            "PR link": meta.get("pr_url") or "",
         })
     st.dataframe(
         rows,
@@ -123,20 +171,28 @@ def _render_index_table(items: list[tuple[Path, dict[str, Any], dict[str, Any]]]
         hide_index=True,
         column_config={
             "Pass %": st.column_config.NumberColumn("Pass %", format="%.1f%%"),
+            "PR link": st.column_config.LinkColumn(
+                "PR link",
+                display_text="open",
+                help="Opens the GitHub PR (CI rows only).",
+            ),
         },
     )
 
 
-def _render_topic_tab(label: str, filter_fn) -> None:
-    items = _list_reports(filter_fn)
+def _render_topic_tab(label: str, filter_fn: Callable[[str], bool], cache_subdir: str) -> None:
+    items = _list_reports(filter_fn, cache_subdir)
     if not items:
         st.info(
-            f"No {label} reports under `{RESULTS_DIR}/` yet. "
-            f"Trigger a run from the **Run Tests** page."
+            f"No {label} reports yet — neither in `{RESULTS_DIR}/` "
+            f"nor `{CACHE_DIR / cache_subdir}/`. Trigger a run from the "
+            f"**Run Tests** page."
         )
         return
 
-    st.markdown(f"**{len(items)} {label} runs.**")
+    n_local = sum(1 for _, _, m in items if m.get("_source") == "local")
+    n_ci = len(items) - n_local
+    st.markdown(f"**{len(items)} {label} runs** ({n_local} local, {n_ci} from CI cache).")
     _render_index_table(items)
     st.divider()
 
@@ -166,8 +222,14 @@ def _render_topic_tab(label: str, filter_fn) -> None:
     baseline_path, baseline_report, baseline_meta = items[a_idx]
     candidate_path, candidate_report, candidate_meta = items[b_idx]
 
-    a_short = f"baseline · {baseline_meta.get('model') or '?'} {humanize_when(baseline_meta, baseline_report)}"
-    b_short = f"candidate · {candidate_meta.get('model') or '?'} {humanize_when(candidate_meta, candidate_report)}"
+    a_short = (
+        f"baseline · {_source_disp(baseline_meta)} · "
+        f"{baseline_meta.get('model') or '?'} {humanize_when(baseline_meta, baseline_report)}"
+    )
+    b_short = (
+        f"candidate · {_source_disp(candidate_meta)} · "
+        f"{candidate_meta.get('model') or '?'} {humanize_when(candidate_meta, candidate_report)}"
+    )
 
     render_diff_section(
         baseline_path, baseline_report,
@@ -182,7 +244,8 @@ def main() -> None:
     st.title(t("compare_title"))
     st.caption(
         "Compare two regression runs — overall verdict, per-case Δ matrix, "
-        "case-by-case drill-in."
+        "case-by-case drill-in. Sources: Streamlit-triggered runs in `results/` "
+        "+ historical CI cache."
     )
 
     tab_lite, tab_full = st.tabs([TOPICS["lite"][0], TOPICS["full"][0]])
