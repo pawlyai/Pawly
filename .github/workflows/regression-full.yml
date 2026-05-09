@@ -27,6 +27,9 @@ jobs:
     if: github.event.label.name == 'full-regression'
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 240   # 4 hours; abort if it stalls
+    env:
+      MODEL: deepseek-v4-pro
+      REGRESSION_CACHE_DIR: /opt/pawly/regression-cache
 
     steps:
       - name: Check out PR commit
@@ -34,6 +37,17 @@ jobs:
 
       - name: Install dependencies
         run: make install
+
+      - name: Restore baseline from VPS cache
+        run: |
+          BASELINE_CACHE="$REGRESSION_CACHE_DIR/baseline-full-223.json"
+          if [ -f "$BASELINE_CACHE" ]; then
+            mkdir -p tests/blackbox_multiturn/results
+            cp "$BASELINE_CACHE" tests/blackbox_multiturn/results/_baseline_main_full_223.json
+            echo "Restored full-223 baseline from $BASELINE_CACHE"
+          else
+            echo "No cached full-223 baseline yet — diff step will emit 'first run' summary."
+          fi
 
       - name: Comment "started" on PR
         uses: marocchino/sticky-pull-request-comment@v2
@@ -70,7 +84,7 @@ jobs:
         run: |
           BASELINE=tests/blackbox_multiturn/results/_baseline_main_full_223.json
           if [ -f "$BASELINE" ]; then
-            python scripts/regression-diff.py \
+            python scripts/regression_diff.py \
               "$BASELINE" \
               "${{ steps.report.outputs.path }}" \
               --out regression-full-summary.md
@@ -93,6 +107,44 @@ jobs:
         with:
           header: regression-full
           path: regression-full-summary.md
+
+      - name: Save report + PR metadata to tree-SHA cache
+        # Mirror the light workflow's caching: keep every PR's full-223 run
+        # under <cache>/reports-full-223/<MODEL>/<tree-sha>.json plus a
+        # .meta.json sidecar for the History page.
+        if: always() && steps.report.outputs.path != ''
+        env:
+          TOPIC: multiturn_pawly_regression
+          TREE_SHA: ""  # filled below
+          COMMIT_SHA: ${{ github.sha }}
+          TRIGGER: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TREE=$(git rev-parse HEAD^{tree})
+          export TREE_SHA="$TREE"
+          DEST="$REGRESSION_CACHE_DIR/reports-full-223/$MODEL"
+          mkdir -p "$DEST"
+          cp "${{ steps.report.outputs.path }}" "$DEST/$TREE.json"
+          .venv/bin/python scripts/regression_write_meta.py "$DEST/$TREE.meta.json"
+          # If the diff verdict was a clear improvement (or first run), promote
+          # this report to baseline so the next full-223 PR gets compared
+          # against this number rather than a stale one. Promotion is opt-in
+          # for full-223 (vs auto for light-30) because each promotion freezes
+          # a $50 measurement; a maintainer should review before promoting.
+          # For now: only auto-promote if no baseline exists yet.
+          if [ ! -f "$REGRESSION_CACHE_DIR/baseline-full-223.json" ]; then
+            cp "${{ steps.report.outputs.path }}" "$REGRESSION_CACHE_DIR/baseline-full-223.json"
+            echo "First full-223 ever — also seeded as baseline."
+          fi
+          echo "Cached:"
+          echo "  $DEST/$TREE.json"
+          echo "  $DEST/$TREE.meta.json"
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4

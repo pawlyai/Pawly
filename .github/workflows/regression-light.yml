@@ -116,7 +116,7 @@ jobs:
           # First-time runs without a baseline still emit a useful summary.
           BASELINE=tests/blackbox_multiturn/results/_baseline_main_light_30.json
           if [ -f "$BASELINE" ]; then
-            python scripts/regression-diff.py \
+            python scripts/regression_diff.py \
               "$BASELINE" \
               "${{ steps.report.outputs.path }}" \
               --out regression-summary.md
@@ -140,18 +140,36 @@ jobs:
           header: regression-light
           path: regression-summary.md
 
-      - name: Save report to tree-SHA cache
+      - name: Save report + PR metadata to tree-SHA cache
         # Always cache, even if the diff step complained — the report itself
         # is still a valid record of "this tree's behavior". Lets a future
         # push-to-main with the same tree (common for squash merges where
-        # main hadn't moved) skip its refresh-baseline run.
+        # main hadn't moved) skip its refresh-baseline run. The .meta.json
+        # sidecar is what the Streamlit History page reads to populate
+        # PR / Title / Author columns.
         if: always() && steps.report.outputs.path != ''
+        env:
+          TOPIC: multiturn_pawly_regression_light_30
+          TREE_SHA: ""  # filled below; can't use $(git ...) here
+          COMMIT_SHA: ${{ github.sha }}
+          TRIGGER: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           TREE=$(git rev-parse HEAD^{tree})
+          export TREE_SHA="$TREE"
           DEST="$REGRESSION_CACHE_DIR/reports-light-30/$MODEL"
           mkdir -p "$DEST"
           cp "${{ steps.report.outputs.path }}" "$DEST/$TREE.json"
-          echo "Cached at $DEST/$TREE.json"
+          .venv/bin/python scripts/regression_write_meta.py "$DEST/$TREE.meta.json"
+          echo "Cached:"
+          echo "  $DEST/$TREE.json"
+          echo "  $DEST/$TREE.meta.json"
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
@@ -220,10 +238,20 @@ jobs:
 
       - name: Save as baseline + tree-SHA cache (cache miss path)
         if: steps.cache.outputs.hit == 'false'
+        env:
+          TOPIC: multiturn_pawly_regression_light_30
+          TREE_SHA: ${{ steps.cache.outputs.tree }}
+          COMMIT_SHA: ${{ github.sha }}
+          TRIGGER: ${{ github.event_name }}
+          PR_BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           REPORT=$(ls -1t tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json | head -1)
           cp "$REPORT" "$REGRESSION_CACHE_DIR/baseline-light-30.json"
           DEST="$REGRESSION_CACHE_DIR/reports-light-30/$MODEL"
           mkdir -p "$DEST"
           cp "$REPORT" "$DEST/${{ steps.cache.outputs.tree }}.json"
+          .venv/bin/python scripts/regression_write_meta.py "$DEST/${{ steps.cache.outputs.tree }}.meta.json"
           echo "Refreshed baseline: $(basename $REPORT)"

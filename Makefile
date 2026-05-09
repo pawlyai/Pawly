@@ -102,9 +102,9 @@ regression-full: _require-venv
 #   make regression-diff
 regression-diff: _require-venv
 	@if [ -n "$(BASELINE)" ] && [ -n "$(CANDIDATE)" ]; then \
-	    $(VENV_PY) scripts/regression-diff.py "$(BASELINE)" "$(CANDIDATE)"; \
+	    $(VENV_PY) scripts/regression_diff.py "$(BASELINE)" "$(CANDIDATE)"; \
 	else \
-	    $(VENV_PY) scripts/regression-diff.py --auto; \
+	    $(VENV_PY) scripts/regression_diff.py --auto; \
 	fi
 
 # Show path of the latest light-30 report (handy for chaining with diff).
@@ -115,11 +115,12 @@ regression-report-latest:
 # persistent CI cache. Use when you've manually run `make regression-light`
 # on the VPS and want to seed the baseline without waiting for CI.
 #
-# Writes to two places:
-#   1. <cache>/baseline-light-30.json  — what the next PR diffs against
-#   2. <cache>/reports-light-30/<MODEL>/<tree-sha>.json  — content cache,
-#      keyed by git tree SHA so a future push-to-main with the same tree
-#      can short-circuit refresh-baseline.
+# Writes to three places:
+#   1. <cache>/baseline-light-30.json                    — next PR's diff target
+#   2. <cache>/reports-light-30/<MODEL>/<tree-sha>.json  — content cache
+#   3. <cache>/reports-light-30/<MODEL>/<tree-sha>.meta.json
+#                                                        — PR metadata sidecar
+#                                                          (manual run, no PR#)
 regression-promote-baseline:
 	@if [ ! -d "$(REGRESSION_CACHE_DIR)" ]; then \
 	    echo "ERROR: $(REGRESSION_CACHE_DIR) does not exist."; \
@@ -135,9 +136,20 @@ regression-promote-baseline:
 	    exit 1; \
 	fi; \
 	TREE=$$(git rev-parse HEAD^{tree}); \
+	COMMIT=$$(git rev-parse HEAD); \
 	mkdir -p "$(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)"; \
 	cp "$$LATEST" "$(REGRESSION_CACHE_DIR)/baseline-light-30.json"; \
 	cp "$$LATEST" "$(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)/$$TREE.json"; \
+	TOPIC=multiturn_pawly_regression_light_30 \
+	    MODEL=$(MODEL) \
+	    TREE_SHA=$$TREE \
+	    COMMIT_SHA=$$COMMIT \
+	    TRIGGER=manual \
+	    ACTOR=$$(git config user.name 2>/dev/null || whoami) \
+	    PR_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	    $(VENV_PY) scripts/regression_write_meta.py \
+	        "$(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)/$$TREE.meta.json"; \
 	echo "Promoted: $$(basename $$LATEST)"; \
 	echo "  -> $(REGRESSION_CACHE_DIR)/baseline-light-30.json"; \
-	echo "  -> $(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)/$$TREE.json"
+	echo "  -> $(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)/$$TREE.json"; \
+	echo "  -> $(REGRESSION_CACHE_DIR)/reports-light-30/$(MODEL)/$$TREE.meta.json"

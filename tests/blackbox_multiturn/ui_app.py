@@ -45,6 +45,7 @@ def main() -> None:
         - **Run Tests** — pick a model + topic and trigger a new evaluation run
         - **Compare** — side-by-side comparison of multiple reports
         - **Test Cases** — view, edit, add, or LLM-generate new test cases
+        - **Regression History** — PR-aware index of every CI / manual regression run; pick two to diff
 
         Use the left sidebar to navigate.
         """
