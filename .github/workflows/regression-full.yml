@@ -1,11 +1,13 @@
-# Full-223 regression — opt-in per PR via the `regression` label.
+# Full-223 regression — opt-in per PR via the `full-regression` label.
 #
-# Triggered when a maintainer adds the `regression` label to a PR. Takes
-# 1-3 hours and ~$50 in LLM calls, so it's NOT default-on. Use before
-# merging any non-trivial change to prompts / models / orchestrator.
+# Triggered when a maintainer adds the `full-regression` label to a PR.
+# Takes 1-3 hours and ~$50 in LLM calls, so it's NOT default-on. Use
+# before merging any non-trivial change to prompts / models / orchestrator.
 #
-# To run: open the PR, click "Labels", add `regression`. The workflow will
-# kick off automatically. If you re-add the label, it re-runs.
+# To run: open the PR, click "Labels", add `full-regression`. The workflow
+# fires only on the label-add event (not on subsequent commits) so you
+# don't accidentally burn $50 by pushing to a labeled PR. To re-run after
+# new commits, remove and re-add the label.
 
 name: regression-full
 
@@ -22,7 +24,7 @@ concurrency:
 jobs:
   blackbox-multiturn-full:
     name: full-223
-    if: github.event.label.name == 'regression'
+    if: github.event.label.name == 'full-regression'
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 240   # 4 hours; abort if it stalls
 

@@ -1,4 +1,4 @@
-# Light-30 regression on every PR.
+# Light-30 regression — opt-in per PR via the `lite-regression` label.
 #
 # Runs on a self-hosted runner installed on the VPS so we can source
 # /opt/pawly/.env directly — no API keys live in GitHub Secrets, they
@@ -8,23 +8,28 @@
 # Required env file on the VPS: /opt/pawly/.env containing
 #   DEEPSEEK_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY
 #
-# Branch protection: this job is a required check on PRs to main.
-# Add via Settings → Branches → main → "Require status checks" →
-# select `light-30 / blackbox-multiturn`.
+# To run on a PR: open the PR, click "Labels", add `lite-regression`.
+# The job will fire on label-add and re-fire on each new commit while
+# the label remains. To stop re-running, remove the label.
+#
+# Not gated by branch protection — there's no required check, so it's
+# the author's responsibility to opt in when regression matters.
 
 name: regression-light
 
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/blackbox_multiturn/**'
-      - 'pyproject.toml'
-      - 'Makefile'
-      - '.github/workflows/regression-light.yml'
+    # `labeled` lets us start the run when `lite-regression` is added to
+    # an existing PR. `synchronize` re-runs it on each new commit while the
+    # label is present. `opened` covers the case of opening a PR with the
+    # label already attached.
+    types: [opened, synchronize, reopened, labeled]
   # Refresh the cached baseline whenever main moves so that the next PR
   # diffs against fresh numbers, not against the report from a month ago.
+  # Path filter here is conservative — docs-only pushes don't need a
+  # baseline refresh (tree changed but code didn't, cache would miss
+  # and we'd waste $2 re-running on functionally identical code).
   push:
     branches: [main]
     paths:
@@ -41,15 +46,11 @@ concurrency:
 jobs:
   blackbox-multiturn:
     name: light-30
-    # Skip when:
-    #   1. event is `push` (push handled by refresh-baseline job below; running
-    #      both would double-bill and use the wrong baseline for the diff).
-    #   2. PR carries the `skip-regression` label (explicit opt-out for changes
-    #      the author is confident don't affect prompt/model/orchestrator
-    #      behavior, e.g. log-format tweaks, internal refactors with no
-    #      observable change). Add the label *before* opening the PR — adding
-    #      it after the run starts won't cancel an in-flight run.
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-regression')
+    # Run only when the PR carries `lite-regression`. `contains(...)` checks
+    # the *current* label set, which means: adding any other label to a PR
+    # that already has `lite-regression` will also re-trigger this — slightly
+    # wasteful but harmless given the cancel-in-progress concurrency.
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'lite-regression')
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 45
     env:

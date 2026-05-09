@@ -80,17 +80,23 @@ The workflows fail-loud if `/opt/pawly/.env` is missing or the required keys are
 
 ### 6. Add labels to the repo
 
-Two labels gate the regression workflows. Create both at
-**github.com/pawlyai/Pawly → Issues → Labels → New label**:
+Both regression workflows are opt-in via PR labels — by default a PR runs
+nothing. Create both at **github.com/pawlyai/Pawly → Issues → Labels → New label**:
 
-| Label | Color | Purpose |
+| Label | Suggested color | Purpose |
 |---|---|---|
-| `regression` | orange | Adding it to a PR triggers `regression-full.yml` (the 1–3 hour, $50 full-223 run). Use before merging changes to prompts / models / orchestrator. |
-| `skip-regression` | gray | Adding it to a PR **before opening** suppresses `regression-light.yml`. Use only when you're certain the change has no observable behavior impact (log-format tweaks, comment-only edits, internal refactors). |
+| `lite-regression` | red `#de053d` | Triggers `regression-light.yml` (30 cases, ~20 min, ~$2). Re-runs on every new commit while the label is present. |
+| `full-regression` | dark red `#a01030` | Triggers `regression-full.yml` (223 cases, 1–3 hours, ~$50). Fires only on label-add (not on subsequent commits) — to re-run, remove and re-add the label. |
 
-The path filter on `regression-light.yml` already auto-skips pure docs/CI PRs;
-`skip-regression` is the explicit opt-out for cases where the path filter
-matched but the author knows regression isn't needed.
+Color is purely cosmetic; the workflows match by exact label name. Use
+visually-distinct colors so a glance at the PR list shows what's being
+spent where.
+
+**Important**: there is **no required status check** for either label. A
+PR can merge without running regression — the labels are author-driven
+opt-in, not gating. If the change warrants regression (touches prompts /
+models / orchestrator / scoring), the author is responsible for adding
+the label. See `docs/regression-runbook.md` for the decision matrix.
 
 ### 7. Create the regression cache directory
 
