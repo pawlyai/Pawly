@@ -3,7 +3,7 @@
 Each row corresponds to one cached report under
 `/opt/pawly/regression-cache/reports-{light-30,full-223}/<MODEL>/`. Pick
 exactly two rows to see:
-  - Overall pass-rate delta + verdict (via scripts/regression_diff.render)
+  - Overall pass-rate delta + verdict (via utils.regression_diff.render)
   - Per-case score matrix (rows = test cases, columns = the two reports)
   - Drill-into-a-case side-by-side reasoning
 
@@ -13,12 +13,10 @@ Reads PR metadata from the `.meta.json` sidecar written by the CI workflow
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from types import ModuleType
 from typing import Any
 
 import streamlit as st
@@ -33,36 +31,7 @@ for _p in (str(REPO_ROOT), str(BLACKBOX_DIR)):
 
 from lang import get_lang, lang_toggle, t  # noqa: E402
 from utils.export import translate_for_display  # noqa: E402
-
-
-def _load_regression_diff() -> ModuleType:
-    """Load `scripts/regression_diff.py` by file path.
-
-    Streamlit can run from different cwds depending on how it's started
-    (host /opt/pawly vs docker /app vs other), so relying on sys.path
-    finding `scripts/` is fragile. We try a handful of likely locations
-    and use importlib to load the module regardless of sys.path state.
-    """
-    candidates = [
-        REPO_ROOT / "scripts" / "regression_diff.py",
-        Path("/opt/pawly/scripts/regression_diff.py"),
-        Path("/app/scripts/regression_diff.py"),
-    ]
-    for path in candidates:
-        if path.exists():
-            spec = importlib.util.spec_from_file_location("regression_diff", path)
-            assert spec and spec.loader
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-    raise ImportError(
-        "regression_diff.py not found in any of: "
-        + ", ".join(str(c) for c in candidates)
-    )
-
-
-_regression_diff = _load_regression_diff()
-render_diff_md = _regression_diff.render
+from utils.regression_diff import render as render_diff_md  # noqa: E402
 
 CACHE_PATH = BLACKBOX_DIR / "results" / "translation_cache.json"
 

@@ -5,9 +5,9 @@ suitable for a PR comment / Slack post.
 
 Usage
 -----
-    python scripts/regression-diff.py BASELINE.json CANDIDATE.json
-    python scripts/regression-diff.py --auto         # pick two most recent
-    python scripts/regression-diff.py BASELINE.json CANDIDATE.json --out report-summary.md
+    python tests/blackbox_multiturn/utils/regression_diff.py BASELINE.json CANDIDATE.json
+    python tests/blackbox_multiturn/utils/regression_diff.py --auto         # pick two most recent
+    python tests/blackbox_multiturn/utils/regression_diff.py BASELINE.json CANDIDATE.json --out report-summary.md
 
 Output sections
 ---------------
@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPORTS_DIR = Path(__file__).resolve().parent.parent / "tests" / "blackbox_multiturn" / "results"
+REPORTS_DIR = Path(__file__).resolve().parent.parent / "results"
 
 
 def load_report(path: Path) -> dict[str, Any]:

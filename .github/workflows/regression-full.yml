@@ -84,7 +84,7 @@ jobs:
         run: |
           BASELINE=tests/blackbox_multiturn/results/_baseline_main_full_223.json
           if [ -f "$BASELINE" ]; then
-            python scripts/regression_diff.py \
+            python tests/blackbox_multiturn/utils/regression_diff.py \
               "$BASELINE" \
               "${{ steps.report.outputs.path }}" \
               --out regression-full-summary.md

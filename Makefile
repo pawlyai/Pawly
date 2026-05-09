@@ -102,9 +102,9 @@ regression-full: _require-venv
 #   make regression-diff
 regression-diff: _require-venv
 	@if [ -n "$(BASELINE)" ] && [ -n "$(CANDIDATE)" ]; then \
-	    $(VENV_PY) scripts/regression_diff.py "$(BASELINE)" "$(CANDIDATE)"; \
+	    $(VENV_PY) tests/blackbox_multiturn/utils/regression_diff.py "$(BASELINE)" "$(CANDIDATE)"; \
 	else \
-	    $(VENV_PY) scripts/regression_diff.py --auto; \
+	    $(VENV_PY) tests/blackbox_multiturn/utils/regression_diff.py --auto; \
 	fi
 
 # Show path of the latest light-30 report (handy for chaining with diff).

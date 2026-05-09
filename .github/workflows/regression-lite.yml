@@ -116,7 +116,7 @@ jobs:
           # First-time runs without a baseline still emit a useful summary.
           BASELINE=tests/blackbox_multiturn/results/_baseline_main_light_30.json
           if [ -f "$BASELINE" ]; then
-            python scripts/regression_diff.py \
+            python tests/blackbox_multiturn/utils/regression_diff.py \
               "$BASELINE" \
               "${{ steps.report.outputs.path }}" \
               --out regression-summary.md
