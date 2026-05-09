@@ -60,6 +60,12 @@ def humanize_when(meta: dict[str, Any], report: dict[str, Any]) -> str:
     if when is None:
         return "—"
 
+    # Local report timestamps (e.g. "20260411_175500") parse via fromisoformat
+    # on Python 3.11+ but come back naive; treat naive as UTC so the subtraction
+    # below doesn't raise.
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+
     delta = datetime.now(timezone.utc) - when
     if delta.days > 30:
         return when.strftime("%Y-%m-%d")
