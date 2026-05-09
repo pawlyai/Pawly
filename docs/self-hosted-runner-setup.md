@@ -57,22 +57,40 @@ sudo ./svc.sh start
 sudo ./svc.sh status        # should be "active (running)"
 ```
 
-### 5. Add API keys to GitHub repo secrets
+### 5. Verify `/opt/pawly/.env` is readable by the runner
 
-Even though the runner has the VPS's `.env`, the workflows fetch keys via `${{ secrets.DEEPSEEK_API_KEY }}` etc. so they're auditable in workflow logs and can be rotated without re-deploying. Add them at:
+The workflows source `/opt/pawly/.env` at run-time and pull `DEEPSEEK_API_KEY` / `GOOGLE_API_KEY` / `OPENAI_API_KEY` from it. **Keys are NOT stored in GitHub Secrets** — they live only on the VPS, so a compromised GitHub account can't exfiltrate them.
 
-**github.com/pawlyai/Pawly → Settings → Secrets and variables → Actions → New repository secret**
+This means the runner's Linux user needs read access to `/opt/pawly/.env`. Check:
 
-Required:
-- `DEEPSEEK_API_KEY` — chat default
-- `GOOGLE_API_KEY` — Gemini fallback + judge
-- `OPENAI_API_KEY` — embedding model (used by some test fixtures)
+```bash
+# Run as the same user the runner runs as (whoami inside the runner service)
+cat /opt/pawly/.env | head -1
+# Should print the first line of the env file. If "permission denied":
+sudo chmod 644 /opt/pawly/.env       # readable by anyone on the VPS
+# Or, more locked-down:
+sudo chown root:runner-group /opt/pawly/.env
+sudo chmod 640 /opt/pawly/.env
+sudo usermod -aG runner-group $(whoami)
+```
 
-### 6. Add `regression` label to the repo
+The workflows fail-loud if `/opt/pawly/.env` is missing or the required keys aren't in it, so you'll see the error immediately on the first PR run.
 
-For the full-223 workflow's label trigger:
+**Tradeoff vs. GitHub Secrets**: this approach loses the GitHub UI audit log of "who used the key when" and locks the workflow to this specific machine. For a single-VPS personal project that's a fine trade — keys never leave the box, no GitHub-side breach can leak them, no rotation drift. If you ever scale to multiple runners or hosted GitHub-cloud runners, you'll want to migrate to `${{ secrets.* }}` instead and re-add the secrets via the UI.
 
-**github.com/pawlyai/Pawly → Issues → Labels → New label** → name = `regression`, color = orange-ish.
+### 6. Add labels to the repo
+
+Two labels gate the regression workflows. Create both at
+**github.com/pawlyai/Pawly → Issues → Labels → New label**:
+
+| Label | Color | Purpose |
+|---|---|---|
+| `regression` | orange | Adding it to a PR triggers `regression-full.yml` (the 1–3 hour, $50 full-223 run). Use before merging changes to prompts / models / orchestrator. |
+| `skip-regression` | gray | Adding it to a PR **before opening** suppresses `regression-light.yml`. Use only when you're certain the change has no observable behavior impact (log-format tweaks, comment-only edits, internal refactors). |
+
+The path filter on `regression-light.yml` already auto-skips pure docs/CI PRs;
+`skip-regression` is the explicit opt-out for cases where the path filter
+matched but the author knows regression isn't needed.
 
 ### 7. Configure branch protection
 

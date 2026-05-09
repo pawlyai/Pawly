@@ -43,12 +43,19 @@ jobs:
 
       - name: Run full-223 regression
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # API keys come from /opt/pawly/.env on the VPS-hosted runner.
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           TELEGRAM_BOT_TOKEN: ci-test-token
-        run: make regression-full
+        run: |
+          if [ ! -f /opt/pawly/.env ]; then
+            echo "FATAL: /opt/pawly/.env not found. This workflow requires the"
+            echo "       VPS-hosted runner (see docs/self-hosted-runner-setup.md)."
+            exit 1
+          fi
+          set -a; . /opt/pawly/.env; set +a
+          : "${DEEPSEEK_API_KEY:?missing in /opt/pawly/.env}"
+          : "${GOOGLE_API_KEY:?missing in /opt/pawly/.env}"
+          make regression-full
 
       - name: Locate latest report
         id: report

@@ -1,10 +1,11 @@
 # Light-30 regression on every PR.
 #
-# Runs on a self-hosted runner installed on the VPS so we reuse the existing
-# Postgres/Redis/.env infra and don't ship API keys to GitHub-cloud runners.
-# The runner setup is documented in docs/self-hosted-runner-setup.md.
+# Runs on a self-hosted runner installed on the VPS so we can source
+# /opt/pawly/.env directly — no API keys live in GitHub Secrets, they
+# never leave the VPS. The runner setup is documented in
+# docs/self-hosted-runner-setup.md.
 #
-# Required repo secrets (already set per docs/self-hosted-runner-setup.md):
+# Required env file on the VPS: /opt/pawly/.env containing
 #   DEEPSEEK_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY
 #
 # Branch protection: this job is a required check on PRs to main.
@@ -40,6 +41,15 @@ concurrency:
 jobs:
   blackbox-multiturn:
     name: light-30
+    # Skip when:
+    #   1. event is `push` (push handled by refresh-baseline job below; running
+    #      both would double-bill and use the wrong baseline for the diff).
+    #   2. PR carries the `skip-regression` label (explicit opt-out for changes
+    #      the author is confident don't affect prompt/model/orchestrator
+    #      behavior, e.g. log-format tweaks, internal refactors with no
+    #      observable change). Add the label *before* opening the PR — adding
+    #      it after the run starts won't cancel an in-flight run.
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-regression')
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 45
 
@@ -52,12 +62,23 @@ jobs:
 
       - name: Run light-30 regression
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # API keys come from /opt/pawly/.env (sourced below) so they
+          # stay on the VPS and never get stored in GitHub.
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           TELEGRAM_BOT_TOKEN: ci-test-token
-        run: make regression-light
+        run: |
+          if [ ! -f /opt/pawly/.env ]; then
+            echo "FATAL: /opt/pawly/.env not found. This workflow requires the"
+            echo "       VPS-hosted runner (see docs/self-hosted-runner-setup.md)."
+            exit 1
+          fi
+          # `set -a` auto-exports every assignment, so the keys reach pytest.
+          set -a; . /opt/pawly/.env; set +a
+          # Sanity-check that the keys we actually need are non-empty,
+          # without echoing them.
+          : "${DEEPSEEK_API_KEY:?missing in /opt/pawly/.env}"
+          : "${GOOGLE_API_KEY:?missing in /opt/pawly/.env}"
+          make regression-light
 
       - name: Locate latest report
         id: report
@@ -119,12 +140,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: make install
       - env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           TELEGRAM_BOT_TOKEN: ci-test-token
-        run: make regression-light
+        run: |
+          set -a; . /opt/pawly/.env; set +a
+          make regression-light
       - run: |
           REPORT=$(ls -1t tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json | head -1)
           cp "$REPORT" tests/blackbox_multiturn/results/_baseline_main_light_30.json
