@@ -194,6 +194,11 @@ def _recover_reason_score_payload(text: str) -> str | None:
 class GeminiDeepEvalModelMixin:
     def __init__(self, client: GeminiClient, model_name: str | None = None) -> None:
         self._client = client
+        # Stash the eval model id so the chat() calls below can pin the
+        # judge to the model we asked for (--model CLI arg / PAWLY_MODEL
+        # env). Without this, the resilient client would fall back to
+        # settings.main_model and silently grade with the wrong model.
+        self._eval_model_id = model_name
         super().__init__(model=model_name)
 
     def load_model(self) -> "GeminiDeepEvalModelMixin":
@@ -241,6 +246,7 @@ class GeminiDeepEvalModelMixin:
                     messages=[{"role": "user", "content": attempt_prompt}],
                     temperature=0,
                     max_tokens=4096,
+                    model=self._eval_model_id,
                 )
             )
             text = result["text"]
@@ -258,6 +264,7 @@ class GeminiDeepEvalModelMixin:
                     system_prompt="",
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0,
+                    model=self._eval_model_id,
                 )
             )
             return result["text"]
@@ -279,6 +286,7 @@ class GeminiDeepEvalModelMixin:
                 messages=[{"role": "user", "content": attempt_prompt}],
                 temperature=0,
                 max_tokens=4096,
+                model=self._eval_model_id,
             )
             text = result["text"]
             try:
@@ -294,6 +302,7 @@ class GeminiDeepEvalModelMixin:
                 system_prompt="",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
+                model=self._eval_model_id,
             )
             return result["text"]
         return await self._a_generate_with_schema_retry(prompt, schema)
