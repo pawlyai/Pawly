@@ -1,0 +1,131 @@
+# Light-30 regression on every PR.
+#
+# Runs on a self-hosted runner installed on the VPS so we reuse the existing
+# Postgres/Redis/.env infra and don't ship API keys to GitHub-cloud runners.
+# The runner setup is documented in docs/self-hosted-runner-setup.md.
+#
+# Required repo secrets (already set per docs/self-hosted-runner-setup.md):
+#   DEEPSEEK_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY
+#
+# Branch protection: this job is a required check on PRs to main.
+# Add via Settings → Branches → main → "Require status checks" →
+# select `light-30 / blackbox-multiturn`.
+
+name: regression-light
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/blackbox_multiturn/**'
+      - 'pyproject.toml'
+      - 'Makefile'
+      - '.github/workflows/regression-light.yml'
+  # Refresh the cached baseline whenever main moves so that the next PR
+  # diffs against fresh numbers, not against the report from a month ago.
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/blackbox_multiturn/**'
+      - 'pyproject.toml'
+
+concurrency:
+  # Cancel in-flight runs on the same PR when a new commit arrives. Saves
+  # both wall-clock and LLM dollars.
+  group: regression-light-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  blackbox-multiturn:
+    name: light-30
+    runs-on: [self-hosted, pawly-vps]
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out PR commit
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run light-30 regression
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+          TELEGRAM_BOT_TOKEN: ci-test-token
+        run: make regression-light
+
+      - name: Locate latest report
+        id: report
+        run: |
+          REPORT=$(ls -1t tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json | head -1)
+          echo "path=$REPORT" >> "$GITHUB_OUTPUT"
+          echo "Latest report: $REPORT"
+
+      - name: Compare against main baseline
+        id: diff
+        run: |
+          # The runner caches the most recent main-branch report under this name.
+          # First-time runs without a baseline still emit a useful summary.
+          BASELINE=tests/blackbox_multiturn/results/_baseline_main_light_30.json
+          if [ -f "$BASELINE" ]; then
+            python scripts/regression-diff.py \
+              "$BASELINE" \
+              "${{ steps.report.outputs.path }}" \
+              --out regression-summary.md
+          else
+            echo "## Light-30 regression — first run (no baseline yet)" > regression-summary.md
+            echo "" >> regression-summary.md
+            python -c "
+            import json, sys
+            d = json.load(open('${{ steps.report.outputs.path }}'))
+            s = d['summary']
+            total = s['total_cases']; pas = s['passed_threshold']
+            print(f'**{pas}/{total} passed** ({100*pas/total:.1f}%)')
+            " >> regression-summary.md
+          fi
+          cat regression-summary.md
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: always() && github.event_name == 'pull_request'
+        with:
+          header: regression-light
+          path: regression-summary.md
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-light-report
+          path: |
+            tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json
+            regression-summary.md
+          retention-days: 30
+
+  # ── Baseline refresh ────────────────────────────────────────────────────
+  # Run on push-to-main only, so that future PRs diff against the latest
+  # main-branch numbers. Keeping this in the same workflow file avoids
+  # having two workflows fight over the runner.
+  refresh-baseline:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, pawly-vps]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: make install
+      - env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+          TELEGRAM_BOT_TOKEN: ci-test-token
+        run: make regression-light
+      - run: |
+          REPORT=$(ls -1t tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json | head -1)
+          cp "$REPORT" tests/blackbox_multiturn/results/_baseline_main_light_30.json
+          echo "Refreshed baseline: $(basename $REPORT)"
