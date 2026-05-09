@@ -92,7 +92,47 @@ The path filter on `regression-light.yml` already auto-skips pure docs/CI PRs;
 `skip-regression` is the explicit opt-out for cases where the path filter
 matched but the author knows regression isn't needed.
 
-### 7. Configure branch protection
+### 7. Create the regression cache directory
+
+The CI workflows persist baseline + per-tree report cache here. It lives
+*outside* the runner workdir so that `actions/checkout`'s `git clean` can't
+wipe it between runs. Without this dir the workflows still work — they
+just behave as if every run is the first, so every PR gets a "first run"
+summary instead of a real diff.
+
+```bash
+sudo mkdir -p /opt/pawly/regression-cache/reports-light-30
+sudo chown -R $(whoami) /opt/pawly/regression-cache
+# Verify the runner user can write to it:
+touch /opt/pawly/regression-cache/.write-test && rm /opt/pawly/regression-cache/.write-test
+```
+
+What ends up in here over time:
+
+```
+/opt/pawly/regression-cache/
+├── baseline-light-30.json                          ← what every PR's diff compares against
+└── reports-light-30/
+    └── deepseek-v4-pro/
+        ├── <tree-sha-1>.json                       ← report from PR whose HEAD tree was sha-1
+        ├── <tree-sha-2>.json
+        └── ...
+```
+
+The per-tree cache lets `refresh-baseline` short-circuit on push-to-main
+when the merge commit's tree matches one we already ran (common for squash
+merges where main hadn't moved). Without the cache, every push-to-main
+re-runs light-30, double-billing every merge.
+
+**Pruning** (do this every 2-3 months):
+
+```bash
+# Drop tree-SHA cache entries older than 90 days. baseline-light-30.json
+# is overwritten in place on each refresh, so it doesn't need pruning.
+find /opt/pawly/regression-cache/reports-light-30 -name '*.json' -mtime +90 -delete
+```
+
+### 8. Configure branch protection
 
 So the PR can't merge with red regression-light:
 

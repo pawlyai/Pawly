@@ -52,6 +52,14 @@ jobs:
     if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip-regression')
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 45
+    env:
+      # Both the cache key and the Makefile use $MODEL — keep them in
+      # sync by setting it once at the job level. Override in a feature
+      # branch by editing this line; cache will partition automatically.
+      MODEL: deepseek-v4-pro
+      # Persistent cache lives outside the runner workdir so
+      # `actions/checkout`'s `git clean` doesn't wipe it.
+      REGRESSION_CACHE_DIR: /opt/pawly/regression-cache
 
     steps:
       - name: Check out PR commit
@@ -59,6 +67,19 @@ jobs:
 
       - name: Install dependencies
         run: make install
+
+      - name: Restore baseline from VPS cache
+        run: |
+          BASELINE_CACHE="$REGRESSION_CACHE_DIR/baseline-light-30.json"
+          if [ -f "$BASELINE_CACHE" ]; then
+            mkdir -p tests/blackbox_multiturn/results
+            cp "$BASELINE_CACHE" tests/blackbox_multiturn/results/_baseline_main_light_30.json
+            echo "Restored baseline from $BASELINE_CACHE"
+          else
+            echo "No cached baseline yet — diff step will emit 'first run' summary."
+            echo "Seed via \`make regression-promote-baseline\` on the VPS, or wait"
+            echo "for the first push-to-main to populate it."
+          fi
 
       - name: Run light-30 regression
         env:
@@ -118,6 +139,19 @@ jobs:
           header: regression-light
           path: regression-summary.md
 
+      - name: Save report to tree-SHA cache
+        # Always cache, even if the diff step complained — the report itself
+        # is still a valid record of "this tree's behavior". Lets a future
+        # push-to-main with the same tree (common for squash merges where
+        # main hadn't moved) skip its refresh-baseline run.
+        if: always() && steps.report.outputs.path != ''
+        run: |
+          TREE=$(git rev-parse HEAD^{tree})
+          DEST="$REGRESSION_CACHE_DIR/reports-light-30/$MODEL"
+          mkdir -p "$DEST"
+          cp "${{ steps.report.outputs.path }}" "$DEST/$TREE.json"
+          echo "Cached at $DEST/$TREE.json"
+
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -132,20 +166,63 @@ jobs:
   # Run on push-to-main only, so that future PRs diff against the latest
   # main-branch numbers. Keeping this in the same workflow file avoids
   # having two workflows fight over the runner.
+  #
+  # Cache strategy: every PR's light-30 run caches its report keyed by
+  # `git rev-parse HEAD^{tree}`. When main moves, this job checks if the
+  # merge commit's tree matches a cached report — if so, just promote it
+  # to baseline (free, instant). If not (cache miss, e.g. main moved
+  # between PR open and merge so the squash produced a new tree), run
+  # a fresh light-30. For a single-dev project where main usually
+  # doesn't move between PR open and merge, cache hits are the norm.
   refresh-baseline:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, pawly-vps]
     timeout-minutes: 45
+    env:
+      MODEL: deepseek-v4-pro
+      REGRESSION_CACHE_DIR: /opt/pawly/regression-cache
+
     steps:
       - uses: actions/checkout@v4
-      - run: make install
-      - env:
+
+      - name: Check tree-SHA cache
+        id: cache
+        run: |
+          TREE=$(git rev-parse HEAD^{tree})
+          CACHED="$REGRESSION_CACHE_DIR/reports-light-30/$MODEL/$TREE.json"
+          BASELINE="$REGRESSION_CACHE_DIR/baseline-light-30.json"
+          echo "tree=$TREE" >> "$GITHUB_OUTPUT"
+          if [ -f "$CACHED" ]; then
+            echo "Cache HIT for tree $TREE — promoting cached report to baseline."
+            echo "(saved ~20min wall-clock + ~\$2 LLM spend)"
+            cp "$CACHED" "$BASELINE"
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cache MISS for tree $TREE — running full light-30."
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.cache.outputs.hit == 'false'
+        run: make install
+
+      - name: Run light-30 (cache miss path)
+        if: steps.cache.outputs.hit == 'false'
+        env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
           TELEGRAM_BOT_TOKEN: ci-test-token
         run: |
           set -a; . /opt/pawly/.env; set +a
+          : "${DEEPSEEK_API_KEY:?missing in /opt/pawly/.env}"
+          : "${GOOGLE_API_KEY:?missing in /opt/pawly/.env}"
           make regression-light
-      - run: |
+
+      - name: Save as baseline + tree-SHA cache (cache miss path)
+        if: steps.cache.outputs.hit == 'false'
+        run: |
           REPORT=$(ls -1t tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json | head -1)
-          cp "$REPORT" tests/blackbox_multiturn/results/_baseline_main_light_30.json
+          cp "$REPORT" "$REGRESSION_CACHE_DIR/baseline-light-30.json"
+          DEST="$REGRESSION_CACHE_DIR/reports-light-30/$MODEL"
+          mkdir -p "$DEST"
+          cp "$REPORT" "$DEST/${{ steps.cache.outputs.tree }}.json"
           echo "Refreshed baseline: $(basename $REPORT)"
