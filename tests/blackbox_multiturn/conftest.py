@@ -632,11 +632,28 @@ def mock_multiturn_runtime(
     from src.llm import orchestrator
 
     def _apply(case: dict[str, Any], user: User, pet: Pet) -> ConversationRuntime:
-        memories = [_build_pet_memory(pet.id, item) for item in case.get("memories", [])]
+        # Three legacy generators (gen_p0_outofscope, gen_p1_general,
+        # gen_longitudinal) used a `mem(role, content)` helper that returns
+        # turn-shape dicts but stuffs them into the `memories` field. Route
+        # any turn-shape entry to recent_turns so those cases run; real
+        # memory entries (with `memory_type`) stay where they are. Once the
+        # generators are fixed and JSONs regenerated, this branch is dead
+        # weight and can be removed.
+        raw_memories = case.get("memories", [])
+        real_memories = [m for m in raw_memories if "memory_type" in m]
+        misplaced_turns = [
+            m for m in raw_memories
+            if "memory_type" not in m and "role" in m and "content" in m
+        ]
+        memories = [_build_pet_memory(pet.id, item) for item in real_memories]
+        # Misplaced turns predate the explicit recent_turns — these are
+        # background context the case author wanted established before the
+        # fresh conversation begins.
+        recent_turns = misplaced_turns + list(case.get("recent_turns", []))
         runtime = ConversationRuntime(
             pet=pet,
             memories=memories,
-            recent_turns=case.get("recent_turns", []),
+            recent_turns=recent_turns,
         )
         fake_session_id = uuid.uuid4()
         fake_dialogue_id = uuid.uuid4()
