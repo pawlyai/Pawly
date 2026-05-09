@@ -15,7 +15,8 @@
       "weight": "5.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."
@@ -31,9 +32,7 @@
       {
         "role": "assistant",
         "content": "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "It's been 4 weeks — Luna now weighs 5.4 kg."
@@ -74,7 +73,8 @@
       "weight": "5.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."
@@ -90,9 +90,7 @@
       {
         "role": "assistant",
         "content": "Elimination trial began; instructed Emma to avoid all chicken, chicken meal, or poultry-based ingredients for 8 weeks."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "Luna has been fine on the hydrolysed food for 6 weeks now — no symptoms."
@@ -133,7 +131,8 @@
       "weight": "5.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Luna was overweight at 5.8 kg; now 4.7 kg after 3 months on grain-free low-calorie wet food."
@@ -153,9 +152,7 @@
       {
         "role": "user",
         "content": "Luna shows soft stools when any grain is present in food; grain-free management has resolved GI symptoms."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "Luna's annual vet check is next week — what should I tell the vet?"
@@ -196,7 +193,8 @@
       "weight": "33 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."
@@ -212,9 +210,7 @@
       {
         "role": "assistant",
         "content": "Stair hesitation is a classic early sign of hip pain. Physio/hydrotherapy was also suggested as an adjunct."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "It's been 2 months — Rex is going up the stairs without hesitation now."
@@ -255,7 +251,8 @@
       "weight": "33 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."
@@ -271,9 +268,7 @@
       {
         "role": "assistant",
         "content": "Advised teaching family members to approach from the side and avoid patting the lower back/hindquarters."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "A neighbour's child ran up and hugged Rex from behind — Rex growled loudly."
@@ -314,7 +309,8 @@
       "weight": "33 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."
@@ -330,9 +326,7 @@
       {
         "role": "assistant",
         "content": "Elevated liver enzymes noted — worth monitoring; could be related to long-term NSAID use if any has been prescribed."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "Rex turns 6 next month — should I start thinking about senior food?"
@@ -373,7 +367,8 @@
       "weight": "3.6 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."
@@ -389,9 +384,7 @@
       {
         "role": "assistant",
         "content": "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "Mochi finished the antibiotics 3 weeks ago and seems fine now."
@@ -432,7 +425,8 @@
       "weight": "3.6 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."
@@ -448,9 +442,7 @@
       {
         "role": "assistant",
         "content": "Recommended a safe hiding space and consistent feeding schedule as environmental anchors during stressful periods."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "I have a move coming up — Mochi is already acting weird just from seeing packing boxes."
@@ -491,7 +483,8 @@
       "weight": "3.6 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."
@@ -507,9 +500,7 @@
       {
         "role": "assistant",
         "content": "Dropping food or unilateral chewing can indicate oral pain; flagged for the vet to examine at next visit."
-      }
-    ],
-    "recent_turns": [
+      },
       {
         "role": "user",
         "content": "It's been a year since Mochi's last dental — she seems fine eating."

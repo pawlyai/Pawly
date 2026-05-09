@@ -15,13 +15,13 @@
       "weight": "11 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Priya has been feeding Mango kibble but is curious about raw after reading a pet blog."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Is a raw food diet actually good for dogs like Mango?",
       "What proteins should I rotate?",
@@ -53,13 +53,13 @@
       "weight": "30 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "James switched to grain-free kibble 6 months ago after a friend's recommendation."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I heard grain-free food can cause heart problems — is that true?",
       "What's the DCM link exactly?",
@@ -91,13 +91,13 @@
       "weight": "7 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Aisha is budget-conscious and believes home cooking is healthier."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "What do I need to include in home-cooked meals for Pepper?",
       "What vegetables are safe for Schnauzers?",
@@ -129,13 +129,13 @@
       "weight": "3.8 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Noodle has been eating the same adult kibble for 3 years; recently lost 0.4 kg over 2 months."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Noodle's been losing weight — should I switch her to senior food?",
       "What's different about senior cat food?",
@@ -167,13 +167,13 @@
       "weight": "5.5 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Mei follows a vegan lifestyle and wants her pet's diet to align with her values."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Can Tofu eat vegan food like I do?",
       "What nutrients would he be missing?",
@@ -205,13 +205,13 @@
       "weight": "38 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Ravi gives Charlie treats during training and as rewards — approximately 10 treats per day."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Charlie's overweight — how do I cut treats without him getting upset?",
       "What are low-calorie treat options?",
@@ -243,13 +243,13 @@
       "weight": "4.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Sophie's family recently switched from dry to wet food because Boba drinks more water now."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Is feeding Boba only wet food okay?",
       "Will her teeth get bad without dry food?",
@@ -281,13 +281,13 @@
       "weight": "18 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Thomas competes in agility trials with Rocky 3 times per week."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How much protein does an active Border Collie really need?",
       "Is plant protein as good as animal protein for dogs?",
@@ -319,13 +319,13 @@
       "weight": "4.0 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Marshmallow was diagnosed with stage 2 CKD at the last vet visit; currently eating regular adult food."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Marshmallow has kidney disease — what should she eat now?",
       "Why does the phosphorus level matter so much?",
@@ -357,13 +357,13 @@
       "weight": "12 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Cookie has had recurring ear infections for 8 months despite treatment; vet suspects environmental or food allergy."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Could Cookie's ear infections be from her food?",
       "How do I do an elimination diet?",
@@ -395,13 +395,13 @@
       "weight": "8 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Oreo goes to the dog park twice a week and Anna bathes him roughly once a month."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How often should I bathe Oreo?",
       "Is human shampoo okay in a pinch?",
@@ -433,13 +433,13 @@
       "weight": "6.5 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Ben has never trimmed Simba's nails; Simba scratched the sofa last week."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I'm scared to cut Simba's nails — how do I do it safely?",
       "What is the quick and how do I avoid it?",
@@ -471,13 +471,13 @@
       "weight": "3 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Grace adopted Luna 3 months ago; Luna has never had her teeth brushed."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How do I start brushing Luna's teeth if she's never had it done?",
       "Can I use human toothpaste?",
@@ -509,13 +509,13 @@
       "weight": "25 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Archie blows coat twice a year; Tom spends 30 minutes vacuuming daily during shedding season."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How do I manage Archie's shedding at home?",
       "What brushes work best for a Husky's double coat?",
@@ -547,13 +547,13 @@
       "weight": "22 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Clara adopted Mochi 6 months ago; Mochi had one ear infection treated 2 months ago."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How often should I clean Mochi's ears?",
       "What solution should I use?",
@@ -585,13 +585,13 @@
       "weight": "29 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Yusuf lives in Singapore and walks Ziggy at noon on weekdays due to his work schedule."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Can hot pavement hurt Ziggy's paws?",
       "How do I test if the ground is too hot?",
@@ -623,13 +623,13 @@
       "weight": "7 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Nina just adopted Cloud and has never owned a cat before."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How often should I completely change Cloud's litter?",
       "Is crystal litter safer than clumping litter?",
@@ -661,13 +661,13 @@
       "weight": "13 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Duke used to run for an hour daily but lately he stops after 20 minutes and pants heavily."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Duke seems less energetic lately — is he just getting old?",
       "How much exercise does a 7-year-old Cocker Spaniel need?",
@@ -699,13 +699,13 @@
       "weight": "6 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Irene has tried scolding Pepper for barking but it makes the behavior worse."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How do I stop Pepper from barking at every stranger we pass?",
       "What is desensitization — I keep reading about it?",
@@ -737,13 +737,13 @@
       "weight": "35 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Mike injured his shoulder last month due to Rex's pulling; currently using a collar."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Rex pulls so hard he almost dislocated my shoulder — how do I fix this?",
       "What gear should I use?",
@@ -775,13 +775,13 @@
       "weight": "7 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Coco tears up cushions whenever I leave — is that separation anxiety?",
       "What is graduated departure training?",
@@ -813,13 +813,13 @@
       "weight": "4.5 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Delia moved apartments 3 weeks ago; Whiskers started missing the litter box last week."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Whiskers is peeing on the bathroom mat — why?",
       "Could it be a medical problem?",
@@ -851,13 +851,13 @@
       "weight": "28 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Kevin's elderly mother visits weekly and is afraid of being knocked down by Buddy."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Buddy jumps on everyone — how do I train him to stop?",
       "What is the turn-and-ignore method?",
@@ -889,13 +889,13 @@
       "weight": "8 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Ginger was rescued 1 year ago; she growls at Rachel's husband when he approaches her food bowl."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Ginger growls at my husband near her food bowl — is she dangerous?",
       "Should I punish her for growling?",
@@ -927,13 +927,13 @@
       "weight": "4.5 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Andy bought a carpeted cat tree but Mocha ignores it and still scratches the sofa."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Mocha destroys my leather sofa — how do I stop it?",
       "Should I declaw him?",
@@ -965,13 +965,13 @@
       "weight": "4 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "A 10-week-old Beagle puppy arrived 3 days ago; Snow now hides and hisses."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Snow hisses at the new puppy — is this normal?",
       "How do I introduce them properly?",
@@ -1003,13 +1003,13 @@
       "weight": "4.5 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Liam just adopted Peanut and has never owned a dog before."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "What vaccines does an 8-week-old Labrador puppy need?",
       "When do I give each vaccine?",
@@ -1041,13 +1041,13 @@
       "weight": "4.8 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Diana noticed Felix scratching and found live fleas; she has a carpeted apartment."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Felix has fleas — what should I do first?",
       "Why do I need to treat the whole apartment?",
@@ -1079,13 +1079,13 @@
       "weight": "3 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Bella goes to the dog park 3 times per week; Sam last dewormed her 8 months ago."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How often should I deworm Bella?",
       "What worms do dogs at the park usually get?",
@@ -1117,13 +1117,13 @@
       "weight": "12 kg",
       "sex": "female intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Natalie's previous dog was spayed at 6 months without issue, but she heard newer research recommends waiting."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Should I spay Cleo now at 5 months or wait?",
       "I heard early spay can hurt joint development — is that true?",
@@ -1155,13 +1155,13 @@
       "weight": "31 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Paul found a tick on Milo after a hike in a forested area; Milo is not on tick prevention."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I found a tick on Milo — how do I remove it?",
       "Should I twist or pull straight?",
@@ -1193,13 +1193,13 @@
       "weight": "11 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Daisy has never had a professional dental cleaning; Zoe brushes her teeth once a week."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Daisy has really bad breath — is that normal for dogs?",
       "What causes bad breath in dogs?",
@@ -1231,13 +1231,13 @@
       "weight": "18 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Fred is getting Titan his first vet visit next week and wants to know what to expect."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Does microchipping hurt Titan?",
       "Where is the chip implanted?",
@@ -1269,13 +1269,13 @@
       "weight": "6.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "The vet says Princess is obese — how do I help her lose weight safely?",
       "How much should I cut her food by?",
@@ -1307,13 +1307,13 @@
       "weight": "3.5 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Victor noticed Echo has started spraying in the apartment; vet recommended neutering."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "What happens during Echo's neutering surgery?",
       "How long is the recovery?",
@@ -1345,13 +1345,13 @@
       "weight": "3.2 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Claire recently moved to Singapore from a non-endemic country and is unsure if heartworm prevention is needed."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Does Benny need heartworm prevention in Singapore?",
       "How does heartworm spread?",
@@ -1383,13 +1383,13 @@
       "weight": "3 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Matt just brought Spark home; he works from home and has time to focus on socialization."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "When is the best time to socialize a puppy like Spark?",
       "What kinds of things should I expose him to?",
@@ -1421,13 +1421,13 @@
       "weight": "4.2 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Ellen has had Mittens since she was a kitten; Mittens is indoor-only and eats adult kibble."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "The vet called Mittens a senior — what should I be watching for?",
       "How often should she see the vet now?",
@@ -1459,13 +1459,13 @@
       "weight": "15 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Bean graduated puppy class at 4 months; now he ignores recall commands and chews furniture."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Bean was trained but now he acts like he forgot everything — what happened?",
       "Is this just a phase?",
@@ -1497,13 +1497,13 @@
       "weight": "3.8 kg",
       "sex": "female intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Cherry is indoor-outdoor and may have encountered a male cat; Petra noticed nipple enlargement."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I think Cherry might be pregnant — how do I confirm?",
       "How long is cat pregnancy?",
@@ -1535,13 +1535,13 @@
       "weight": "0.85 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Robin adopted Basil from a shelter; shelter was feeding him kitten wet food."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "What should I feed Basil at 10 weeks old?",
       "How many times per day does he need to eat?",
@@ -1573,13 +1573,13 @@
       "weight": "6 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Daffy has been incontinent at night for the past 2 weeks; she seems otherwise bright and alert."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Daffy is wetting the bed at night — is this just old age?",
       "What could be causing it?",
@@ -1611,13 +1611,13 @@
       "weight": "7 kg",
       "sex": "male intact"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Carl's furniture and shoes have bite marks; Tigger seems more restless at night."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Tigger is biting everything — is this because he's teething?",
       "When will the teething stop?",
@@ -1649,13 +1649,13 @@
       "weight": "2.8 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Nova just came home from the clinic 2 hours ago; she is groggy from anaesthesia."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Nova just got spayed — what do I do for her tonight?",
       "She keeps trying to lick the wound — what do I do?",
@@ -1687,13 +1687,13 @@
       "weight": "7 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I read online to use diluted vinegar for dog ear infections — is that safe?",
       "Why would vinegar make things worse?",
@@ -1725,13 +1725,13 @@
       "weight": "9 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Marcus follows a wellness Instagram account that promotes coconut oil for dogs daily."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I heard coconut oil is great for dogs — how much should I add to Fudge's food?",
       "It's natural fat, so it should be fine, right?",
@@ -1763,13 +1763,13 @@
       "weight": "4.1 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Ivy found the article on a natural-remedies website; Nugget has a small scabby patch on his neck."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Can I use diluted tea tree oil on Nugget's skin patch?",
       "The article says it's fine when diluted — are you sure it's dangerous?",
@@ -1801,13 +1801,13 @@
       "weight": "34 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Shadow has had soft stools for 3 days after a change in kibble brand."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Can I give Shadow my Yakult or human probiotic for his loose stools?",
       "Why are dog probiotics different?",
@@ -1839,13 +1839,13 @@
       "weight": "30 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Pumpkin was diagnosed with diabetes last week; Fiona is worried about giving daily injections."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I read that cinnamon can control dog diabetes naturally — is that true?",
       "The injections scare me — can I try diet changes first?",
@@ -1877,13 +1877,13 @@
       "weight": "N/A",
       "sex": "N/A"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Wei is considering adopting a dog for the first time and lives in an HDB flat."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Can I keep a dog in my HDB flat in Singapore?",
       "Which dog breeds are allowed in HDB flats?",
@@ -1915,13 +1915,13 @@
       "weight": "3.9 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Hui is a student on a tight budget; Mimi is a stray she adopted informally."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "Are there cheaper vet options in Singapore for cats?",
       "What about the SPCA — do they treat pets that aren't adopted from them?",
@@ -1953,13 +1953,13 @@
       "weight": "20 kg",
       "sex": "male neutered"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Jun is relocating in 3 months; Astro has current rabies vaccination and microchip."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "What do I need to bring Astro from Australia to Singapore?",
       "Does Australia count as Group 1?",
@@ -1991,13 +1991,13 @@
       "weight": "13 kg",
       "sex": "female spayed"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Siti walks Brownie at lunchtime due to her schedule; Singapore temperature is typically 30–34°C midday."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "How do I keep Brownie safe in Singapore's heat when I walk her?",
       "What are the warning signs of heatstroke in dogs?",
@@ -2029,13 +2029,13 @@
       "weight": "N/A",
       "sex": "N/A"
     },
-    "memories": [
+    "memories": [],
+    "recent_turns": [
       {
         "role": "user",
         "content": "Dave witnessed his neighbour kicking a stray cat and wants to report it."
       }
     ],
-    "recent_turns": [],
     "user_turns": [
       "I saw my neighbour kick a stray cat — is that illegal in Singapore?",
       "Which law covers animal cruelty?",

@@ -41,7 +41,17 @@ CITATION_PREAMBLE = (
     "A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. "
 )
 
-def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_turns, user_turns, persona):
+def lon(name, display, scenario, outcome, role, criteria, pet,
+        prior_session_turns, recent_turns, user_turns, persona):
+    """Build a longitudinal case.
+
+    `prior_session_turns` is conversation from earlier sessions (older than
+    `recent_turns`); both get concatenated into the case's `recent_turns`
+    field so the bot sees them as continuous history. The previous version
+    of this constructor placed `prior_session_turns` into the `memories`
+    field via a turn-shape `mem()` helper, which violated the memory schema
+    and broke conftest's case loader.
+    """
     return {
         "name": name,
         "user_display_name": display,
@@ -51,8 +61,10 @@ def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_
         "criteria": CITATION_PREAMBLE + criteria,
         "threshold": 0.90,
         "pet_profile": pet,
-        "memories": memories,
-        "recent_turns": recent_turns,
+        # No structured pet memories for longitudinal cases — both context
+        # buckets are conversational, so they go to recent_turns.
+        "memories": [],
+        "recent_turns": prior_session_turns + recent_turns,
         "user_turns": user_turns,
         "metadata": {
             "focus": "memory",
@@ -64,7 +76,9 @@ def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_
         },
     }
 
-def mem(role, content):
+
+def prior_turn(role, content):
+    """Helper for "this conversation already happened earlier"."""
     return {"role": role, "content": content}
 
 CASES = []
@@ -82,15 +96,15 @@ CASES.append(lon(
     role="Provide continuity-aware weight management follow-up for a cat seen in prior sessions.",
     criteria="Must demonstrate coherent use of Luna's previous weight of 5.8 kg (explicit or implicit citation acceptable per Shared Rule 2); must build on the earlier dietary plan; must provide progress-oriented advice toward the 4.5 kg target.",
     pet=LUNA,
-    memories=[
-        mem("user", "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."),
-        mem("assistant", "Recommended reducing caloric intake by 20% using a high-protein low-carb wet food and eliminating dry kibble entirely."),
-        mem("user", "Emma mentioned Luna shows loose stools with grain-containing food — suspected grain intolerance."),
-        mem("assistant", "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."),
+    prior_session_turns=[
+        prior_turn("user", "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."),
+        prior_turn("assistant", "Recommended reducing caloric intake by 20% using a high-protein low-carb wet food and eliminating dry kibble entirely."),
+        prior_turn("user", "Emma mentioned Luna shows loose stools with grain-containing food — suspected grain intolerance."),
+        prior_turn("assistant", "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."),
     ],
     recent_turns=[
-        mem("user", "It's been 4 weeks — Luna now weighs 5.4 kg."),
-        mem("assistant", "Great progress — 0.4 kg lost in 4 weeks is within the safe rate of 0.1–0.2 kg per week. Continue the grain-free wet food plan."),
+        prior_turn("user", "It's been 4 weeks — Luna now weighs 5.4 kg."),
+        prior_turn("assistant", "Great progress — 0.4 kg lost in 4 weeks is within the safe rate of 0.1–0.2 kg per week. Continue the grain-free wet food plan."),
     ],
     user_turns=[
         "Luna is at 5.2 kg now — is she on track compared to when we started?",
@@ -109,15 +123,15 @@ CASES.append(lon(
     role="Provide continuity-aware allergy management advice referencing previous allergic episode details.",
     criteria="Must demonstrate coherent use of the chicken-protein allergic reaction from prior session (explicit or implicit citation acceptable per Shared Rule 2); must recommend completing the full 8-week elimination trial; must not advise introducing new protein mid-trial.",
     pet=LUNA,
-    memories=[
-        mem("user", "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."),
-        mem("assistant", "Advised immediate vet visit and switching to a novel-protein elimination diet (rabbit or venison) for 8 weeks minimum."),
-        mem("user", "Vet confirmed it was a food allergy reaction; prescribed antihistamine and started hydrolysed protein food."),
-        mem("assistant", "Elimination trial began; instructed Emma to avoid all chicken, chicken meal, or poultry-based ingredients for 8 weeks."),
+    prior_session_turns=[
+        prior_turn("user", "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."),
+        prior_turn("assistant", "Advised immediate vet visit and switching to a novel-protein elimination diet (rabbit or venison) for 8 weeks minimum."),
+        prior_turn("user", "Vet confirmed it was a food allergy reaction; prescribed antihistamine and started hydrolysed protein food."),
+        prior_turn("assistant", "Elimination trial began; instructed Emma to avoid all chicken, chicken meal, or poultry-based ingredients for 8 weeks."),
     ],
     recent_turns=[
-        mem("user", "Luna has been fine on the hydrolysed food for 6 weeks now — no symptoms."),
-        mem("assistant", "Excellent recovery. Continue the elimination trial through the full 8 weeks before any reintroduction."),
+        prior_turn("user", "Luna has been fine on the hydrolysed food for 6 weeks now — no symptoms."),
+        prior_turn("assistant", "Excellent recovery. Continue the elimination trial through the full 8 weeks before any reintroduction."),
     ],
     user_turns=[
         "We're at 6 weeks with no reaction — can I introduce duck now?",
@@ -136,16 +150,16 @@ CASES.append(lon(
     role="Synthesize multi-session pet health history into a structured vet visit summary.",
     criteria="Must incorporate weight history, allergy history, and grain intolerance from across multiple sessions; must produce a structured checklist format; must not omit any known health issue.",
     pet=LUNA,
-    memories=[
-        mem("user", "Luna was overweight at 5.8 kg; now 4.7 kg after 3 months on grain-free low-calorie wet food."),
-        mem("assistant", "Dietary intervention successful. Recommend maintaining current grain-free diet and annual weight monitoring."),
-        mem("user", "Luna had a chicken-protein allergic reaction 3 months ago; now on hydrolysed protein long-term."),
-        mem("assistant", "Chicken and poultry proteins confirmed allergens; advised lifelong avoidance."),
-        mem("user", "Luna shows soft stools when any grain is present in food; grain-free management has resolved GI symptoms."),
+    prior_session_turns=[
+        prior_turn("user", "Luna was overweight at 5.8 kg; now 4.7 kg after 3 months on grain-free low-calorie wet food."),
+        prior_turn("assistant", "Dietary intervention successful. Recommend maintaining current grain-free diet and annual weight monitoring."),
+        prior_turn("user", "Luna had a chicken-protein allergic reaction 3 months ago; now on hydrolysed protein long-term."),
+        prior_turn("assistant", "Chicken and poultry proteins confirmed allergens; advised lifelong avoidance."),
+        prior_turn("user", "Luna shows soft stools when any grain is present in food; grain-free management has resolved GI symptoms."),
     ],
     recent_turns=[
-        mem("user", "Luna's annual vet check is next week — what should I tell the vet?"),
-        mem("assistant", "I can help you compile a full health history summary for the visit."),
+        prior_turn("user", "Luna's annual vet check is next week — what should I tell the vet?"),
+        prior_turn("assistant", "I can help you compile a full health history summary for the visit."),
     ],
     user_turns=[
         "Can you give me a complete list of Luna's health issues to share with the vet?",
@@ -169,15 +183,15 @@ CASES.append(lon(
     role="Provide continuity-aware joint management follow-up for a dog with diagnosed hip dysplasia.",
     criteria="Must demonstrate coherent use of the prior hip dysplasia diagnosis and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must recommend long-term continuation; must discuss maintenance exercise.",
     pet=REX,
-    memories=[
-        mem("user", "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."),
-        mem("assistant", "Recommended glucosamine 500 mg + chondroitin 400 mg daily, fish oil 1000 mg, and low-impact exercise (swimming, slow walks)."),
-        mem("user", "David noticed Rex hesitated at the stairs 2 months ago; that was the trigger for the vet visit."),
-        mem("assistant", "Stair hesitation is a classic early sign of hip pain. Physio/hydrotherapy was also suggested as an adjunct."),
+    prior_session_turns=[
+        prior_turn("user", "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."),
+        prior_turn("assistant", "Recommended glucosamine 500 mg + chondroitin 400 mg daily, fish oil 1000 mg, and low-impact exercise (swimming, slow walks)."),
+        prior_turn("user", "David noticed Rex hesitated at the stairs 2 months ago; that was the trigger for the vet visit."),
+        prior_turn("assistant", "Stair hesitation is a classic early sign of hip pain. Physio/hydrotherapy was also suggested as an adjunct."),
     ],
     recent_turns=[
-        mem("user", "It's been 2 months — Rex is going up the stairs without hesitation now."),
-        mem("assistant", "Great improvement. Continue the joint supplements and maintain low-impact exercise."),
+        prior_turn("user", "It's been 2 months — Rex is going up the stairs without hesitation now."),
+        prior_turn("assistant", "Great improvement. Continue the joint supplements and maintain low-impact exercise."),
     ],
     user_turns=[
         "Rex is doing much better — can I stop the supplements since he's improving?",
@@ -196,15 +210,15 @@ CASES.append(lon(
     role="Connect chronic pain history to new behavioural changes in a dog, and recommend appropriate professional support.",
     criteria="Must demonstrate coherent use of Rex's hip dysplasia and pain history (explicit or implicit citation acceptable per Shared Rule 2); must raise pain-induced aggression as a plausible contributing factor; must recommend both vet reassessment and behaviourist.",
     pet=REX,
-    memories=[
-        mem("user", "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."),
-        mem("assistant", "Pain-induced aggression is possible in dogs with chronic orthopaedic pain — especially if unexpectedly touched near the hips."),
-        mem("user", "David mentioned Rex has snapped once before when patted on the lower back — attributed to hip sensitivity."),
-        mem("assistant", "Advised teaching family members to approach from the side and avoid patting the lower back/hindquarters."),
+    prior_session_turns=[
+        prior_turn("user", "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."),
+        prior_turn("assistant", "Pain-induced aggression is possible in dogs with chronic orthopaedic pain — especially if unexpectedly touched near the hips."),
+        prior_turn("user", "David mentioned Rex has snapped once before when patted on the lower back — attributed to hip sensitivity."),
+        prior_turn("assistant", "Advised teaching family members to approach from the side and avoid patting the lower back/hindquarters."),
     ],
     recent_turns=[
-        mem("user", "A neighbour's child ran up and hugged Rex from behind — Rex growled loudly."),
-        mem("assistant", "That context matters — being grabbed from behind can startle and hurt a dog with hip pain. Growling was a warning, not random aggression."),
+        prior_turn("user", "A neighbour's child ran up and hugged Rex from behind — Rex growled loudly."),
+        prior_turn("assistant", "That context matters — being grabbed from behind can startle and hurt a dog with hip pain. Growling was a warning, not random aggression."),
     ],
     user_turns=[
         "Is Rex becoming aggressive or is this related to his hips?",
@@ -223,15 +237,15 @@ CASES.append(lon(
     role="Provide proactive health planning for a large-breed dog nearing senior status with existing orthopaedic issues.",
     criteria="Must demonstrate coherent use of Rex's existing hip dysplasia and supplement protocol (explicit or implicit citation acceptable per Shared Rule 2); must explain senior-range onset for large breeds (around 7 years); must provide a forward-looking health roadmap.",
     pet=REX,
-    memories=[
-        mem("user", "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."),
-        mem("assistant", "Large breeds like German Shepherds are considered senior around 7–8 years; monitoring kidney, cardiac, and joint health becomes more important."),
-        mem("user", "Rex has annual bloodwork done; last results were normal except slightly elevated liver enzymes — vet said to recheck in 6 months."),
-        mem("assistant", "Elevated liver enzymes noted — worth monitoring; could be related to long-term NSAID use if any has been prescribed."),
+    prior_session_turns=[
+        prior_turn("user", "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."),
+        prior_turn("assistant", "Large breeds like German Shepherds are considered senior around 7–8 years; monitoring kidney, cardiac, and joint health becomes more important."),
+        prior_turn("user", "Rex has annual bloodwork done; last results were normal except slightly elevated liver enzymes — vet said to recheck in 6 months."),
+        prior_turn("assistant", "Elevated liver enzymes noted — worth monitoring; could be related to long-term NSAID use if any has been prescribed."),
     ],
     recent_turns=[
-        mem("user", "Rex turns 6 next month — should I start thinking about senior food?"),
-        mem("assistant", "Not yet mandatory at 6 for GSDs, but it's a good time to review his nutritional needs given his hip condition."),
+        prior_turn("user", "Rex turns 6 next month — should I start thinking about senior food?"),
+        prior_turn("assistant", "Not yet mandatory at 6 for GSDs, but it's a good time to review his nutritional needs given his hip condition."),
     ],
     user_turns=[
         "When should Rex transition to senior food given his hip condition?",
@@ -255,15 +269,15 @@ CASES.append(lon(
     role="Provide post-UTI follow-up care and recurrence prevention for a cat.",
     criteria="Must demonstrate coherent use of the prior UTI episode and antibiotic treatment (explicit or implicit citation acceptable per Shared Rule 2); must recommend post-treatment urine culture; must address hydration strategies.",
     pet=MOCHI,
-    memories=[
-        mem("user", "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."),
-        mem("assistant", "After completing antibiotics, a follow-up urine culture at 4 weeks is essential to confirm resolution."),
-        mem("user", "Mochi drinks very little water and eats only dry kibble — identified as a risk factor for UTI recurrence."),
-        mem("assistant", "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."),
+    prior_session_turns=[
+        prior_turn("user", "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."),
+        prior_turn("assistant", "After completing antibiotics, a follow-up urine culture at 4 weeks is essential to confirm resolution."),
+        prior_turn("user", "Mochi drinks very little water and eats only dry kibble — identified as a risk factor for UTI recurrence."),
+        prior_turn("assistant", "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."),
     ],
     recent_turns=[
-        mem("user", "Mochi finished the antibiotics 3 weeks ago and seems fine now."),
-        mem("assistant", "Good — but schedule the 4-week post-treatment urine culture this week if you haven't yet."),
+        prior_turn("user", "Mochi finished the antibiotics 3 weeks ago and seems fine now."),
+        prior_turn("assistant", "Good — but schedule the 4-week post-treatment urine culture this week if you haven't yet."),
     ],
     user_turns=[
         "Mochi seems fully recovered — do I still need the follow-up urine test?",
@@ -282,15 +296,15 @@ CASES.append(lon(
     role="Create a cat-specific moving plan accounting for prior stress-induced health issues.",
     criteria="Must demonstrate coherent use of Mochi's stress-linked UTI history (explicit or implicit citation acceptable per Shared Rule 2); must recommend Feliway pheromone diffuser; must provide a structured pre/during/post-move protocol.",
     pet=MOCHI,
-    memories=[
-        mem("user", "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."),
-        mem("assistant", "Stress is a known trigger for feline lower urinary tract disease (FLUTD). Environmental stability is important for Mochi."),
-        mem("user", "Sarah mentioned Mochi hides under the bed whenever there is any disruption to her routine."),
-        mem("assistant", "Recommended a safe hiding space and consistent feeding schedule as environmental anchors during stressful periods."),
+    prior_session_turns=[
+        prior_turn("user", "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."),
+        prior_turn("assistant", "Stress is a known trigger for feline lower urinary tract disease (FLUTD). Environmental stability is important for Mochi."),
+        prior_turn("user", "Sarah mentioned Mochi hides under the bed whenever there is any disruption to her routine."),
+        prior_turn("assistant", "Recommended a safe hiding space and consistent feeding schedule as environmental anchors during stressful periods."),
     ],
     recent_turns=[
-        mem("user", "I have a move coming up — Mochi is already acting weird just from seeing packing boxes."),
-        mem("assistant", "That's a red flag given her stress history. Let's plan the move carefully."),
+        prior_turn("user", "I have a move coming up — Mochi is already acting weird just from seeing packing boxes."),
+        prior_turn("assistant", "That's a red flag given her stress history. Let's plan the move carefully."),
     ],
     user_turns=[
         "How do I prepare Mochi for the move given her stress history?",
@@ -309,15 +323,15 @@ CASES.append(lon(
     role="Advise on dental care frequency for a cat with prior dental disease history.",
     criteria="Must demonstrate coherent use of the prior dental cleaning and tooth extractions (explicit or implicit citation acceptable per Shared Rule 2); must explain elevated recurrence risk; must recommend annual dental assessment.",
     pet=MOCHI,
-    memories=[
-        mem("user", "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."),
-        mem("assistant", "Feline tooth resorption (FTR) tends to recur — cats who have had lesions once are at higher risk for further lesions. Annual dental checks are recommended."),
-        mem("user", "Sarah mentioned Mochi sometimes drops food when eating or chews only on one side."),
-        mem("assistant", "Dropping food or unilateral chewing can indicate oral pain; flagged for the vet to examine at next visit."),
+    prior_session_turns=[
+        prior_turn("user", "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."),
+        prior_turn("assistant", "Feline tooth resorption (FTR) tends to recur — cats who have had lesions once are at higher risk for further lesions. Annual dental checks are recommended."),
+        prior_turn("user", "Sarah mentioned Mochi sometimes drops food when eating or chews only on one side."),
+        prior_turn("assistant", "Dropping food or unilateral chewing can indicate oral pain; flagged for the vet to examine at next visit."),
     ],
     recent_turns=[
-        mem("user", "It's been a year since Mochi's last dental — she seems fine eating."),
-        mem("assistant", "Cats often mask oral pain — a dental exam is still warranted given her resorptive lesion history."),
+        prior_turn("user", "It's been a year since Mochi's last dental — she seems fine eating."),
+        prior_turn("assistant", "Cats often mask oral pain — a dental exam is still warranted given her resorptive lesion history."),
     ],
     user_turns=[
         "Does Mochi really need another dental clean this year?",

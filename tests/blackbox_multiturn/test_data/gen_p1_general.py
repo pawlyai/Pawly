@@ -13,7 +13,7 @@ import json, pathlib
 
 OUT = pathlib.Path(__file__).parent / "multiturn_pawly_regression_test_p1_general.json"
 
-def p1(name, display, scenario, outcome, role, criteria, pet, memories, user_turns, persona,
+def p1(name, display, scenario, outcome, role, criteria, pet, prior_turns, user_turns, persona,
        focus="general", category="general_topic"):
     return {
         "name": name,
@@ -24,8 +24,10 @@ def p1(name, display, scenario, outcome, role, criteria, pet, memories, user_tur
         "criteria": criteria,
         "threshold": 0.75,
         "pet_profile": pet,
-        "memories": memories,
-        "recent_turns": [],
+        # No structured pet memories for general cases — the relevant context
+        # is conversational background, which lives in recent_turns.
+        "memories": [],
+        "recent_turns": prior_turns,
         "user_turns": user_turns,
         "metadata": {
             "focus": focus,
@@ -37,7 +39,12 @@ def p1(name, display, scenario, outcome, role, criteria, pet, memories, user_tur
         },
     }
 
-def mem(role, content):
+
+# Helper for "this conversation already happened earlier" — produces
+# turn-shape entries that go into recent_turns. The previous version was
+# named `mem` and routed to the `memories` field, which violated the
+# memory schema; renaming + rerouting fixes the schema mismatch.
+def prior_turn(role, content):
     return {"role": role, "content": content}
 
 CASES = []
@@ -54,7 +61,7 @@ CASES.append(p1(
     role="Provide balanced, evidence-informed nutritional guidance for dogs on raw diets.",
     criteria="Must cover protein variety, raw-diet hygiene, and recommend professional nutritional advice; must not endorse raw-only diet without caveats.",
     pet={"name": "Mango", "species": "dog", "breed": "Beagle", "age": "2 years", "weight": "11 kg", "sex": "male neutered"},
-    memories=[mem("user", "Priya has been feeding Mango kibble but is curious about raw after reading a pet blog.")],
+    prior_turns=[prior_turn("user", "Priya has been feeding Mango kibble but is curious about raw after reading a pet blog.")],
     user_turns=[
         "Is a raw food diet actually good for dogs like Mango?",
         "What proteins should I rotate?",
@@ -72,7 +79,7 @@ CASES.append(p1(
     role="Discuss grain-free diet controversy objectively and support evidence-based decisions.",
     criteria="Must mention DCM concern without catastrophizing; must recommend vet consultation; must not definitively condemn grain-free diets.",
     pet={"name": "Biscuit", "species": "dog", "breed": "Golden Retriever", "age": "4 years", "weight": "30 kg", "sex": "male neutered"},
-    memories=[mem("user", "James switched to grain-free kibble 6 months ago after a friend's recommendation.")],
+    prior_turns=[prior_turn("user", "James switched to grain-free kibble 6 months ago after a friend's recommendation.")],
     user_turns=[
         "I heard grain-free food can cause heart problems — is that true?",
         "What's the DCM link exactly?",
@@ -90,7 +97,7 @@ CASES.append(p1(
     role="Guide home-cooking for dogs with attention to nutritional completeness.",
     criteria="Must highlight risk of nutrient deficiencies; must list essential supplements (calcium, taurine, etc.); must recommend vet-nutritionist sign-off.",
     pet={"name": "Pepper", "species": "dog", "breed": "Miniature Schnauzer", "age": "5 years", "weight": "7 kg", "sex": "female spayed"},
-    memories=[mem("user", "Aisha is budget-conscious and believes home cooking is healthier.")],
+    prior_turns=[prior_turn("user", "Aisha is budget-conscious and believes home cooking is healthier.")],
     user_turns=[
         "What do I need to include in home-cooked meals for Pepper?",
         "What vegetables are safe for Schnauzers?",
@@ -108,7 +115,7 @@ CASES.append(p1(
     role="Advise on senior cat nutrition while flagging clinical signs needing vet attention.",
     criteria="Must not dismiss weight loss as normal aging; must recommend vet check; must explain senior-formula benefits.",
     pet={"name": "Noodle", "species": "cat", "breed": "Domestic Shorthair", "age": "10 years", "weight": "3.8 kg", "sex": "female spayed"},
-    memories=[mem("user", "Noodle has been eating the same adult kibble for 3 years; recently lost 0.4 kg over 2 months.")],
+    prior_turns=[prior_turn("user", "Noodle has been eating the same adult kibble for 3 years; recently lost 0.4 kg over 2 months.")],
     user_turns=[
         "Noodle's been losing weight — should I switch her to senior food?",
         "What's different about senior cat food?",
@@ -126,7 +133,7 @@ CASES.append(p1(
     role="Provide accurate species-specific nutritional guidance on vegan pet diets.",
     criteria="Must clarify dogs vs. cats nutritional needs; must warn about taurine, vitamin D3, and B12 in dogs on vegan diets; must recommend vet or nutritionist oversight.",
     pet={"name": "Tofu", "species": "dog", "breed": "Shih Tzu", "age": "3 years", "weight": "5.5 kg", "sex": "male neutered"},
-    memories=[mem("user", "Mei follows a vegan lifestyle and wants her pet's diet to align with her values.")],
+    prior_turns=[prior_turn("user", "Mei follows a vegan lifestyle and wants her pet's diet to align with her values.")],
     user_turns=[
         "Can Tofu eat vegan food like I do?",
         "What nutrients would he be missing?",
@@ -144,7 +151,7 @@ CASES.append(p1(
     role="Support healthy weight management for dogs through balanced treat strategies.",
     criteria="Must quantify treat calorie limits; must suggest low-calorie alternatives (carrot, green bean); must not suggest abrupt treat elimination.",
     pet={"name": "Charlie", "species": "dog", "breed": "Labrador Retriever", "age": "6 years", "weight": "38 kg", "sex": "male neutered"},
-    memories=[mem("user", "Ravi gives Charlie treats during training and as rewards — approximately 10 treats per day.")],
+    prior_turns=[prior_turn("user", "Ravi gives Charlie treats during training and as rewards — approximately 10 treats per day.")],
     user_turns=[
         "Charlie's overweight — how do I cut treats without him getting upset?",
         "What are low-calorie treat options?",
@@ -162,7 +169,7 @@ CASES.append(p1(
     role="Advise on wet-food-only diets for cats with attention to dental health.",
     criteria="Must affirm wet food benefits; must address dental health maintenance; must not discourage wet-food diets.",
     pet={"name": "Boba", "species": "cat", "breed": "Persian", "age": "2 years", "weight": "4.2 kg", "sex": "female spayed"},
-    memories=[mem("user", "Sophie's family recently switched from dry to wet food because Boba drinks more water now.")],
+    prior_turns=[prior_turn("user", "Sophie's family recently switched from dry to wet food because Boba drinks more water now.")],
     user_turns=[
         "Is feeding Boba only wet food okay?",
         "Will her teeth get bad without dry food?",
@@ -180,7 +187,7 @@ CASES.append(p1(
     role="Advise on high-protein diets for active working-breed dogs.",
     criteria="Must provide protein percentage ranges; must recommend animal-based protein; must mention BCS monitoring.",
     pet={"name": "Rocky", "species": "dog", "breed": "Border Collie", "age": "3 years", "weight": "18 kg", "sex": "male intact"},
-    memories=[mem("user", "Thomas competes in agility trials with Rocky 3 times per week.")],
+    prior_turns=[prior_turn("user", "Thomas competes in agility trials with Rocky 3 times per week.")],
     user_turns=[
         "How much protein does an active Border Collie really need?",
         "Is plant protein as good as animal protein for dogs?",
@@ -198,7 +205,7 @@ CASES.append(p1(
     role="Guide CKD cat diet management with appropriate medical caution.",
     criteria="Must recommend low-phosphorus diet; must emphasize moisture and prescription food; must advise ongoing vet monitoring.",
     pet={"name": "Marshmallow", "species": "cat", "breed": "Domestic Shorthair", "age": "9 years", "weight": "4.0 kg", "sex": "female spayed"},
-    memories=[mem("user", "Marshmallow was diagnosed with stage 2 CKD at the last vet visit; currently eating regular adult food.")],
+    prior_turns=[prior_turn("user", "Marshmallow was diagnosed with stage 2 CKD at the last vet visit; currently eating regular adult food.")],
     user_turns=[
         "Marshmallow has kidney disease — what should she eat now?",
         "Why does the phosphorus level matter so much?",
@@ -216,7 +223,7 @@ CASES.append(p1(
     role="Guide the food allergy investigation process for dogs with chronic ear infections.",
     criteria="Must explain elimination trial protocol and duration; must not name a specific allergen without testing; must recommend vet-directed allergy workup.",
     pet={"name": "Cookie", "species": "dog", "breed": "French Bulldog", "age": "4 years", "weight": "12 kg", "sex": "female spayed"},
-    memories=[mem("user", "Cookie has had recurring ear infections for 8 months despite treatment; vet suspects environmental or food allergy.")],
+    prior_turns=[prior_turn("user", "Cookie has had recurring ear infections for 8 months despite treatment; vet suspects environmental or food allergy.")],
     user_turns=[
         "Could Cookie's ear infections be from her food?",
         "How do I do an elimination diet?",
@@ -238,7 +245,7 @@ CASES.append(p1(
     role="Advise on bathing frequency and product selection for Poodle mixes.",
     criteria="Must give specific bathing frequency; must recommend dog-specific shampoo; must warn against human shampoo.",
     pet={"name": "Oreo", "species": "dog", "breed": "Poodle mix", "age": "3 years", "weight": "8 kg", "sex": "male neutered"},
-    memories=[mem("user", "Oreo goes to the dog park twice a week and Anna bathes him roughly once a month.")],
+    prior_turns=[prior_turn("user", "Oreo goes to the dog park twice a week and Anna bathes him roughly once a month.")],
     user_turns=[
         "How often should I bathe Oreo?",
         "Is human shampoo okay in a pinch?",
@@ -256,7 +263,7 @@ CASES.append(p1(
     role="Teach safe cat nail trimming technique to an anxious owner.",
     criteria="Must explain the quick; must recommend styptic powder; must describe calm restraint technique.",
     pet={"name": "Simba", "species": "cat", "breed": "Maine Coon", "age": "2 years", "weight": "6.5 kg", "sex": "male neutered"},
-    memories=[mem("user", "Ben has never trimmed Simba's nails; Simba scratched the sofa last week.")],
+    prior_turns=[prior_turn("user", "Ben has never trimmed Simba's nails; Simba scratched the sofa last week.")],
     user_turns=[
         "I'm scared to cut Simba's nails — how do I do it safely?",
         "What is the quick and how do I avoid it?",
@@ -274,7 +281,7 @@ CASES.append(p1(
     role="Guide new owners through pet dental care desensitization and brushing.",
     criteria="Must describe gradual desensitization; must specify enzymatic toothpaste; must never recommend human toothpaste (xylitol risk).",
     pet={"name": "Luna", "species": "dog", "breed": "Maltese", "age": "1 year", "weight": "3 kg", "sex": "female spayed"},
-    memories=[mem("user", "Grace adopted Luna 3 months ago; Luna has never had her teeth brushed.")],
+    prior_turns=[prior_turn("user", "Grace adopted Luna 3 months ago; Luna has never had her teeth brushed.")],
     user_turns=[
         "How do I start brushing Luna's teeth if she's never had it done?",
         "Can I use human toothpaste?",
@@ -292,7 +299,7 @@ CASES.append(p1(
     role="Advise on at-home grooming for double-coat breeds.",
     criteria="Must recommend undercoat rake and slicker brush combo; must warn against shaving double coats; must suggest bathing frequency.",
     pet={"name": "Archie", "species": "dog", "breed": "Siberian Husky", "age": "5 years", "weight": "25 kg", "sex": "male neutered"},
-    memories=[mem("user", "Archie blows coat twice a year; Tom spends 30 minutes vacuuming daily during shedding season.")],
+    prior_turns=[prior_turn("user", "Archie blows coat twice a year; Tom spends 30 minutes vacuuming daily during shedding season.")],
     user_turns=[
         "How do I manage Archie's shedding at home?",
         "What brushes work best for a Husky's double coat?",
@@ -310,7 +317,7 @@ CASES.append(p1(
     role="Guide floppy-ear dog owners on safe ear cleaning to prevent otitis.",
     criteria="Must specify vet-approved ear cleanser; must warn against cotton swabs; must list infection warning signs.",
     pet={"name": "Mochi", "species": "dog", "breed": "Basset Hound", "age": "3 years", "weight": "22 kg", "sex": "female spayed"},
-    memories=[mem("user", "Clara adopted Mochi 6 months ago; Mochi had one ear infection treated 2 months ago.")],
+    prior_turns=[prior_turn("user", "Clara adopted Mochi 6 months ago; Mochi had one ear infection treated 2 months ago.")],
     user_turns=[
         "How often should I clean Mochi's ears?",
         "What solution should I use?",
@@ -328,7 +335,7 @@ CASES.append(p1(
     role="Advise on paw pad protection for dogs in hot climates.",
     criteria="Must explain 5-second pavement test; must recommend walking at cooler times; must mention paw wax or protective booties.",
     pet={"name": "Ziggy", "species": "dog", "breed": "Labrador Retriever", "age": "4 years", "weight": "29 kg", "sex": "male neutered"},
-    memories=[mem("user", "Yusuf lives in Singapore and walks Ziggy at noon on weekdays due to his work schedule.")],
+    prior_turns=[prior_turn("user", "Yusuf lives in Singapore and walks Ziggy at noon on weekdays due to his work schedule.")],
     user_turns=[
         "Can hot pavement hurt Ziggy's paws?",
         "How do I test if the ground is too hot?",
@@ -346,7 +353,7 @@ CASES.append(p1(
     role="Advise on litter hygiene and litter-type selection for cats.",
     criteria="Must recommend daily scooping; must distinguish litter types; must not assert one type is universally superior.",
     pet={"name": "Cloud", "species": "cat", "breed": "Maine Coon", "age": "2 years", "weight": "7 kg", "sex": "male neutered"},
-    memories=[mem("user", "Nina just adopted Cloud and has never owned a cat before.")],
+    prior_turns=[prior_turn("user", "Nina just adopted Cloud and has never owned a cat before.")],
     user_turns=[
         "How often should I completely change Cloud's litter?",
         "Is crystal litter safer than clumping litter?",
@@ -364,7 +371,7 @@ CASES.append(p1(
     role="Advise on exercise adjustment for middle-aged/senior dogs with reduced energy.",
     criteria="Must recommend appropriate exercise duration; must suggest low-impact alternatives; must flag vet check for underlying causes of energy decrease.",
     pet={"name": "Duke", "species": "dog", "breed": "Cocker Spaniel", "age": "7 years", "weight": "13 kg", "sex": "male neutered"},
-    memories=[mem("user", "Duke used to run for an hour daily but lately he stops after 20 minutes and pants heavily.")],
+    prior_turns=[prior_turn("user", "Duke used to run for an hour daily but lately he stops after 20 minutes and pants heavily.")],
     user_turns=[
         "Duke seems less energetic lately — is he just getting old?",
         "How much exercise does a 7-year-old Cocker Spaniel need?",
@@ -386,7 +393,7 @@ CASES.append(p1(
     role="Guide reactive barking reduction through positive reinforcement techniques.",
     criteria="Must explain desensitization/counter-conditioning; must introduce threshold concept; must not recommend punishment-based tools.",
     pet={"name": "Pepper", "species": "dog", "breed": "Jack Russell Terrier", "age": "2 years", "weight": "6 kg", "sex": "female spayed"},
-    memories=[mem("user", "Irene has tried scolding Pepper for barking but it makes the behavior worse.")],
+    prior_turns=[prior_turn("user", "Irene has tried scolding Pepper for barking but it makes the behavior worse.")],
     user_turns=[
         "How do I stop Pepper from barking at every stranger we pass?",
         "What is desensitization — I keep reading about it?",
@@ -404,7 +411,7 @@ CASES.append(p1(
     role="Teach loose-leash walking techniques appropriate for large-breed dogs.",
     criteria="Must recommend front-clip harness; must explain stop-and-wait method; must advise short focused sessions.",
     pet={"name": "Rex", "species": "dog", "breed": "Doberman Pinscher", "age": "3 years", "weight": "35 kg", "sex": "male neutered"},
-    memories=[mem("user", "Mike injured his shoulder last month due to Rex's pulling; currently using a collar.")],
+    prior_turns=[prior_turn("user", "Mike injured his shoulder last month due to Rex's pulling; currently using a collar.")],
     user_turns=[
         "Rex pulls so hard he almost dislocated my shoulder — how do I fix this?",
         "What gear should I use?",
@@ -422,7 +429,7 @@ CASES.append(p1(
     role="Guide owners through separation anxiety management with graduated training.",
     criteria="Must explain graduated departure training; must recommend enrichment toys; must flag severe cases for vet/behaviourist referral.",
     pet={"name": "Coco", "species": "dog", "breed": "Cavalier King Charles Spaniel", "age": "1.5 years", "weight": "7 kg", "sex": "female spayed"},
-    memories=[mem("user", "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago.")],
+    prior_turns=[prior_turn("user", "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago.")],
     user_turns=[
         "Coco tears up cushions whenever I leave — is that separation anxiety?",
         "What is graduated departure training?",
@@ -440,7 +447,7 @@ CASES.append(p1(
     role="Triage inappropriate elimination in cats — medical vs. behavioural.",
     criteria="Must recommend vet check before behavioural fix; must list litter-aversion factors; must not attribute issue to behavioral cause without ruling out medical.",
     pet={"name": "Whiskers", "species": "cat", "breed": "Domestic Shorthair", "age": "4 years", "weight": "4.5 kg", "sex": "female spayed"},
-    memories=[mem("user", "Delia moved apartments 3 weeks ago; Whiskers started missing the litter box last week.")],
+    prior_turns=[prior_turn("user", "Delia moved apartments 3 weeks ago; Whiskers started missing the litter box last week.")],
     user_turns=[
         "Whiskers is peeing on the bathroom mat — why?",
         "Could it be a medical problem?",
@@ -458,7 +465,7 @@ CASES.append(p1(
     role="Teach jumping-up prevention training to owners of exuberant dogs.",
     criteria="Must explain four-on-floor rule; must emphasize consistency across all household members; must not recommend knee-bump or alpha rolling.",
     pet={"name": "Buddy", "species": "dog", "breed": "Golden Retriever", "age": "1 year", "weight": "28 kg", "sex": "male intact"},
-    memories=[mem("user", "Kevin's elderly mother visits weekly and is afraid of being knocked down by Buddy.")],
+    prior_turns=[prior_turn("user", "Kevin's elderly mother visits weekly and is afraid of being knocked down by Buddy.")],
     user_turns=[
         "Buddy jumps on everyone — how do I train him to stop?",
         "What is the turn-and-ignore method?",
@@ -476,7 +483,7 @@ CASES.append(p1(
     role="Help owners understand canine growling and safely manage resource/person guarding.",
     criteria="Must not advise punishing growling; must recommend professional behaviourist; must provide interim safety management.",
     pet={"name": "Ginger", "species": "dog", "breed": "Terrier mix", "age": "5 years", "weight": "8 kg", "sex": "female spayed"},
-    memories=[mem("user", "Ginger was rescued 1 year ago; she growls at Rachel's husband when he approaches her food bowl.")],
+    prior_turns=[prior_turn("user", "Ginger was rescued 1 year ago; she growls at Rachel's husband when he approaches her food bowl.")],
     user_turns=[
         "Ginger growls at my husband near her food bowl — is she dangerous?",
         "Should I punish her for growling?",
@@ -494,7 +501,7 @@ CASES.append(p1(
     role="Guide cat scratching redirection using positive reinforcement.",
     criteria="Must recommend appropriate scratch surface (sisal); must advise against declawing; must include positive reinforcement steps.",
     pet={"name": "Mocha", "species": "cat", "breed": "Siamese", "age": "2 years", "weight": "4.5 kg", "sex": "male neutered"},
-    memories=[mem("user", "Andy bought a carpeted cat tree but Mocha ignores it and still scratches the sofa.")],
+    prior_turns=[prior_turn("user", "Andy bought a carpeted cat tree but Mocha ignores it and still scratches the sofa.")],
     user_turns=[
         "Mocha destroys my leather sofa — how do I stop it?",
         "Should I declaw him?",
@@ -512,7 +519,7 @@ CASES.append(p1(
     role="Guide multi-species household introduction using gradual desensitization.",
     criteria="Must recommend scent introduction before visual; must not force contact; must give realistic timeline.",
     pet={"name": "Snow", "species": "cat", "breed": "Domestic Shorthair", "age": "3 years", "weight": "4 kg", "sex": "female spayed"},
-    memories=[mem("user", "A 10-week-old Beagle puppy arrived 3 days ago; Snow now hides and hisses.")],
+    prior_turns=[prior_turn("user", "A 10-week-old Beagle puppy arrived 3 days ago; Snow now hides and hisses.")],
     user_turns=[
         "Snow hisses at the new puppy — is this normal?",
         "How do I introduce them properly?",
@@ -534,7 +541,7 @@ CASES.append(p1(
     role="Educate new puppy owners on core vaccination schedules.",
     criteria="Must list core vaccines by name; must give timing intervals; must recommend vet for local regulatory requirements.",
     pet={"name": "Peanut", "species": "dog", "breed": "Labrador Retriever", "age": "8 weeks", "weight": "4.5 kg", "sex": "male intact"},
-    memories=[mem("user", "Liam just adopted Peanut and has never owned a dog before.")],
+    prior_turns=[prior_turn("user", "Liam just adopted Peanut and has never owned a dog before.")],
     user_turns=[
         "What vaccines does an 8-week-old Labrador puppy need?",
         "When do I give each vaccine?",
@@ -552,7 +559,7 @@ CASES.append(p1(
     role="Guide comprehensive flea eradication in pet and home environment.",
     criteria="Must address both pet treatment and environmental treatment; must mention flea lifecycle (eggs in environment); must recommend vet-approved products.",
     pet={"name": "Felix", "species": "cat", "breed": "Domestic Shorthair", "age": "3 years", "weight": "4.8 kg", "sex": "male neutered"},
-    memories=[mem("user", "Diana noticed Felix scratching and found live fleas; she has a carpeted apartment.")],
+    prior_turns=[prior_turn("user", "Diana noticed Felix scratching and found live fleas; she has a carpeted apartment.")],
     user_turns=[
         "Felix has fleas — what should I do first?",
         "Why do I need to treat the whole apartment?",
@@ -570,7 +577,7 @@ CASES.append(p1(
     role="Advise on routine deworming frequency and product selection for adult dogs.",
     criteria="Must give deworming frequency; must name common worm types; must recommend vet-prescribed products over OTC.",
     pet={"name": "Bella", "species": "dog", "breed": "Pomeranian", "age": "5 years", "weight": "3 kg", "sex": "female spayed"},
-    memories=[mem("user", "Bella goes to the dog park 3 times per week; Sam last dewormed her 8 months ago.")],
+    prior_turns=[prior_turn("user", "Bella goes to the dog park 3 times per week; Sam last dewormed her 8 months ago.")],
     user_turns=[
         "How often should I deworm Bella?",
         "What worms do dogs at the park usually get?",
@@ -588,7 +595,7 @@ CASES.append(p1(
     role="Discuss pros and cons of spay timing for large-breed dogs without dictating one correct answer.",
     criteria="Must mention joint health considerations; must not give a one-size-fits-all recommendation; must recommend vet consultation.",
     pet={"name": "Cleo", "species": "dog", "breed": "Border Collie", "age": "5 months", "weight": "12 kg", "sex": "female intact"},
-    memories=[mem("user", "Natalie's previous dog was spayed at 6 months without issue, but she heard newer research recommends waiting.")],
+    prior_turns=[prior_turn("user", "Natalie's previous dog was spayed at 6 months without issue, but she heard newer research recommends waiting.")],
     user_turns=[
         "Should I spay Cleo now at 5 months or wait?",
         "I heard early spay can hurt joint development — is that true?",
@@ -606,7 +613,7 @@ CASES.append(p1(
     role="Guide safe tick removal and prevention for dogs in tick-endemic areas.",
     criteria="Must explain correct tweezers technique; must warn against twisting or burning; must recommend monitoring for tick-borne disease signs.",
     pet={"name": "Milo", "species": "dog", "breed": "Golden Retriever", "age": "4 years", "weight": "31 kg", "sex": "male neutered"},
-    memories=[mem("user", "Paul found a tick on Milo after a hike in a forested area; Milo is not on tick prevention.")],
+    prior_turns=[prior_turn("user", "Paul found a tick on Milo after a hike in a forested area; Milo is not on tick prevention.")],
     user_turns=[
         "I found a tick on Milo — how do I remove it?",
         "Should I twist or pull straight?",
@@ -624,7 +631,7 @@ CASES.append(p1(
     role="Advise on dental disease recognition and professional dental care for dogs.",
     criteria="Must link halitosis to periodontal disease; must recommend professional dental exam; must not dismiss it as normal.",
     pet={"name": "Daisy", "species": "dog", "breed": "Cocker Spaniel", "age": "6 years", "weight": "11 kg", "sex": "female spayed"},
-    memories=[mem("user", "Daisy has never had a professional dental cleaning; Zoe brushes her teeth once a week.")],
+    prior_turns=[prior_turn("user", "Daisy has never had a professional dental cleaning; Zoe brushes her teeth once a week.")],
     user_turns=[
         "Daisy has really bad breath — is that normal for dogs?",
         "What causes bad breath in dogs?",
@@ -642,7 +649,7 @@ CASES.append(p1(
     role="Educate owners on microchipping procedure and local regulations.",
     criteria="Must mention ISO 15-digit standard; must note Singapore mandatory requirement for dogs; must reassure about minimal pain.",
     pet={"name": "Titan", "species": "dog", "breed": "Great Dane", "age": "3 months", "weight": "18 kg", "sex": "male intact"},
-    memories=[mem("user", "Fred is getting Titan his first vet visit next week and wants to know what to expect.")],
+    prior_turns=[prior_turn("user", "Fred is getting Titan his first vet visit next week and wants to know what to expect.")],
     user_turns=[
         "Does microchipping hurt Titan?",
         "Where is the chip implanted?",
@@ -660,7 +667,7 @@ CASES.append(p1(
     role="Guide safe weight-loss strategies for overweight adult cats.",
     criteria="Must recommend measured portions; must suggest active play; must not recommend rapid weight loss (hepatic lipidosis risk).",
     pet={"name": "Princess", "species": "cat", "breed": "Domestic Shorthair", "age": "7 years", "weight": "6.2 kg", "sex": "female spayed"},
-    memories=[mem("user", "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat.")],
+    prior_turns=[prior_turn("user", "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat.")],
     user_turns=[
         "The vet says Princess is obese — how do I help her lose weight safely?",
         "How much should I cut her food by?",
@@ -678,7 +685,7 @@ CASES.append(p1(
     role="Inform cat owners about neutering procedure and post-op care.",
     criteria="Must explain activity restriction post-op; must mention e-collar; must list benefits of neutering without being prescriptive.",
     pet={"name": "Echo", "species": "cat", "breed": "Bengal", "age": "6 months", "weight": "3.5 kg", "sex": "male intact"},
-    memories=[mem("user", "Victor noticed Echo has started spraying in the apartment; vet recommended neutering.")],
+    prior_turns=[prior_turn("user", "Victor noticed Echo has started spraying in the apartment; vet recommended neutering.")],
     user_turns=[
         "What happens during Echo's neutering surgery?",
         "How long is the recovery?",
@@ -696,7 +703,7 @@ CASES.append(p1(
     role="Advise on heartworm prevention in tropical/endemic regions.",
     criteria="Must confirm heartworm risk in Singapore; must recommend monthly preventive; must advise annual testing.",
     pet={"name": "Benny", "species": "dog", "breed": "Maltese", "age": "2 years", "weight": "3.2 kg", "sex": "male neutered"},
-    memories=[mem("user", "Claire recently moved to Singapore from a non-endemic country and is unsure if heartworm prevention is needed.")],
+    prior_turns=[prior_turn("user", "Claire recently moved to Singapore from a non-endemic country and is unsure if heartworm prevention is needed.")],
     user_turns=[
         "Does Benny need heartworm prevention in Singapore?",
         "How does heartworm spread?",
@@ -718,7 +725,7 @@ CASES.append(p1(
     role="Guide new owners through the puppy socialization window.",
     criteria="Must state the 3–14 week window; must give specific exposure categories; must warn against forcing fearful exposures.",
     pet={"name": "Spark", "species": "dog", "breed": "Siberian Husky", "age": "7 weeks", "weight": "3 kg", "sex": "male intact"},
-    memories=[mem("user", "Matt just brought Spark home; he works from home and has time to focus on socialization.")],
+    prior_turns=[prior_turn("user", "Matt just brought Spark home; he works from home and has time to focus on socialization.")],
     user_turns=[
         "When is the best time to socialize a puppy like Spark?",
         "What kinds of things should I expose him to?",
@@ -736,7 +743,7 @@ CASES.append(p1(
     role="Prepare cat owners for the health changes that come with feline aging.",
     criteria="Must list multiple senior-stage changes; must recommend biannual vet checks; must suggest senior-appropriate diet.",
     pet={"name": "Mittens", "species": "cat", "breed": "Tabby", "age": "12 years", "weight": "4.2 kg", "sex": "female spayed"},
-    memories=[mem("user", "Ellen has had Mittens since she was a kitten; Mittens is indoor-only and eats adult kibble.")],
+    prior_turns=[prior_turn("user", "Ellen has had Mittens since she was a kitten; Mittens is indoor-only and eats adult kibble.")],
     user_turns=[
         "The vet called Mittens a senior — what should I be watching for?",
         "How often should she see the vet now?",
@@ -754,7 +761,7 @@ CASES.append(p1(
     role="Help owners understand and manage canine adolescence.",
     criteria="Must explain adolescence developmental stage; must recommend consistent positive reinforcement; must reassure owner that regression is temporary.",
     pet={"name": "Bean", "species": "dog", "breed": "Border Collie", "age": "8 months", "weight": "15 kg", "sex": "male intact"},
-    memories=[mem("user", "Bean graduated puppy class at 4 months; now he ignores recall commands and chews furniture.")],
+    prior_turns=[prior_turn("user", "Bean graduated puppy class at 4 months; now he ignores recall commands and chews furniture.")],
     user_turns=[
         "Bean was trained but now he acts like he forgot everything — what happened?",
         "Is this just a phase?",
@@ -772,7 +779,7 @@ CASES.append(p1(
     role="Guide owners through feline pregnancy confirmation and preparation.",
     criteria="Must recommend vet confirmation via ultrasound; must mention gestational timeline; must describe nesting preparation.",
     pet={"name": "Cherry", "species": "cat", "breed": "Domestic Shorthair", "age": "3 years", "weight": "3.8 kg", "sex": "female intact"},
-    memories=[mem("user", "Cherry is indoor-outdoor and may have encountered a male cat; Petra noticed nipple enlargement.")],
+    prior_turns=[prior_turn("user", "Cherry is indoor-outdoor and may have encountered a male cat; Petra noticed nipple enlargement.")],
     user_turns=[
         "I think Cherry might be pregnant — how do I confirm?",
         "How long is cat pregnancy?",
@@ -790,7 +797,7 @@ CASES.append(p1(
     role="Guide kitten feeding schedule and food selection in early development.",
     criteria="Must recommend kitten-specific food; must give feeding frequency for the age; must not recommend adult food for a kitten.",
     pet={"name": "Basil", "species": "cat", "breed": "Domestic Shorthair", "age": "10 weeks", "weight": "0.85 kg", "sex": "male intact"},
-    memories=[mem("user", "Robin adopted Basil from a shelter; shelter was feeding him kitten wet food.")],
+    prior_turns=[prior_turn("user", "Robin adopted Basil from a shelter; shelter was feeding him kitten wet food.")],
     user_turns=[
         "What should I feed Basil at 10 weeks old?",
         "How many times per day does he need to eat?",
@@ -808,7 +815,7 @@ CASES.append(p1(
     role="Advise on geriatric incontinence with empathy and actionable options.",
     criteria="Must recommend vet workup; must list multiple possible causes; must mention doggy diapers as management aid.",
     pet={"name": "Daffy", "species": "dog", "breed": "Poodle", "age": "15 years", "weight": "6 kg", "sex": "female spayed"},
-    memories=[mem("user", "Daffy has been incontinent at night for the past 2 weeks; she seems otherwise bright and alert.")],
+    prior_turns=[prior_turn("user", "Daffy has been incontinent at night for the past 2 weeks; she seems otherwise bright and alert.")],
     user_turns=[
         "Daffy is wetting the bed at night — is this just old age?",
         "What could be causing it?",
@@ -826,7 +833,7 @@ CASES.append(p1(
     role="Guide owners through puppy teething with appropriate chew options.",
     criteria="Must give teething timeline; must recommend appropriate chew options; must advise redirection over punishment.",
     pet={"name": "Tigger", "species": "dog", "breed": "Beagle", "age": "4 months", "weight": "7 kg", "sex": "male intact"},
-    memories=[mem("user", "Carl's furniture and shoes have bite marks; Tigger seems more restless at night.")],
+    prior_turns=[prior_turn("user", "Carl's furniture and shoes have bite marks; Tigger seems more restless at night.")],
     user_turns=[
         "Tigger is biting everything — is this because he's teething?",
         "When will the teething stop?",
@@ -844,7 +851,7 @@ CASES.append(p1(
     role="Guide owners through immediate post-spay recovery care for cats.",
     criteria="Must mention e-collar; must state activity restriction duration; must list complication warning signs.",
     pet={"name": "Nova", "species": "cat", "breed": "Domestic Shorthair", "age": "6 months", "weight": "2.8 kg", "sex": "female spayed"},
-    memories=[mem("user", "Nova just came home from the clinic 2 hours ago; she is groggy from anaesthesia.")],
+    prior_turns=[prior_turn("user", "Nova just came home from the clinic 2 hours ago; she is groggy from anaesthesia.")],
     user_turns=[
         "Nova just got spayed — what do I do for her tonight?",
         "She keeps trying to lick the wound — what do I do?",
@@ -866,7 +873,7 @@ CASES.append(p1(
     role="Critically evaluate home-remedy information retrieved from the internet.",
     criteria="Must explain why vinegar can be harmful; must recommend vet diagnosis before home treatment; must not dismiss internet searches dismissively.",
     pet={"name": "Coco", "species": "dog", "breed": "Poodle", "age": "4 years", "weight": "7 kg", "sex": "female spayed"},
-    memories=[mem("user", "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days.")],
+    prior_turns=[prior_turn("user", "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days.")],
     user_turns=[
         "I read online to use diluted vinegar for dog ear infections — is that safe?",
         "Why would vinegar make things worse?",
@@ -884,7 +891,7 @@ CASES.append(p1(
     role="Evaluate popular pet-health social media claims with evidence-based context.",
     criteria="Must explain pancreatitis risk; must note lack of strong evidence; must not endorse large amounts of coconut oil.",
     pet={"name": "Fudge", "species": "dog", "breed": "Dachshund", "age": "3 years", "weight": "9 kg", "sex": "male neutered"},
-    memories=[mem("user", "Marcus follows a wellness Instagram account that promotes coconut oil for dogs daily.")],
+    prior_turns=[prior_turn("user", "Marcus follows a wellness Instagram account that promotes coconut oil for dogs daily.")],
     user_turns=[
         "I heard coconut oil is great for dogs — how much should I add to Fudge's food?",
         "It's natural fat, so it should be fine, right?",
@@ -902,7 +909,7 @@ CASES.append(p1(
     role="Urgently advise against toxic home remedies for cats.",
     criteria="Must clearly state tea tree oil is toxic to cats; must list toxicity symptoms; must advise immediate contact with vet if already applied.",
     pet={"name": "Nugget", "species": "cat", "breed": "Domestic Shorthair", "age": "2 years", "weight": "4.1 kg", "sex": "male neutered"},
-    memories=[mem("user", "Ivy found the article on a natural-remedies website; Nugget has a small scabby patch on his neck.")],
+    prior_turns=[prior_turn("user", "Ivy found the article on a natural-remedies website; Nugget has a small scabby patch on his neck.")],
     user_turns=[
         "Can I use diluted tea tree oil on Nugget's skin patch?",
         "The article says it's fine when diluted — are you sure it's dangerous?",
@@ -920,7 +927,7 @@ CASES.append(p1(
     role="Advise on evidence-based probiotic options for dogs.",
     criteria="Must distinguish dog vs. human probiotic strains; must recommend species-appropriate products; must suggest vet consultation for persistent diarrhoea.",
     pet={"name": "Shadow", "species": "dog", "breed": "Doberman Pinscher", "age": "4 years", "weight": "34 kg", "sex": "male neutered"},
-    memories=[mem("user", "Shadow has had soft stools for 3 days after a change in kibble brand.")],
+    prior_turns=[prior_turn("user", "Shadow has had soft stools for 3 days after a change in kibble brand.")],
     user_turns=[
         "Can I give Shadow my Yakult or human probiotic for his loose stools?",
         "Why are dog probiotics different?",
@@ -938,7 +945,7 @@ CASES.append(p1(
     role="Reinforce evidence-based diabetes management and correct dangerous misinformation.",
     criteria="Must not endorse natural alternatives to insulin; must explain why insulin is essential; must recommend following the vet's treatment plan.",
     pet={"name": "Pumpkin", "species": "dog", "breed": "Labrador Retriever", "age": "9 years", "weight": "30 kg", "sex": "female spayed"},
-    memories=[mem("user", "Pumpkin was diagnosed with diabetes last week; Fiona is worried about giving daily injections.")],
+    prior_turns=[prior_turn("user", "Pumpkin was diagnosed with diabetes last week; Fiona is worried about giving daily injections.")],
     user_turns=[
         "I read that cinnamon can control dog diabetes naturally — is that true?",
         "The injections scare me — can I try diet changes first?",
@@ -960,7 +967,7 @@ CASES.append(p1(
     role="Advise Singapore HDB residents on pet ownership regulations accurately.",
     criteria="Must mention HDB Pet Dog Scheme by name; must note sterilisation and microchipping requirements; must not give outdated breed list — direct to official source.",
     pet={"name": "Kopi", "species": "dog", "breed": "Unknown (prospective)", "age": "N/A", "weight": "N/A", "sex": "N/A"},
-    memories=[mem("user", "Wei is considering adopting a dog for the first time and lives in an HDB flat.")],
+    prior_turns=[prior_turn("user", "Wei is considering adopting a dog for the first time and lives in an HDB flat.")],
     user_turns=[
         "Can I keep a dog in my HDB flat in Singapore?",
         "Which dog breeds are allowed in HDB flats?",
@@ -978,7 +985,7 @@ CASES.append(p1(
     role="Help Singapore residents find affordable veterinary care options.",
     criteria="Must mention SPCA clinic as a low-cost option; must recommend confirming details directly with the clinic; must not provide fabricated prices.",
     pet={"name": "Mimi", "species": "cat", "breed": "Domestic Shorthair", "age": "4 years", "weight": "3.9 kg", "sex": "female spayed"},
-    memories=[mem("user", "Hui is a student on a tight budget; Mimi is a stray she adopted informally.")],
+    prior_turns=[prior_turn("user", "Hui is a student on a tight budget; Mimi is a stray she adopted informally.")],
     user_turns=[
         "Are there cheaper vet options in Singapore for cats?",
         "What about the SPCA — do they treat pets that aren't adopted from them?",
@@ -996,7 +1003,7 @@ CASES.append(p1(
     role="Guide owners through Singapore pet import procedures accurately.",
     criteria="Must mention AVS import permit requirement; must mention microchip and vaccination records; must recommend contacting AVS for the latest requirements.",
     pet={"name": "Astro", "species": "dog", "breed": "Border Collie", "age": "5 years", "weight": "20 kg", "sex": "male neutered"},
-    memories=[mem("user", "Jun is relocating in 3 months; Astro has current rabies vaccination and microchip.")],
+    prior_turns=[prior_turn("user", "Jun is relocating in 3 months; Astro has current rabies vaccination and microchip.")],
     user_turns=[
         "What do I need to bring Astro from Australia to Singapore?",
         "Does Australia count as Group 1?",
@@ -1014,7 +1021,7 @@ CASES.append(p1(
     role="Provide tropical climate-specific exercise safety advice for dogs.",
     criteria="Must recommend early morning or evening walks; must list heatstroke warning signs; must advise carrying water.",
     pet={"name": "Brownie", "species": "dog", "breed": "Pembroke Welsh Corgi", "age": "3 years", "weight": "13 kg", "sex": "female spayed"},
-    memories=[mem("user", "Siti walks Brownie at lunchtime due to her schedule; Singapore temperature is typically 30–34°C midday.")],
+    prior_turns=[prior_turn("user", "Siti walks Brownie at lunchtime due to her schedule; Singapore temperature is typically 30–34°C midday.")],
     user_turns=[
         "How do I keep Brownie safe in Singapore's heat when I walk her?",
         "What are the warning signs of heatstroke in dogs?",
@@ -1032,7 +1039,7 @@ CASES.append(p1(
     role="Inform Singapore residents about animal cruelty laws and reporting channels.",
     criteria="Must name the Animals and Birds Act; must provide the AVS cruelty hotline as the correct reporting channel; must not fabricate penalties or legal outcomes.",
     pet={"name": "N/A", "species": "N/A", "breed": "N/A", "age": "N/A", "weight": "N/A", "sex": "N/A"},
-    memories=[mem("user", "Dave witnessed his neighbour kicking a stray cat and wants to report it.")],
+    prior_turns=[prior_turn("user", "Dave witnessed his neighbour kicking a stray cat and wants to report it.")],
     user_turns=[
         "I saw my neighbour kick a stray cat — is that illegal in Singapore?",
         "Which law covers animal cruelty?",
