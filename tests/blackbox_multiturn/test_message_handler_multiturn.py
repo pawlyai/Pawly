@@ -1,45 +1,10 @@
 import asyncio
 import json
-import os
-import subprocess
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
-
-BASE_DIR = Path(__file__).parent
-RESULTS_DIR = BASE_DIR / "results"
-LOGS_DIR = BASE_DIR / "logs"
-REPO_ROOT = BASE_DIR.resolve().parents[1]
-
-
-def _git_metadata() -> dict[str, str]:
-    def _run(*args: str) -> str:
-        try:
-            out = subprocess.check_output(
-                ["git", *args],
-                cwd=REPO_ROOT,
-                stderr=subprocess.DEVNULL,
-                text=True,
-                timeout=5,
-            )
-            return out.strip()
-        except (subprocess.SubprocessError, FileNotFoundError, OSError):
-            return ""
-
-    branch = _run("rev-parse", "--abbrev-ref", "HEAD")
-    return {
-        "git_commit": os.environ.get("GIT_COMMIT") or _run("rev-parse", "HEAD"),
-        "git_tree_sha": os.environ.get("GIT_TREE_SHA") or _run("rev-parse", "HEAD^{tree}"),
-        "git_branch": os.environ.get("GIT_BRANCH") or ("" if branch == "HEAD" else branch),
-    }
-
-
-def _write_report(report: dict[str, Any], report_path: Path) -> None:
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    with report_path.open("w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, ensure_ascii=True)
 
 
 def _append_log(log_path: Path, event: dict[str, Any]) -> None:
@@ -50,196 +15,148 @@ def _append_log(log_path: Path, event: dict[str, Any]) -> None:
         handle.write("\n")
 
 
-def _resolve_model_name(deepeval_model: Any) -> str:
-    raw_name = getattr(deepeval_model, "model", None)
-    if isinstance(raw_name, str) and raw_name.strip():
-        return raw_name.replace("/", "-")
-
-    get_model_name = getattr(deepeval_model, "get_model_name", None)
-    if callable(get_model_name):
-        resolved_name = get_model_name()
-        if isinstance(resolved_name, str) and resolved_name.strip():
-            return resolved_name.replace("/", "-")
-
-    return "gemini-2.5-flash"
-
-
 def test_handle_message_multiturn_with_conversational_geval(
-    load_test_cases,
+    case: dict[str, Any],
     build_user_and_pet,
     build_update,
     mock_multiturn_runtime,
     build_router_runtime,
     deepeval_model,
-    multiturn_topic,
+    run_context: dict[str, Any],
+    report_state: dict[str, Any],
 ) -> None:
     pytest.importorskip("deepeval")
     from deepeval.metrics import ConversationalGEval
     from deepeval.test_case import ConversationalTestCase, Turn
     from deepeval.test_case.conversational_test_case import TurnParams
 
-    # Generate report filename with LLM name and datetime
-    llm_name = _resolve_model_name(deepeval_model)
-    started_at_dt = datetime.now(timezone.utc)
-    timestamp = started_at_dt.strftime("%Y%m%d_%H%M%S")
-    started_at = started_at_dt.isoformat(timespec="seconds")
-    report_filename = f"{multiturn_topic}_report_{llm_name}_v{timestamp}.json"
-    report_path = RESULTS_DIR / report_filename
-    log_filename = f"{multiturn_topic}_run_{llm_name}_v{timestamp}.jsonl"
-    log_path = LOGS_DIR / log_filename
-    git_meta = _git_metadata()
+    log_path: Path = run_context["partial_log"]
+    case_name = case.get("name") or "<unnamed_case>"
 
-    cases = load_test_cases(f"{multiturn_topic}_cases.json")
-    report_cases: list[dict[str, Any]] = []
-    _append_log(
-        log_path,
-        {
-            "event": "test_started",
-            "topic": multiturn_topic,
-            "llm_model": llm_name,
-            "case_count": len(cases),
-            "report_path": str(report_path),
-        },
-    )
-
-    for case in cases:
+    # One test_started event per worker (the parametrized tests share a single
+    # session-scoped report_state, so the flag prevents duplicate entries).
+    if not report_state["started_logged"]:
+        report_state["started_logged"] = True
         _append_log(
             log_path,
             {
-                "event": "case_started",
-                "case_name": case["name"],
-                "scenario": case["scenario"],
-                "user_turn_count": len(case["user_turns"]),
+                "event": "test_started",
+                "topic": run_context["topic"],
+                "llm_model": run_context["model_name"],
+                "worker_id": run_context["worker_id"],
+                "report_path": str(run_context["partial_report"]),
             },
         )
-        try:
-            user, pet = build_user_and_pet(case)
-            runtime = mock_multiturn_runtime(case, user, pet)
-            bot, dp, fake_api, _redis = build_router_runtime(user, pet)
-            full_turns: list[Turn] = []
 
-            for index, user_text in enumerate(case["user_turns"], start=1):
-                before_count = len(fake_api.sent_messages)
-                update = build_update(user_text, message_id=index, telegram_user_id=10001)
-                asyncio.run(
-                    dp.feed_update(bot, update)
-                )
-                new_messages = fake_api.sent_messages[before_count:]
-                assistant_text = "\n".join(item["text"] for item in new_messages)
-                full_turns.append(Turn(role="user", content=user_text))
-                full_turns.append(Turn(role="assistant", content=assistant_text))
-                runtime.record_exchange(user_text, assistant_text)
-
-                _append_log(
-                    log_path,
-                    {
-                        "event": "turn_completed",
-                        "case_name": case["name"],
-                        "turn_index": index,
-                        "user_text": user_text,
-                        "assistant_text": assistant_text,
-                        "new_message_count": len(new_messages),
-                    },
-                )
-
-            conversation_case = ConversationalTestCase(
-                name=case["name"],
-                scenario=case["scenario"],
-                expected_outcome=case["expected_outcome"],
-                chatbot_role=case["chatbot_role"],
-                turns=full_turns,
-                additional_metadata=case.get("metadata"),
-            )
-            metric = ConversationalGEval(
-                name="MultiTurnTriageEffectiveness",
-                criteria=case["criteria"],
-                evaluation_params=[
-                    TurnParams.ROLE,
-                    TurnParams.CONTENT,
-                    TurnParams.SCENARIO,
-                    TurnParams.EXPECTED_OUTCOME,
-                ],
-                threshold=case.get("threshold", 0.7),
-                model=deepeval_model,
-                async_mode=False,
-                verbose_mode=False,
-            )
-            score = metric.measure(
-                conversation_case,
-                _show_indicator=False,
-                _log_metric_to_confident=False,
-            )
-
-            case_result = {
-                "name": case["name"],
-                "status": "passed_threshold" if score >= metric.threshold else "below_threshold",
-                "score": score,
-                "threshold": metric.threshold,
-                "reason": metric.reason,
-                "turn_count": len(full_turns),
-                "turns": [{"role": turn.role, "content": turn.content} for turn in full_turns],
-                "metadata": case.get("metadata"),
-            }
-            report_cases.append(case_result)
-            _append_log(
-                log_path,
-                {
-                    "event": "case_finished",
-                    "case_name": case["name"],
-                    "status": case_result["status"],
-                    "score": score,
-                    "threshold": metric.threshold,
-                },
-            )
-        except Exception as exc:
-            _append_log(
-                log_path,
-                {
-                    "event": "case_failed",
-                    "case_name": case["name"],
-                    "error_type": type(exc).__name__,
-                    "error": str(exc),
-                    "completed_cases": len(report_cases),
-                },
-            )
-            partial_summary = {
-                "report_path": str(report_path),
-                "log_path": str(log_path),
-                "llm_model": llm_name,
-                "model": llm_name,
-                "topic": multiturn_topic,
-                "timestamp": timestamp,
-                "started_at": started_at,
-                "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "total_cases": len(cases),
-                "completed_cases": len(report_cases),
-                "failed_case": case["name"],
-                **git_meta,
-            }
-            _write_report({"summary": partial_summary, "cases": report_cases}, report_path)
-            raise
-
-    summary = {
-        "report_path": str(report_path),
-        "log_path": str(log_path),
-        "llm_model": llm_name,
-        "model": llm_name,
-        "topic": multiturn_topic,
-        "timestamp": timestamp,
-        "started_at": started_at,
-        "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "total_cases": len(report_cases),
-        "passed_threshold": sum(1 for item in report_cases if item["status"] == "passed_threshold"),
-        "below_threshold": sum(1 for item in report_cases if item["status"] == "below_threshold"),
-        **git_meta,
-    }
-    _write_report({"summary": summary, "cases": report_cases}, report_path)
     _append_log(
         log_path,
         {
-            "event": "test_finished",
-            "total_cases": len(report_cases),
-            "passed_threshold": summary["passed_threshold"],
-            "below_threshold": summary["below_threshold"],
+            "event": "case_started",
+            "case_name": case_name,
+            "scenario": case.get("scenario", ""),
+            "user_turn_count": len(case.get("user_turns") or []),
         },
     )
+
+    try:
+        user, pet = build_user_and_pet(case)
+        runtime = mock_multiturn_runtime(case, user, pet)
+        bot, dp, fake_api, _redis = build_router_runtime(user, pet)
+        full_turns: list[Turn] = []
+
+        user_turns = case.get("user_turns") or []
+        for index, user_text in enumerate(user_turns, start=1):
+            before_count = len(fake_api.sent_messages)
+            update = build_update(user_text, message_id=index, telegram_user_id=10001)
+            asyncio.run(dp.feed_update(bot, update))
+            new_messages = fake_api.sent_messages[before_count:]
+            assistant_text = "\n".join(item["text"] for item in new_messages)
+            full_turns.append(Turn(role="user", content=user_text))
+            full_turns.append(Turn(role="assistant", content=assistant_text))
+            runtime.record_exchange(user_text, assistant_text)
+
+            _append_log(
+                log_path,
+                {
+                    "event": "turn_completed",
+                    "case_name": case_name,
+                    "turn_index": index,
+                    "user_text": user_text,
+                    "assistant_text": assistant_text,
+                    "new_message_count": len(new_messages),
+                },
+            )
+
+        conversation_case = ConversationalTestCase(
+            name=case_name,
+            scenario=case.get("scenario", ""),
+            expected_outcome=case.get("expected_outcome", ""),
+            chatbot_role=case.get("chatbot_role", ""),
+            turns=full_turns,
+            additional_metadata=case.get("metadata"),
+        )
+        metric = ConversationalGEval(
+            name="MultiTurnTriageEffectiveness",
+            criteria=case.get("criteria", ""),
+            evaluation_params=[
+                TurnParams.ROLE,
+                TurnParams.CONTENT,
+                TurnParams.SCENARIO,
+                TurnParams.EXPECTED_OUTCOME,
+            ],
+            threshold=case.get("threshold", 0.7),
+            model=deepeval_model,
+            async_mode=False,
+            verbose_mode=False,
+        )
+        score = metric.measure(
+            conversation_case,
+            _show_indicator=False,
+            _log_metric_to_confident=False,
+        )
+
+        case_result: dict[str, Any] = {
+            "name": case_name,
+            "status": "passed_threshold" if score >= metric.threshold else "below_threshold",
+            "score": score,
+            "threshold": metric.threshold,
+            "reason": metric.reason,
+            "turn_count": len(full_turns),
+            "turns": [{"role": turn.role, "content": turn.content} for turn in full_turns],
+            "metadata": case.get("metadata"),
+        }
+        report_state["cases"].append(case_result)
+        _append_log(
+            log_path,
+            {
+                "event": "case_finished",
+                "case_name": case_name,
+                "status": case_result["status"],
+                "score": score,
+                "threshold": metric.threshold,
+            },
+        )
+    except Exception as exc:
+        # Record the failure in both jsonl and the merged report so a single
+        # bad case shows up in downstream tooling without taking down the run.
+        _append_log(
+            log_path,
+            {
+                "event": "case_failed",
+                "case_name": case_name,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            },
+        )
+        report_state["cases"].append(
+            {
+                "name": case_name,
+                "status": "errored",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "metadata": case.get("metadata"),
+            }
+        )
+        # Re-raise so pytest marks this parametrized invocation as failed; the
+        # other cases continue (this is the whole point of parametrizing).
+        raise
