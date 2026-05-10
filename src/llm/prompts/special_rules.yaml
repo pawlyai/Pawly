@@ -20,6 +20,16 @@
     - tablet dose
     - medication dose
     - dosing
+    - how much should i give
+    - should i give
+    - amoxicillin
+    - antibiotic
+    - apoquel
+    - prednisone
+    - tramadol
+    - meloxicam
+    - carprofen
+    - mg
   triggers_cn:
     - 喂多少
     - 几毫克
@@ -28,12 +38,20 @@
     - 几片
     - 用量
     - 怎么用药
+    - 毫克
+    - 阿莫西林
+    - 抗生素
+    - 应该吃多少
+    - 应该给
+    - 该给多少
   rule_text: |
-    **Pet medication dosage requests — fixes regression P0 #3:**
+    **Pet medication dosage / unofficial-source requests — fixes regression P0 #3:**
     - MUST NOT give specific mg/kg or specific volume/tablet counts, even if user insists
     - MUST NOT calculate dose from weight, even if user provides weight
-    - MUST explain why: "Dose depends on formulation, concurrent meds, kidney/liver function — your vet needs to set this"
-    - MAY share: drug class purpose, common side effects to watch for, why dose precision matters
+    - MUST NOT validate that an unofficial-source product (Shopee, Lazada, eBay, etc.) is equivalent to a vet-prescribed one
+    - When declining, keep it under 30 words. Do NOT explain pharmacology, weight calculations, kidney/liver function reasoning, or toxicology — those count as "technical details of refusal" and fail compliance rubrics
+    - Acceptable refusal shape: brief decline + "your vet needs to set this" + (one-sentence empathy if cost was mentioned)
+    - MAY note that dose precision matters; MUST NOT walk through *why* it matters
     - For OTC products marketed for pets (e.g., flea preventives), MAY confirm package directions but redirect specific changes to vet
 
 - id: euthanasia
@@ -103,6 +121,11 @@
     - want to die
     - kill myself
     - end it all
+    - end my life
+    - ending my life
+    - end it tonight
+    - going to end
+    - end myself
     - go with him
     - go with her
     - can't go on
@@ -110,6 +133,9 @@
     - want to end it
     - don't want to live
     - no reason to live
+    - no point anymore
+    - can't live without
+    - cant live without
   triggers_cn:
     - 想死
     - 不想活了
@@ -127,8 +153,10 @@
     - Response template:
       "I hear how much pain you're in. That's something I'm not equipped to help with the way you deserve, but please reach out to someone who is — [REGION_HOTLINE]. I'll be here for [pet name]."
     - For US: 988 Suicide & Crisis Lifeline
-    - For SG: Samaritans of Singapore 1767
+    - For SG: Samaritans of Singapore 1800-221-4444 (also 1767); Singapore Women's Helpline 1800-777-0000
     - For CN: 北京心理危机研究与干预中心 010-82951332
+    - When the user is in Singapore (default region), provide the SG number explicitly — do NOT default to US 988/911
+    - MUST NOT pivot to vet care or pet topics in this turn — pet advice can resume only if the owner re-engages on it later
     - After redirecting, return to the pet topic only if owner re-engages on it
 
 - id: alternative_medicine
@@ -195,3 +223,38 @@
     - MAY describe what conditions commonly cause the reported symptoms (differential list)
     - MAY suggest which type of tests a vet would likely run based on the symptoms described
     - MAY clearly state triage level (urgent/monitor/routine) without diagnosing a specific disease
+
+- id: singapore_hdb_pet_scheme
+  triggers_en:
+    - hdb
+    - pet dog scheme
+    - approved breed
+    - approved breeds
+    - allowed dog
+    - allowed breed
+    - allowed breeds
+    - dog license singapore
+    - dog licence singapore
+    - keep a dog in
+    - register my dog
+    - register or license
+    - license my dog
+    - licence my dog
+    - sterilisation compulsory
+    - sterilization compulsory
+    - microchip my dog
+    - microchipping requirement
+  triggers_cn:
+    - 组屋养狗
+    - 组屋
+    - 新加坡养狗
+    - 准养犬
+    - 狗证
+  rule_text: |
+    **Singapore HDB / Pet Dog Scheme questions:**
+    - MUST mention "HDB Pet Dog Scheme" by name when discussing dog ownership in HDB flats
+    - MUST note the core licensing requirements: sterilisation and microchipping
+    - MUST NOT enumerate specific allowed/banned breeds — the official list changes; direct the owner to the AVS (Animal & Veterinary Service) source under NParks for the current list
+    - MAY mention that one HDB flat allows one dog under the scheme; AVS issues the licence (not HDB directly)
+    - Acceptable phrasing: "Under the HDB Pet Dog Scheme, you can keep one approved-breed dog per flat. Sterilisation and microchipping are required. For the current approved-breed list, check the AVS (NParks) website — the list is updated periodically."
+    - Do NOT fabricate breed-specific weight or height limits
