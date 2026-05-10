@@ -1,6 +1,8 @@
 import asyncio
 import json
-from datetime import datetime
+import os
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +11,29 @@ import pytest
 BASE_DIR = Path(__file__).parent
 RESULTS_DIR = BASE_DIR / "results"
 LOGS_DIR = BASE_DIR / "logs"
+REPO_ROOT = BASE_DIR.resolve().parents[1]
+
+
+def _git_metadata() -> dict[str, str]:
+    def _run(*args: str) -> str:
+        try:
+            out = subprocess.check_output(
+                ["git", *args],
+                cwd=REPO_ROOT,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=5,
+            )
+            return out.strip()
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
+            return ""
+
+    branch = _run("rev-parse", "--abbrev-ref", "HEAD")
+    return {
+        "git_commit": os.environ.get("GIT_COMMIT") or _run("rev-parse", "HEAD"),
+        "git_tree_sha": os.environ.get("GIT_TREE_SHA") or _run("rev-parse", "HEAD^{tree}"),
+        "git_branch": os.environ.get("GIT_BRANCH") or ("" if branch == "HEAD" else branch),
+    }
 
 
 def _write_report(report: dict[str, Any], report_path: Path) -> None:
@@ -55,11 +80,14 @@ def test_handle_message_multiturn_with_conversational_geval(
 
     # Generate report filename with LLM name and datetime
     llm_name = _resolve_model_name(deepeval_model)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    started_at_dt = datetime.now(timezone.utc)
+    timestamp = started_at_dt.strftime("%Y%m%d_%H%M%S")
+    started_at = started_at_dt.isoformat(timespec="seconds")
     report_filename = f"{multiturn_topic}_report_{llm_name}_v{timestamp}.json"
     report_path = RESULTS_DIR / report_filename
     log_filename = f"{multiturn_topic}_run_{llm_name}_v{timestamp}.jsonl"
     log_path = LOGS_DIR / log_filename
+    git_meta = _git_metadata()
 
     cases = load_test_cases(f"{multiturn_topic}_cases.json")
     report_cases: list[dict[str, Any]] = []
@@ -178,10 +206,15 @@ def test_handle_message_multiturn_with_conversational_geval(
                 "report_path": str(report_path),
                 "log_path": str(log_path),
                 "llm_model": llm_name,
+                "model": llm_name,
+                "topic": multiturn_topic,
                 "timestamp": timestamp,
+                "started_at": started_at,
+                "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "total_cases": len(cases),
                 "completed_cases": len(report_cases),
                 "failed_case": case["name"],
+                **git_meta,
             }
             _write_report({"summary": partial_summary, "cases": report_cases}, report_path)
             raise
@@ -190,10 +223,15 @@ def test_handle_message_multiturn_with_conversational_geval(
         "report_path": str(report_path),
         "log_path": str(log_path),
         "llm_model": llm_name,
+        "model": llm_name,
+        "topic": multiturn_topic,
         "timestamp": timestamp,
+        "started_at": started_at,
+        "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "total_cases": len(report_cases),
         "passed_threshold": sum(1 for item in report_cases if item["status"] == "passed_threshold"),
         "below_threshold": sum(1 for item in report_cases if item["status"] == "below_threshold"),
+        **git_meta,
     }
     _write_report({"summary": summary, "cases": report_cases}, report_path)
     _append_log(

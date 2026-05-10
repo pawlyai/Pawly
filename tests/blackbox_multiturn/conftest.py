@@ -504,6 +504,10 @@ def underlying_chat_client(active_model_name: str) -> Any:
     settings.main_model = active_model_name
     settings.extraction_model = active_model_name
     settings.fallback_model = active_model_name
+    # chat_model takes precedence in the orchestrator (`chat_model or main_model`),
+    # so it must be overridden too — otherwise a non-empty .env value silently
+    # routes every chat call to the wrong provider.
+    settings.chat_model = active_model_name
     return get_chat_client(active_model_name)
 
 
