@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+import sys
 import time
 import uuid
 from collections.abc import Callable
@@ -15,6 +16,11 @@ import pytest
 from aiogram import BaseMiddleware, Bot, Dispatcher
 from aiogram.types import Chat, Message, TelegramObject, Update, User as TgUser
 from aiogram.fsm.storage.memory import MemoryStorage
+
+# Make sibling helper modules importable (matches the pattern used by
+# tests/blackbox_multiturn/pages/*.py for `lang.py`).
+sys.path.insert(0, str(Path(__file__).parent))
+from _validation import ValidationReport, validate_dataset  # noqa: E402
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-bot-token")
@@ -41,6 +47,9 @@ from src.llm.client import GeminiClient, get_gemini_client
 
 
 TEST_DATA_DIR = Path(__file__).parent / "test_data"
+RESULTS_DIR = Path(__file__).parent / "results"
+LOGS_DIR = Path(__file__).parent / "logs"
+RUN_TIMESTAMP_ENV = "PAWLY_BLACKBOX_RUN_TIMESTAMP"
 
 
 def _detach_router(router: Any) -> None:
@@ -84,13 +93,16 @@ def _memory_term(value: str) -> MemoryTerm:
 
 
 def _build_pet_memory(pet_id: uuid.UUID, item: dict[str, Any]) -> PetMemory:
+    # Defaults match production extractor.py:185 so a partial fixture entry
+    # never crashes the whole eval run (preflight validation surfaces the
+    # missing fields separately).
     return PetMemory(
         id=uuid.uuid4(),
         pet_id=pet_id,
-        memory_type=_memory_type(item["memory_type"]),
-        memory_term=_memory_term(item["memory_term"]),
-        field=item["field"],
-        value=item["value"],
+        memory_type=_memory_type(item.get("memory_type", "snapshot")),
+        memory_term=_memory_term(item.get("memory_term", "short")),
+        field=item.get("field", ""),
+        value=item.get("value", ""),
         confidence_score=item.get("confidence_score", 0.9),
         source=MemorySource.AI_EXTRACTED,
         source_message_id=None,
@@ -556,6 +568,25 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="LLM model to evaluate (e.g. gemini-2.0-flash, claude-sonnet-4-6, gpt-4o-mini).",
     )
+    parser.addoption(
+        "--strict-validation",
+        action="store_true",
+        default=False,
+        help=(
+            "Fail the session if any case in the dataset has schema errors. "
+            "Default is warn-only: errors are printed but the run continues "
+            "(combined with .get(default) hardening in fixture builders)."
+        ),
+    )
+    parser.addoption(
+        "--keep-worker-reports",
+        action="store_true",
+        default=False,
+        help=(
+            "Keep per-worker partial report files after the master merges them. "
+            "Off by default — partials are removed after a successful merge."
+        ),
+    )
 
 
 @pytest.fixture(scope="session")
@@ -564,11 +595,36 @@ def multiturn_topic(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture(scope="session")
-def load_test_cases() -> Callable[[str], list[dict[str, Any]]]:
+def load_test_cases(
+    request: pytest.FixtureRequest,
+) -> Callable[[str], list[dict[str, Any]]]:
+    strict = bool(request.config.getoption("--strict-validation"))
+    validated: set[str] = set()
+
     def _loader(filename: str) -> list[dict[str, Any]]:
         path = TEST_DATA_DIR / filename
         with path.open("r", encoding="utf-8") as handle:
-            return json.load(handle)
+            cases = json.load(handle)
+
+        # Validate each dataset at most once per session.
+        if filename not in validated:
+            validated.add(filename)
+            report: ValidationReport = validate_dataset(cases)
+            if report.has_errors or report.warnings:
+                print(
+                    "\n"
+                    + report.format_summary(
+                        header=f"Preflight validation: {filename}"
+                    )
+                )
+            if report.has_errors and strict:
+                pytest.fail(
+                    f"dataset {filename} has {report.error_count} schema error(s); "
+                    "fix the dataset or rerun without --strict-validation.",
+                    pytrace=False,
+                )
+
+        return cases
 
     return _loader
 
@@ -578,7 +634,8 @@ def build_user_and_pet() -> Callable[[dict[str, Any]], tuple[User, Pet]]:
     def _builder(case: dict[str, Any]) -> tuple[User, Pet]:
         user_id = uuid.uuid4()
         pet_id = uuid.uuid4()
-        pet_profile = case["pet_profile"]
+        # Tolerate partial pet_profile (preflight reports the gaps separately).
+        pet_profile = case.get("pet_profile", {}) or {}
 
         user = User(
             id=user_id,
@@ -589,8 +646,8 @@ def build_user_and_pet() -> Callable[[dict[str, Any]], tuple[User, Pet]]:
         pet = Pet(
             id=pet_id,
             user_id=user_id,
-            name=pet_profile["name"],
-            species=_species(pet_profile["species"]),
+            name=pet_profile.get("name", "Unnamed"),
+            species=_species(pet_profile.get("species", "dog")),
             breed=pet_profile.get("breed"),
             age_in_months=pet_profile.get("age_in_months"),
             gender=_gender(pet_profile.get("gender", "unknown")),
@@ -750,3 +807,256 @@ def build_router_runtime(
         return bot, dp, fake_api, fake_redis
 
     return _builder
+
+
+# ===========================================================================
+# Run-level identity + xdist parallelization support
+#
+# All workers in one pytest invocation must agree on a single run identity
+# (timestamp + paths) so the master can post-merge per-worker partial reports
+# into one canonical file matching the historical schema. The master sets a
+# timestamp env var in pytest_configure; xdist forks workers which inherit env.
+# ===========================================================================
+
+
+def _xdist_worker_id() -> str:
+    """'master' when running serially, 'gw0'/'gw1'/... under pytest-xdist."""
+    return os.environ.get("PYTEST_XDIST_WORKER", "master")
+
+
+def _resolve_model_name_for_run(config: pytest.Config) -> str:
+    """Mirrors test_message_handler_multiturn._resolve_model_name but works
+    without instantiating fixtures (needed by master's post-merge hook)."""
+    cli = config.getoption("--model", default=None)
+    raw = cli or os.environ.get("PAWLY_MODEL") or settings.main_model
+    if isinstance(raw, str) and raw.strip():
+        return raw.replace("/", "-")
+    return "gemini-2.5-flash"
+
+
+def _run_paths(config: pytest.Config) -> dict[str, Any]:
+    topic = config.getoption("--multiturn-topic")
+    model_name = _resolve_model_name_for_run(config)
+    timestamp = os.environ.get(RUN_TIMESTAMP_ENV, "00000000_000000")
+    worker = _xdist_worker_id()
+    base = f"{topic}_report_{model_name}_v{timestamp}"
+    log_base = f"{topic}_run_{model_name}_v{timestamp}"
+    return {
+        "topic": topic,
+        "model_name": model_name,
+        "timestamp": timestamp,
+        "worker_id": worker,
+        "partial_report": RESULTS_DIR / f"{base}_worker-{worker}.json",
+        "partial_log": LOGS_DIR / f"{log_base}_worker-{worker}.jsonl",
+        "partial_report_glob": f"{base}_worker-*.json",
+        "partial_log_glob": f"{log_base}_worker-*.jsonl",
+        "final_report": RESULTS_DIR / f"{base}.json",
+        "final_log": LOGS_DIR / f"{log_base}.jsonl",
+    }
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    # Generate run timestamp once on master so xdist workers (which inherit
+    # env on fork) write their partial files under the same run identity.
+    if not os.environ.get(RUN_TIMESTAMP_ENV):
+        os.environ[RUN_TIMESTAMP_ENV] = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Parametrize the multiturn test with one entry per case in the dataset.
+
+    Runs at collection time so --strict-validation can fail before any LLM
+    call is made. Longitudinal cases are pinned to the same xdist worker via
+    xdist_group so per-pet ordering is preserved when running with -n N.
+    """
+    if "case" not in metafunc.fixturenames:
+        return
+    topic = metafunc.config.getoption("--multiturn-topic")
+    filename = f"{topic}_cases.json"
+    path = TEST_DATA_DIR / filename
+    if not path.exists():
+        # Defer to the fixture's error path so the missing-file message is consistent.
+        return
+    with path.open("r", encoding="utf-8") as handle:
+        cases = json.load(handle)
+
+    report = validate_dataset(cases)
+    if report.has_errors or report.warnings:
+        print("\n" + report.format_summary(header=f"Preflight validation: {filename}"))
+    if report.has_errors and metafunc.config.getoption("--strict-validation"):
+        pytest.fail(
+            f"dataset {filename} has {report.error_count} schema error(s); "
+            "fix the dataset or rerun without --strict-validation.",
+            pytrace=False,
+        )
+
+    if not isinstance(cases, list):
+        # Validation already flagged this; let the test fixture surface it.
+        return
+
+    params: list[Any] = []
+    seen_ids: set[str] = set()
+    for index, case in enumerate(cases):
+        case_id = (
+            case.get("name") if isinstance(case, dict) and isinstance(case.get("name"), str) else None
+        ) or f"case_{index}"
+        # pytest requires unique parametrize ids; suffix duplicates rather than crashing.
+        original = case_id
+        dedup = 1
+        while case_id in seen_ids:
+            dedup += 1
+            case_id = f"{original}__dup{dedup}"
+        seen_ids.add(case_id)
+
+        marks: list[Any] = []
+        meta = (case.get("metadata") if isinstance(case, dict) else None) or {}
+        if meta.get("category") == "longitudinal":
+            pet_profile = (case.get("pet_profile") if isinstance(case, dict) else None) or {}
+            pet_name = pet_profile.get("name", "unknown")
+            marks.append(pytest.mark.xdist_group(name=f"longitudinal_{pet_name}"))
+        params.append(pytest.param(case, id=case_id, marks=marks))
+
+    metafunc.parametrize("case", params)
+
+
+@pytest.fixture(scope="session")
+def run_context(request: pytest.FixtureRequest) -> dict[str, Any]:
+    return _run_paths(request.config)
+
+
+@pytest.fixture(scope="session")
+def report_state(request: pytest.FixtureRequest) -> dict[str, Any]:
+    """Per-worker accumulator. Each test appends its case_result; the worker's
+    pytest_sessionfinish writes a partial report; master then merges."""
+    state: dict[str, Any] = {"cases": [], "started_logged": False}
+    # Stash on config so pytest_sessionfinish (which can't request fixtures) can
+    # see the accumulated cases.
+    setattr(request.config, "_pawly_report_state", state)
+    return state
+
+
+def _build_summary(state: dict[str, Any], paths: dict[str, Any]) -> dict[str, Any]:
+    cases = state["cases"]
+    return {
+        "report_path": str(paths["final_report"]),
+        "log_path": str(paths["final_log"]),
+        "llm_model": paths["model_name"],
+        "timestamp": paths["timestamp"],
+        "total_cases": len(cases),
+        "passed_threshold": sum(1 for c in cases if c.get("status") == "passed_threshold"),
+        "below_threshold": sum(1 for c in cases if c.get("status") == "below_threshold"),
+        "errored": sum(1 for c in cases if c.get("status") == "errored"),
+    }
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, ensure_ascii=True)
+
+
+def _is_master(config: pytest.Config) -> bool:
+    """True for serial runs and for the xdist coordinator; False for xdist workers."""
+    return not hasattr(config, "workerinput")
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Write per-worker partial report; on master, merge all partials into the
+    canonical (no-suffix) file so downstream Streamlit / compare_reports.py
+    see the same schema as before parametrization."""
+    config = session.config
+    paths = _run_paths(config)
+
+    state = getattr(config, "_pawly_report_state", None)
+    if state is not None and state["cases"]:
+        partial_report = {
+            "summary": _build_summary(state, paths),
+            "cases": state["cases"],
+        }
+        _write_json(paths["partial_report"], partial_report)
+
+    if not _is_master(config):
+        return
+
+    # Master path — merge all partials this run produced into one canonical file.
+    partial_files = sorted(RESULTS_DIR.glob(paths["partial_report_glob"]))
+    if not partial_files:
+        return  # no eval ran (e.g. only unit tests)
+
+    merged_cases: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    for partial_path in partial_files:
+        try:
+            with partial_path.open("r", encoding="utf-8") as handle:
+                partial = json.load(handle)
+        except (json.JSONDecodeError, OSError):
+            continue
+        for case_result in partial.get("cases", []):
+            name = case_result.get("name") or f"<anon_{len(merged_cases)}>"
+            # If two workers somehow processed the same case, keep the first
+            # and skip the duplicate (xdist_group already prevents this for
+            # longitudinal; this is just defense in depth).
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+            merged_cases.append(case_result)
+
+    merged_cases.sort(key=lambda c: c.get("name", ""))
+
+    merged_state = {"cases": merged_cases}
+    final_report = {
+        "summary": _build_summary(merged_state, paths),
+        "cases": merged_cases,
+    }
+    _write_json(paths["final_report"], final_report)
+
+    # Also concatenate per-worker jsonl logs into the canonical log, sorted by
+    # timestamp so cases are interleaved by wall-clock order.
+    log_files = sorted(LOGS_DIR.glob(paths["partial_log_glob"]))
+    if log_files:
+        all_lines: list[tuple[str, str]] = []
+        for log_path in log_files:
+            try:
+                for line in log_path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    try:
+                        ts = json.loads(line).get("logged_at", "")
+                    except json.JSONDecodeError:
+                        ts = ""
+                    all_lines.append((ts, line))
+            except OSError:
+                continue
+        all_lines.sort(key=lambda x: x[0])
+        paths["final_log"].parent.mkdir(parents=True, exist_ok=True)
+        with paths["final_log"].open("w", encoding="utf-8") as handle:
+            for _, line in all_lines:
+                handle.write(line + "\n")
+        # Append a single test_finished event reflecting the full merged run.
+        finished_event = {
+            "logged_at": datetime.now().isoformat(),
+            "event": "test_finished",
+            "total_cases": len(merged_cases),
+            "passed_threshold": sum(
+                1 for c in merged_cases if c.get("status") == "passed_threshold"
+            ),
+            "below_threshold": sum(
+                1 for c in merged_cases if c.get("status") == "below_threshold"
+            ),
+            "errored": sum(1 for c in merged_cases if c.get("status") == "errored"),
+            "worker_count": len(log_files),
+        }
+        with paths["final_log"].open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(finished_event, ensure_ascii=True) + "\n")
+
+    if not config.getoption("--keep-worker-reports"):
+        for partial_path in partial_files:
+            try:
+                partial_path.unlink()
+            except OSError:
+                pass
+        for log_path in log_files:
+            try:
+                log_path.unlink()
+            except OSError:
+                pass
