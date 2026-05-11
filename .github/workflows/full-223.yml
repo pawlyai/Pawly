@@ -18,11 +18,10 @@ on:
       model:
         description: 'Model to evaluate'
         required: false
-        default: 'deepseek-chat'
+        default: 'deepseek-v4-pro'
         type: choice
         options:
-          - deepseek-chat
-          - deepseek-reasoner
+          - deepseek-v4-pro
 
 concurrency:
   # Serialize full-223 across the whole repo — concurrent runs corrupt each
@@ -32,13 +31,13 @@ concurrency:
 
 jobs:
   full-223:
-    name: Full 223 (${{ inputs.model || 'deepseek-chat' }})
+    name: Full 223 (${{ inputs.model || 'deepseek-v4-pro' }})
     # PR runs are gated on the label name, not just the labeled event.
     if: github.event_name != 'pull_request' || github.event.label.name == 'full-regression'
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
-      PAWLY_MODEL: ${{ inputs.model || 'deepseek-chat' }}
+      PAWLY_MODEL: ${{ inputs.model || 'deepseek-v4-pro' }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       DEEPEVAL_TELEMETRY_OPT_OUT: '1'
 
@@ -59,9 +58,13 @@ jobs:
 
       - name: Run full-223 regression
         run: |
+          # -n 8: 8 parallel xdist workers. loadgroup keeps tests marked with
+          # pytest.mark.xdist_group (longitudinal cases, see conftest.py) on
+          # the same worker so per-pet ordering is preserved.
           python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
             --multiturn-topic=multiturn_pawly_regression \
             --model="$PAWLY_MODEL" \
+            -n 8 --dist loadgroup \
             -s -v
 
       - name: Annotate failure root causes
@@ -97,12 +100,20 @@ jobs:
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
-          STAMP=$(date -u +%Y%m%d_%H%M%SZ)
-          SAFE_REF=$(echo "${GITHUB_REF_NAME}" | tr '/' '_')
-          REMOTE_DIR="${VPS_PATH%/}/full-223/${SAFE_REF}/${STAMP}_run-${GITHUB_RUN_ID}_${PAWLY_MODEL}"
-          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" "mkdir -p '$REMOTE_DIR'"
-          scp -i ~/.ssh/id_ed25519 -r \
-            tests/blackbox_multiturn/results/. \
-            tests/blackbox_multiturn/logs/. \
+          # VPS_PATH is the Streamlit Reports dir (tests/blackbox_multiturn/results
+          # on the VPS-checked-out repo). The Reports page globs *.json non-recursively
+          # (pages/1_Reports.py), so reports go FLAT into VPS_PATH. Per-run filename
+          # uniqueness (topic + model + timestamp + run-id) prevents collisions and
+          # cleanly separates full-223 (`multiturn_pawly_regression_report_*.json`)
+          # from light-30 (`multiturn_pawly_regression_light_30_report_*.json`).
+          # Logs are .jsonl and land in a logs/ subdir to stay out of the Reports glob.
+          REMOTE_DIR="${VPS_PATH%/}"
+          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" "mkdir -p '$REMOTE_DIR' '$REMOTE_DIR/logs'"
+          scp -i ~/.ssh/id_ed25519 \
+            tests/blackbox_multiturn/results/*.json \
             "$VPS_USER@$VPS_HOST:$REMOTE_DIR/"
+          # Logs may not exist on first run; don't fail the step if so.
+          scp -i ~/.ssh/id_ed25519 \
+            tests/blackbox_multiturn/logs/*.jsonl \
+            "$VPS_USER@$VPS_HOST:$REMOTE_DIR/logs/" || true
           echo "Uploaded reports to $VPS_USER@$VPS_HOST:$REMOTE_DIR"
