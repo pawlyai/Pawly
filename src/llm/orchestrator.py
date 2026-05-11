@@ -33,6 +33,7 @@ from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
     format_followups,
     format_special_rules,
+    looks_like_general_husbandry_question,
     match_followups,
     match_red_flags,
 )
@@ -348,12 +349,16 @@ async def _generate_response_classic(
 
     followups = match_followups(user_message)
     red_flags = match_red_flags(user_message)
-    # General-knowledge KB (hybrid keyword + vector). Empty result when the
-    # KB has no rows or no branch finds a hit — caller drops the tag entirely.
-    # Feature-flagged so we can A/B test KB impact without code changes;
-    # when disabled, behaves identically to pre-KB main.
+    # General-knowledge KB (hybrid keyword + vector). v2: intent-gated so KB
+    # only fires for general-husbandry-type questions, NOT symptom reports,
+    # memory follow-ups, or crisis topics. This eliminates the Week-1
+    # observation that KB injection diluted attention on edge / emotional
+    # / longitudinal cases. Empty result → tag dropped entirely.
     general_hits: list = []
-    if settings.kb_retrieval_enabled:
+    if (
+        settings.kb_retrieval_enabled
+        and looks_like_general_husbandry_question(user_message)
+    ):
         try:
             general_hits = await retrieve_general_kb(user_message)
         except Exception as exc:

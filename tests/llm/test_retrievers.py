@@ -10,6 +10,7 @@ import src.llm.retrievers as _ret_module
 from src.llm.retrievers import (
     format_followups,
     format_special_rules,
+    looks_like_general_husbandry_question,
     match_followups,
     match_red_flags,
 )
@@ -170,3 +171,46 @@ def test_format_special_rules_only_matched_entries():
     assert 'rule id="euthanasia"' not in text
     assert 'rule id="toxin_ingestion"' not in text
     assert 'rule id="owner_mental_health"' not in text
+
+
+# ── Intent gating for general KB retrieval ─────────────────────────────────
+
+
+def test_general_husbandry_positive_en():
+    assert looks_like_general_husbandry_question("How often should I brush my cat?") is True
+    assert looks_like_general_husbandry_question("What is the best food for a puppy?") is True
+    assert looks_like_general_husbandry_question("When should I spay my dog?") is True
+    assert looks_like_general_husbandry_question("Can dogs eat watermelon?") is True
+    assert looks_like_general_husbandry_question("Is it safe to leave a cat alone for 2 days?") is True
+    assert looks_like_general_husbandry_question("My puppy needs socialization training") is True
+    assert looks_like_general_husbandry_question("HDB approved dog breeds in Singapore") is True
+
+
+def test_general_husbandry_positive_cn():
+    assert looks_like_general_husbandry_question("怎么训练幼犬不咬人") is True
+    assert looks_like_general_husbandry_question("猫多久绝育合适") is True
+    assert looks_like_general_husbandry_question("室内猫需要多少运动") is True
+
+
+def test_symptom_reports_excluded():
+    """Symptom reports must NOT fire KB injection — even if they contain
+    question words."""
+    assert looks_like_general_husbandry_question("My dog is vomiting blood") is False
+    assert looks_like_general_husbandry_question("What should I do, my cat has a seizure") is False
+    assert looks_like_general_husbandry_question("Why is my dog limping suddenly") is False
+    assert looks_like_general_husbandry_question("She ate chocolate, what now?") is False
+    assert looks_like_general_husbandry_question("狗呕吐怎么办") is False
+    assert looks_like_general_husbandry_question("猫不吃东西怎么办") is False
+
+
+def test_memory_followup_excluded():
+    """Conversational follow-ups on memory shouldn't trigger KB."""
+    assert looks_like_general_husbandry_question("She's still doing the thing we talked about") is False
+    assert looks_like_general_husbandry_question("Update: He's better today") is False
+    assert looks_like_general_husbandry_question("Thanks!") is False
+
+
+def test_empty_input():
+    assert looks_like_general_husbandry_question("") is False
+    assert looks_like_general_husbandry_question("   ") is False
+    assert looks_like_general_husbandry_question(None) is False  # type: ignore[arg-type]

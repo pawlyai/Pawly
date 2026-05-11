@@ -138,3 +138,121 @@ def format_special_rules(red_flags: list[RedFlag]) -> str:
     for rf in red_flags:
         parts.append(f'<rule id="{rf.id}">\n{rf.rule_text.strip()}\n</rule>')
     return "\n".join(parts)
+
+
+# ── Intent gating for general KB retrieval ──────────────────────────────────
+#
+# The general KB (src/memory/kb_retrieval.py) covers husbandry / behaviour /
+# life-stage / region-specific questions. Calling retrieve_general_kb() on
+# *every* message dilutes attention in memory-driven (longitudinal) or
+# safety-critical (RED triage) scenarios. We gate it via this heuristic:
+# only invoke when the user message looks like a general question, not a
+# symptom report, follow-up on prior memory, or crisis topic.
+
+_GENERAL_QUESTION_TOKENS_EN = (
+    # explicit question markers
+    "how do i", "how can i", "how should i", "how often", "how much",
+    "what is", "what's the", "what should", "what kind", "what type",
+    "when should", "when can", "when to",
+    "why does", "why do", "why is",
+    "can i", "can my", "can dogs", "can cats", "is it safe",
+    "should i", "should we",
+    "best way", "best food", "best time", "best age",
+    # care topics
+    "litter box", "grooming", "brushing", "bathing", "nail",
+    "training", "socialization", "crate", "leash",
+    "spay", "neuter", "vaccinat", "deworm", "microchip",
+    "exercise", "diet", "feeding", "treat", "kibble",
+    # life-stage / breed
+    "puppy", "kitten", "senior", "adolescent", "elderly",
+    "indoor cat", "outdoor cat", "apartment dog",
+    # region / housing
+    "hdb", "singapore", "tropical", "humid", "monsoon",
+)
+_GENERAL_QUESTION_TOKENS_CN = (
+    "怎么", "如何", "什么", "为什么", "能不能", "可以吗", "应该", "应不应该",
+    "几岁", "几个月", "多大", "多久", "多少",
+    "刷牙", "梳毛", "剪甲", "洗澡",
+    "训练", "社会化", "笼训",
+    "绝育", "节育", "疫苗", "驱虫", "芯片",
+    "运动", "饮食", "零食", "粮", "干粮", "湿粮",
+    "幼犬", "幼猫", "老年", "高龄",
+    "室内猫", "公寓",
+    "新加坡", "组屋", "湿热",
+)
+
+import re as _re
+
+# Symptom indicators that should EXCLUDE a message from "general husbandry"
+# category, regardless of question-word presence. Use word-boundary regex
+# to avoid false positives like "ate" matching "watermelon".
+_SYMPTOM_RE_EN = _re.compile(
+    r"\b(?:"
+    r"vomit|vomiting|vomited|"
+    r"diarrhea|diarrhoea|"
+    r"limp|limping|"
+    r"swollen|swelling|"
+    r"fever|febrile|"
+    r"lethargic|lethargy|"
+    r"seizure|seizing|"
+    r"collapse|collapsed|unconscious|"
+    r"labored|labored breathing|"
+    r"poisoned|poisoning"
+    r")\b",
+    _re.IGNORECASE,
+)
+_SYMPTOM_PHRASES_EN = (
+    _re.compile(r"\bnot\s+eating\b", _re.IGNORECASE),
+    _re.compile(r"\bnot\s+drinking\b", _re.IGNORECASE),
+    _re.compile(r"\bwon'?t\s+eat\b", _re.IGNORECASE),
+    _re.compile(r"\b(?:blue|pale)\s+gum", _re.IGNORECASE),
+    _re.compile(r"\bgot\s+into\b", _re.IGNORECASE),
+    # "ate X" indicates pet ingested X — only when followed by a likely item
+    _re.compile(r"\bate\s+(?:something|some|a|the|my|his|her|chocolate|grape|raisin|onion|garlic|xylitol|gum|the\s+\w+)\b", _re.IGNORECASE),
+    _re.compile(r"\bswallowed\b", _re.IGNORECASE),
+    # "blood" matters as symptom only with bodily-fluid context, not "bloodhound" etc
+    _re.compile(r"\b(?:blood|bleeding)\s+(?:in|from|on|coming)\b", _re.IGNORECASE),
+    # "pain" matters as pet symptom, not e.g. "a pain to deal with"
+    _re.compile(r"\b(?:in\s+pain|seems?\s+to\s+be\s+in\s+pain|painful)\b", _re.IGNORECASE),
+    # "hurt" + leg/paw/etc.
+    _re.compile(r"\bhurt\s+(?:his|her|its|their|the)\b", _re.IGNORECASE),
+    # toxic/urgent/emergency clearly symptom-zone in pet context
+    _re.compile(r"\b(?:toxic|emergency|urgent)\b", _re.IGNORECASE),
+)
+_SYMPTOM_TOKENS_CN = (
+    "呕吐", "拉肚", "便血", "瘸", "腿疼", "脚疼",
+    "肿", "发烧", "高烧",
+    "没精神", "不吃饭", "不喝水", "癫痫", "倒下", "昏迷",
+    "呼吸困难", "误食", "中毒", "出血",
+)
+
+
+def looks_like_general_husbandry_question(user_msg: str) -> bool:
+    """True when the message looks like a general husbandry / care / behaviour
+    question (the kind general_kb_entry covers), False otherwise.
+
+    Conservative: returns False on symptom reports, crisis topics, or
+    memory-driven follow-ups — those should use memory + followups.yaml,
+    not get distracted by general husbandry content.
+    """
+    if not user_msg or not user_msg.strip():
+        return False
+    lower = user_msg.lower()
+
+    # If any symptom indicator fires, treat as symptom report (not general).
+    if _SYMPTOM_RE_EN.search(user_msg):
+        return False
+    if any(pat.search(user_msg) for pat in _SYMPTOM_PHRASES_EN):
+        return False
+    if any(tok in user_msg for tok in _SYMPTOM_TOKENS_CN):
+        return False
+
+    # Positive match on general-question tokens.
+    if any(tok in lower for tok in _GENERAL_QUESTION_TOKENS_EN):
+        return True
+    if any(tok in user_msg for tok in _GENERAL_QUESTION_TOKENS_CN):
+        return True
+
+    # Default: not a general question. (Long-tail conservative — better to
+    # miss a few real general questions than dilute every message.)
+    return False

@@ -35,8 +35,11 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 # Cosine similarity in pgvector: distance ranges 0 (identical) → 2 (opposite).
-# We filter at <= 0.4 (i.e. similarity >= 0.6) to drop irrelevant hits.
-_VECTOR_DISTANCE_CEILING = 0.4
+# Tightened in v2: was 0.4 (similarity >= 0.6), now 0.25 (similarity >= 0.875)
+# to avoid injecting semantically-adjacent-but-task-irrelevant entries.
+# Verified on edge / emotional / longitudinal regressions in Week 1 eval —
+# loose cosine was pulling general knowledge into memory-driven scenarios.
+_VECTOR_DISTANCE_CEILING = 0.25
 _BRANCH_K = 8           # per-branch fetch count
 _RRF_K_CONSTANT = 60    # standard RRF dampener
 _MIN_RRF_SCORE = 0.005  # entries below this are dropped
