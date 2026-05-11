@@ -57,6 +57,21 @@ def _active_chat_model() -> str:
     """
     return settings.chat_model or settings.main_model
 
+
+# Mirror of src/llm/graph/nodes.py::_parse_triage_level so both paths
+# normalise the LLM's structured triage_level string the same way.
+_STRUCTURED_TRIAGE_MAP = {
+    "RED": TriageLevel.RED,
+    "ORANGE": TriageLevel.ORANGE,
+    "GREEN": TriageLevel.GREEN,
+}
+
+
+def _parse_structured_triage(raw: Any) -> Optional[TriageLevel]:
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return _STRUCTURED_TRIAGE_MAP.get(raw.strip().upper())
+
 # Lazy-built graph to avoid circular import (graph.nodes imports from this module)
 _graph = None
 
@@ -361,14 +376,23 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL CHAT MODEL ────────────────────────────────────────────────────
+    # ── 4. CALL CHAT MODEL (structured output) ───────────────────────────────
+    # Use chat_structured so the LLM emits an authoritative triage_level
+    # alongside the response text. This replaces the v1 path of inferring
+    # triage from the response wording via substring scan — the LLM can
+    # reason about context (negation, hypothetical, past tense) and produce
+    # a triage that matches what it actually meant.
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
+    structured_triage: Optional[TriageLevel] = None
     try:
-        raw = await client.chat(system_prompt=system, messages=messages, model=chat_model)
-        response_text = raw["text"]
-        in_tok = raw["input_tokens"]
-        out_tok = raw["output_tokens"]
+        raw = await client.chat_structured(
+            system_prompt=system, messages=messages, model=chat_model
+        )
+        response_text = raw.get("response_text", "")
+        in_tok = raw.get("input_tokens", 0)
+        out_tok = raw.get("output_tokens", 0)
+        structured_triage = _parse_structured_triage(raw.get("triage_level"))
     except Exception as exc:
         logger.error("llm call failed", error=str(exc))
         response_text = (
@@ -378,16 +402,13 @@ async def _generate_response_classic(
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     rule_result = classify_by_rules(pet, user_message)
-    # detect_triage_from_response substring-scans the assistant's reply for
-    # words like "urgent" / "emergency" / "critical". It has no negation
-    # handling, so phrases like "this is not urgent" classify as RED and the
-    # response keyword loop ends up overriding a perfectly fine reply with a
-    # hyper-urgent regeneration. Keep the call for telemetry (so we can see
-    # in the stored triage_result when the LLM's language disagreed with the
-    # rule engine), but do NOT let it gate the override re-call. The
-    # LangGraph path already only fires override on override_direction ==
-    # "rules_stricter"; this brings the classic path in line.
-    llm_triage = detect_triage_from_response(response_text)
+    # llm_triage is now sourced from the LLM's own structured output
+    # (triage_level field in the JSON response). detect_triage_from_response
+    # is still called below for telemetry — its substring scan can disagree
+    # with the structured signal, which is a useful diagnostic — but it
+    # never influences the resolved classification or the override decision.
+    llm_triage = structured_triage
+    response_keyword_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
     # Safety-banner override (replaces the v1 LLM re-call path).
@@ -428,15 +449,20 @@ async def _generate_response_classic(
 
     triage_result = {
         "rule": rule_result.classification.value,
-        # Kept as telemetry: surfaces when the LLM's wording disagreed with
-        # the rule engine. Useful for offline review but no longer drives
-        # any user-facing behavior.
+        # LLM's own triage from structured output — authoritative LLM signal.
         "llm": llm_triage.value if llm_triage else None,
+        # Audit-only: substring-scan of the LLM's reply. Useful for spotting
+        # cases where the LLM's wording disagreed with its structured triage
+        # (or the rule engine), but not part of the decision graph.
+        "llm_response_keywords": (
+            response_keyword_triage.value if response_keyword_triage else None
+        ),
         "final": effective_triage.value,
         "overridden": resolved.overridden,
         "override_direction": resolved.override_direction,
         "matched_patterns": rule_result.matched_rules,
         "confidence": rule_result.confidence,
+        "score": getattr(rule_result, "score", 0.0),
     }
 
     risk_level = map_triage_to_risk(effective_triage)
