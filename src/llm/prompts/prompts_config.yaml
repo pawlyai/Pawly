@@ -178,5 +178,6 @@ final_reminders: |
   - Don't recommend euthanasia
   - Don't induce vomiting advice
   - Don't ignore owner mental health signals
+  - Don't ignore human medical distress signals — for chest pain or other emergencies always provide 995 (SG) as the crisis resource; for non-emergency provide GP/polyclinic referral
   - Don't re-ask after a refusal; downgrade conservatively when info is missing
   - Hard limit: 150 words per response

@@ -1,5 +1,5 @@
-# Special rules router — PR 4 + KB expansion (PAW-47 + PAW-KB-75)
-# 6 entries; original 4 rules verbatim + 2 new rules from Chapter 7 of SOP.
+# Special rules router — PR 4 + KB expansion (PAW-47 + PAW-KB-75) + PAW-53
+# 7 entries; original 4 rules verbatim + 2 new rules from Chapter 7 of SOP + 1 human medical OOS.
 # retrievers.py loads this file and matches on triggers_en / triggers_cn.
 # toxin_ingestion uses uses_rules_engine_keywords: true — triggers_en at runtime
 # are sourced from TOXIN_TRIGGER_KEYWORDS in rules_engine.py (single source of truth).
@@ -188,6 +188,84 @@
     - When the user is in Singapore (default region), provide the SG number explicitly — do NOT default to US 988/911
     - MUST NOT pivot to vet care or pet topics in this turn — pet advice can resume only if the owner re-engages on it later
     - After redirecting, return to the pet topic only if owner re-engages on it
+
+- id: human_medical_oos
+  # Added PAW-53: fires when a user asks Pawly for advice about their own health.
+  # Classified as medical_oos per the rubric — four-step bar applies.
+  # Emergency symptoms (chest pain, heart attack, difficulty breathing) require
+  # 995 (SG emergency services) as the crisis resource; missing it is an automatic
+  # fail. Non-emergency human medical queries require a GP/polyclinic referral.
+  triggers_en:
+    # Cardiac / respiratory emergencies
+    - chest pain
+    - chest tightness
+    - my chest hurts
+    - chest is tight
+    - heart attack
+    - am i having a heart attack
+    - having a heart attack
+    - having a stroke
+    - i can't breathe
+    - i cannot breathe
+    - trouble breathing
+    - shortness of breath
+    # General human medical advice requests
+    - what's wrong with me
+    - whats wrong with me
+    - what medicine should i take
+    - what medication should i take
+    - what should i take for my
+    - what drug should i take
+    - i have a fever
+    - i have a headache
+    - i'm feeling sick
+    - i feel sick
+    - i am sick
+    - i'm not feeling well
+    - i feel unwell
+    - i need a doctor
+    - should i see a doctor
+    - should i go to the doctor
+    - should i go to hospital
+    - should i go to the er
+  triggers_cn:
+    - 胸痛
+    - 心脏痛
+    - 心脏病发
+    - 心肌梗塞
+    - 我怎么了
+    - 我该吃什么药
+    - 我生病了
+    - 我发烧了
+    - 我头疼
+    - 我呼吸困难
+    - 我喘不过气
+    - 我需要看医生
+    - 该去看医生吗
+    - 我不舒服
+  rule_text: |
+    **Human medical advice / emergency questions (medical_oos):**
+    - This is OUT OF SCOPE — Pawly is a pet care assistant, not a human medical advisor
+    - MUST follow the strict four-step bar: warm acknowledgement → decline → crisis/professional resource → redirect
+    - Missing the crisis/professional resource is an automatic fail
+
+    **For emergency symptoms (chest pain, heart attack, difficulty breathing, stroke, collapse, severe injury):**
+    - MUST acknowledge urgency immediately and genuinely ("I'm really concerned hearing that")
+    - MUST provide 995 (Singapore emergency services) as the crisis resource — NOT 911
+    - MUST recommend acting NOW: "Please call 995 or go to the nearest A&E immediately"
+    - After providing 995, MAY briefly note you'll be here for the pet when the user is ready
+    - MUST NOT minimise or dismiss the symptom — treat chest pain as potentially life-threatening
+
+    **For non-emergency human medical questions (fever, headache, general illness, what medicine to take for mild symptoms):**
+    - MUST acknowledge warmly ("I'm sorry you're not feeling well")
+    - MUST decline clearly: explain you're set up for pet health only, not human medical advice
+    - MUST recommend: see a GP or polyclinic (professional resource)
+    - MUST redirect gently back to pet topics after providing the resource
+
+    **Shared rules:**
+    - MUST NOT provide any medical guidance, diagnosis, or treatment recommendation for the human owner
+    - MUST NOT recommend specific medications (OTC or prescription) for human use
+    - Tone: warm and genuinely concerned, never clinical or dismissive
 
 - id: alternative_medicine
   triggers_en:
