@@ -14,11 +14,10 @@ on:
       model:
         description: 'Model to evaluate'
         required: false
-        default: 'deepseek-chat'
+        default: 'deepseek-v4-pro'
         type: choice
         options:
-          - deepseek-chat
-          - deepseek-reasoner
+          - deepseek-v4-pro
 
 concurrency:
   group: light-30-${{ github.event.pull_request.number || github.ref }}
@@ -26,13 +25,13 @@ concurrency:
 
 jobs:
   light-30:
-    name: Light 30 (${{ inputs.model || 'deepseek-chat' }})
+    name: Light 30 (${{ inputs.model || 'deepseek-v4-pro' }})
     # On PRs only run when the PR carries `lite-regression`; on push/tag/dispatch always run.
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'lite-regression')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      PAWLY_MODEL: ${{ inputs.model || 'deepseek-chat' }}
+      PAWLY_MODEL: ${{ inputs.model || 'deepseek-v4-pro' }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       DEEPEVAL_TELEMETRY_OPT_OUT: '1'
 
