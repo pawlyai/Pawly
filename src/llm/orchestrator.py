@@ -30,6 +30,12 @@ from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
+from src.llm.retrievers import (
+    format_followups,
+    format_special_rules,
+    match_followups,
+    match_red_flags,
+)
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
@@ -338,6 +344,9 @@ async def _generate_response_classic(
         pending=pending,
     )
 
+    followups = match_followups(user_message)
+    red_flags = match_red_flags(user_message)
+
     system = build_system_prompt(
         user=user,
         pet=pet,
@@ -345,6 +354,8 @@ async def _generate_response_classic(
         memory_context=memory_context,
         pending_confirmation=pending_confirmation,
         marketing_context=(session or {}).get("marketing_context"),
+        retrieved_followups=format_followups(followups),
+        special_scenarios=format_special_rules(red_flags),
     )
 
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────

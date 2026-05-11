@@ -27,14 +27,20 @@ from src.db.models import Gender, LifeStage, Pet, Species, TriageLevel
 # EDITABLE KEYWORD LISTS
 # ══════════════════════════════════════════════════════════════════════════════
 
+# Toxin-related subset of RED_KEYWORDS — single source of truth used by
+# retrievers.py for the toxin_ingestion special-rule trigger matching.
+TOXIN_TRIGGER_KEYWORDS: list[str] = [
+    "ate chocolate", "ate xylitol", "ate lily", "ate antifreeze",
+    "ate grape", "ate raisin", "ate onion", "poisoned", "toxic",
+]
+
 RED_KEYWORDS: list[str] = [
     "can't breathe", "cant breathe", "not breathing", "breathing hard",
     "gasping", "labored breathing", "struggling to breathe",
     "seizure", "convulsion", "fitting", "shaking uncontrollably",
     "blood in urine", "can't pee", "cant pee", "straining to urinate",
     "hasn't urinated", "hasnt urinated", "not peeing",
-    "ate chocolate", "ate xylitol", "ate lily", "ate antifreeze",
-    "ate grape", "ate raisin", "ate onion", "poisoned", "toxic",
+    *TOXIN_TRIGGER_KEYWORDS,
     "bloated stomach", "stomach swelling", "distended abdomen",
     "collapsed", "unconscious", "won't wake", "wont wake", "not responding",
     "can't walk", "cant walk", "can't stand", "cant stand",
