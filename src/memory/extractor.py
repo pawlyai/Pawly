@@ -10,6 +10,7 @@ Public API:
 """
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -20,6 +21,12 @@ from src.llm.providers import get_chat_client
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Reasoning-style models (DeepSeek V4, Claude with extended thinking, etc.)
+# emit chain-of-thought before the actual answer. Strip these wrappers before
+# attempting JSON parse.
+_THINK_TAG_RE = re.compile(r"<think(?:ing)?>.*?</think(?:ing)?>", re.DOTALL | re.IGNORECASE)
+_REASONING_BLOCK_RE = re.compile(r"<reasoning>.*?</reasoning>", re.DOTALL | re.IGNORECASE)
 
 
 # ── Result type ───────────────────────────────────────────────────────────────
@@ -110,6 +117,86 @@ def _strip_fences(text: str) -> str:
     return text.strip()
 
 
+def _strip_reasoning_tags(text: str) -> str:
+    """Strip <think>...</think> / <reasoning>...</reasoning> blocks that
+    reasoning-style models (DeepSeek V4, Claude extended thinking) emit
+    before the actual answer. Also handles dangling <think> with no closing
+    tag (when max_tokens cuts off mid-thinking)."""
+    text = _THINK_TAG_RE.sub("", text)
+    text = _REASONING_BLOCK_RE.sub("", text)
+    # Dangling open tag (cut off mid-stream) — drop everything before it
+    # since the actual answer never arrived.
+    for open_tag in ("<think>", "<thinking>", "<reasoning>"):
+        idx = text.lower().find(open_tag)
+        if idx != -1:
+            # If there's no matching close tag, anything after the open is
+            # just truncated thinking — discard.
+            close_tag = open_tag.replace("<", "</")
+            if close_tag.lower() not in text.lower():
+                text = text[:idx]
+    return text.strip()
+
+
+def _extract_json_array(text: str) -> Optional[str]:
+    """Find the first balanced JSON array [...] in text. Used as a fallback
+    when the response has prose mixed in around the JSON."""
+    start = text.find("[")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
+
+
+def _parse_extraction_response(raw_text: str) -> Optional[list]:
+    """Robust extraction-response parser. Tries multiple strategies in order.
+    Returns parsed list on success, None on hard failure."""
+    if not raw_text or not raw_text.strip():
+        return None
+
+    cleaned = _strip_reasoning_tags(raw_text)
+    cleaned = _strip_fences(cleaned)
+
+    if not cleaned:
+        return None
+
+    # Strategy 1: direct parse
+    try:
+        data = json.loads(cleaned)
+        return data if isinstance(data, list) else None
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: pull out first balanced [...] array
+    array_str = _extract_json_array(cleaned)
+    if array_str is None:
+        return None
+    try:
+        data = json.loads(array_str)
+        return data if isinstance(data, list) else None
+    except json.JSONDecodeError:
+        return None
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 
@@ -143,22 +230,80 @@ async def extract_memories(
 
     extraction_model = settings.extraction_model
     client = get_chat_client(extraction_model)
+
+    # max_tokens budget: reasoning-style models (V4) spend tokens on chain-of-
+    # thought before producing JSON. 2048 was empirically too tight for
+    # longitudinal cases — observed empty responses from deepseek-v4-flash.
+    # 8192 gives ample headroom; non-reasoning models stop early anyway so the
+    # cost increase is negligible in practice.
+    primary_max_tokens = 8192
+    retry_max_tokens = 12000
+
+    last_raw_text = ""
+    data: Optional[list] = None
+
     try:
-        # Use chat() with explicit model so the call works across providers.
-        # max_tokens=2048 leaves headroom for reasoning-style models (V4) that
-        # spend tokens on chain-of-thought before producing JSON.
         raw = await client.chat(
             system_prompt=filled_prompt,
             messages=[{"role": "user", "content": "Extract facts from the conversation above."}],
             model=extraction_model,
-            max_tokens=2048,
+            max_tokens=primary_max_tokens,
             temperature=0.2,
         )
-        data = json.loads(_strip_fences(raw["text"]))
-        if not isinstance(data, list):
-            return []
+        last_raw_text = raw.get("text", "")
+        data = _parse_extraction_response(last_raw_text)
     except Exception as exc:
-        logger.error("extract_memories failed", error=str(exc), pet_id=str(pet.id))
+        logger.error(
+            "extract_memories primary call failed",
+            error=str(exc),
+            pet_id=str(pet.id),
+        )
+
+    # Retry once with explicit "output ONLY JSON, no reasoning" instruction
+    # and larger token budget. Reasoning models that exceeded the primary
+    # budget will usually succeed here.
+    if data is None:
+        retry_messages = [
+            {
+                "role": "user",
+                "content": (
+                    "Extract facts from the conversation above. "
+                    "OUTPUT ONLY THE JSON ARRAY. "
+                    "Do not emit any reasoning, thinking, or prose — "
+                    "start your response with '[' and end with ']'. "
+                    "If there are no new facts, output exactly: []"
+                ),
+            }
+        ]
+        try:
+            raw = await client.chat(
+                system_prompt=filled_prompt,
+                messages=retry_messages,
+                model=extraction_model,
+                max_tokens=retry_max_tokens,
+                temperature=0.0,
+            )
+            last_raw_text = raw.get("text", "")
+            data = _parse_extraction_response(last_raw_text)
+        except Exception as exc:
+            logger.error(
+                "extract_memories retry call failed",
+                error=str(exc),
+                pet_id=str(pet.id),
+            )
+
+    if data is None:
+        # Log a head/tail snippet of the raw response so future failures
+        # are diagnosable from logs alone — no need to bisect with print().
+        head = repr(last_raw_text[:200]) if last_raw_text else "<empty>"
+        tail = repr(last_raw_text[-200:]) if len(last_raw_text) > 200 else ""
+        logger.error(
+            "extract_memories failed to parse JSON after retry",
+            pet_id=str(pet.id),
+            raw_len=len(last_raw_text),
+            raw_head=head,
+            raw_tail=tail,
+        )
         return []
 
     proposals: list[MemoryProposal] = []
