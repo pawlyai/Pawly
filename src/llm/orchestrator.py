@@ -39,6 +39,7 @@ from src.llm.retrievers import (
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
+    audit_log_triage_divergence,
     classify_by_rules,
     compare_and_resolve,
     detect_triage_from_response,
@@ -439,6 +440,19 @@ async def _generate_response_classic(
             llm=llm_triage.value if llm_triage else None,
             matched=rule_result.matched_rules,
         )
+
+    # Emit a structured log line whenever the three triage sources diverge.
+    # This is the productive use of the deprecated `detect_triage_from_response`
+    # audit signal — surface offline review opportunities without letting
+    # them drive any user-visible behaviour.
+    audit_log_triage_divergence(
+        pet_id=pet_id_str,
+        structured_triage=structured_triage,
+        rule_classification=rule_result.classification,
+        response_keyword_triage=response_keyword_triage,
+        matched_rules=rule_result.matched_rules,
+        logger_=logger,
+    )
 
     # Apply Figma visual format based on the rule-engine decision. Using
     # resolved.final_classification here would leak response-keyword

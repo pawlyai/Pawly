@@ -33,7 +33,7 @@ false-positive class is one line in tests/triage/test_golden_cases.py.
 
 import re
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from src.db.models import Gender, LifeStage, Pet, Species, TriageLevel
 
@@ -576,14 +576,20 @@ def classify_by_rules(pet: Optional[Pet], description: str) -> TriageRuleResult:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Audit-only: response-side triage detection
+# Audit-only: response-side triage detection (DEPRECATED for decisions)
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# DEPRECATED for decision-making. Substring-scans the assistant's reply for
-# urgency keywords and has no negation handling, so "this is not urgent"
-# classifies as RED. Kept for telemetry — the orchestrator stores the result
-# alongside the rule-engine decision so offline review can flag mismatches.
-# Do NOT use this as a triage source.
+# Substring-scans the assistant's reply for urgency keywords. Has no
+# negation handling, no past-tense detection, no context awareness, so it
+# classifies "this is not urgent" as RED. It must NOT participate in any
+# decision (override gating, resolver, visual format) — those callers were
+# migrated off this function in the v2 redesign (see git log for the
+# fix(triage): commits). The function is preserved purely for telemetry:
+# the orchestrator records its output in `triage_result["llm_response_keywords"]`
+# so offline analytics can spot the rare cases where the LLM emitted RED-
+# coded language in its prose while its structured `triage_level` field
+# was something else. That kind of inconsistency is a useful signal for
+# prompt tuning, but it must not gate user-visible behaviour.
 
 _RED_RESPONSE_SIGNALS: tuple[str, ...] = (
     "urgent", "emergency", "immediately", "emergency vet", "do not wait",
@@ -596,16 +602,74 @@ _ORANGE_RESPONSE_SIGNALS: tuple[str, ...] = (
 
 
 def detect_triage_from_response(text: str) -> Optional[TriageLevel]:
-    """Audit-only response-side triage classifier. Do NOT feed this back into
-    override decisions — substring matching has no negation handling and
-    creates feedback loops where the LLM is punished for using urgency
-    vocabulary in benign contexts."""
+    """DEPRECATED for decisions. Audit-only response-side triage classifier.
+
+    Returns the triage level implied by the assistant's wording, based on
+    substring matching of urgency keywords. NO negation handling, NO past-
+    tense detection, NO context awareness. Do not call this from any code
+    path that gates user-visible behaviour — use the LLM's structured
+    `triage_level` field (orchestrator / graph) or `classify_by_rules`
+    against the user message instead.
+
+    Kept callable so telemetry can record the audit signal for offline
+    review. New code should not depend on this function.
+    """
     lower = text.lower()
     if any(sig in lower for sig in _RED_RESPONSE_SIGNALS):
         return TriageLevel.RED
     if any(sig in lower for sig in _ORANGE_RESPONSE_SIGNALS):
         return TriageLevel.ORANGE
     return TriageLevel.GREEN
+
+
+def audit_log_triage_divergence(
+    *,
+    pet_id: Optional[str],
+    structured_triage: Optional[TriageLevel],
+    rule_classification: TriageLevel,
+    response_keyword_triage: Optional[TriageLevel],
+    matched_rules: list[str],
+    logger_: Any,
+) -> None:
+    """Emit a single structured log line when the three triage sources
+    disagree in a way that's worth reviewing offline.
+
+    The interesting cases are:
+      * structured (LLM JSON) != response_keyword (LLM prose) — the LLM
+        said one thing in its triage_level field and wrote prose at a
+        different urgency level. Usually a prompt-tuning opportunity.
+      * structured == GREEN, response_keyword == RED, rule == GREEN —
+        false-positive territory; useful to see which response wording
+        flips the audit signal.
+      * structured == GREEN, rule == RED — the safety-floor case, banner
+        prepended; log to confirm escalation chose the right rules.
+
+    The orchestrator calls this once per turn; the LangGraph variant does
+    not currently emit audit logs (kept simple). Pass the `logger`
+    instance so the line lands in the right module's namespace.
+    """
+    def _v(t: Optional[TriageLevel]) -> Optional[str]:
+        return t.value if t is not None else None
+
+    structured_val = _v(structured_triage)
+    rule_val = _v(rule_classification)
+    response_val = _v(response_keyword_triage)
+
+    diverges = (
+        (structured_val and response_val and structured_val != response_val)
+        or (structured_val and structured_val != rule_val)
+    )
+    if not diverges:
+        return
+
+    logger_.info(
+        "triage signals diverge",
+        pet_id=pet_id,
+        structured=structured_val,
+        rule=rule_val,
+        response_keywords=response_val,
+        matched_rules=matched_rules,
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
