@@ -38,6 +38,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# KB content-ops: pulled in by scripts/sheet_to_yaml.py. Optional so the
+# main bot/eval doesn't depend on the Sheets toolchain.
+kb_sync = [
+    "gspread>=6.0.0",
+    "google-auth>=2.30.0",
+]
 dev = [
     "deepeval>=1.0.0",
     "pytest>=8.2.0",
