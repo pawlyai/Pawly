@@ -84,6 +84,21 @@ def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -
     c2.metric(t("passed"), passed)
     c3.metric(t("failed"), failed)
     c4.metric(t("pass_rate"), f"{pass_rate:.1f}%")
+
+    breakdown = summary.get("root_cause_breakdown") or {}
+    breakdown_total = sum(breakdown.values())
+    if breakdown_total > 0:
+        st.subheader(t("root_cause_breakdown"))
+        rows = sorted(breakdown.items(), key=lambda kv: kv[1], reverse=True)
+        st.dataframe(
+            {
+                t("rc_category"): [k for k, _ in rows],
+                t("rc_count"): [v for _, v in rows],
+                t("rc_share"): [f"{(v / breakdown_total * 100):.1f}%" for _, v in rows],
+            },
+            hide_index=True,
+            use_container_width=True,
+        )
     st.divider()
 
 
@@ -109,6 +124,18 @@ def render_case_details(case: dict[str, Any]) -> None:
 
     if get_lang() == "zh":
         reason = translate_for_display(reason, CACHE_PATH)
+
+    rc = case.get("root_cause") or {}
+    if rc:
+        st.subheader(t("root_cause"))
+        cat = rc.get("category", "")
+        explanation = rc.get("explanation", "")
+        if get_lang() == "zh" and explanation:
+            explanation = translate_for_display(explanation, CACHE_PATH)
+        st.markdown(f"**{t('rc_category')}:** `{cat}`")
+        if explanation:
+            st.markdown(f"**{t('rc_explanation')}:** {explanation}")
+        st.divider()
 
     st.subheader(t("eval_reason"))
     st.write(reason)
