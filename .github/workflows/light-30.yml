@@ -51,15 +51,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Stage light-30 dataset under conventional topic name
-        run: |
-          cp tests/blackbox_multiturn/test_data/multiturn_pawly_regression_cases-light-30.json \
-             tests/blackbox_multiturn/test_data/multiturn_pawly_regression_light30_cases.json
-
       - name: Run light-30 regression
         run: |
           python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
-            --multiturn-topic=multiturn_pawly_regression_light30 \
+            --multiturn-topic=multiturn_pawly_regression_light_30 \
             --model="$PAWLY_MODEL" \
             -s -v
 
@@ -67,7 +62,7 @@ jobs:
         if: always()
         run: |
           python scripts/annotate_root_causes.py \
-            'tests/blackbox_multiturn/results/multiturn_pawly_regression_light30_report_*.json'
+            'tests/blackbox_multiturn/results/multiturn_pawly_regression_light_30_report_*.json'
 
       - name: Upload reports as workflow artifact
         if: always()
