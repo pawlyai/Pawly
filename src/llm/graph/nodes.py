@@ -18,7 +18,7 @@ from src.config import settings
 from src.db.models import Sentiment, SubscriptionTier, TriageLevel
 from src.llm.graph.state import PawlyState
 from src.llm.prompts.context import build_context_block
-from src.llm.prompts.formatters import apply_response_format
+from src.llm.prompts.formatters import apply_response_format, prepend_safety_banner
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
@@ -234,38 +234,30 @@ def should_override(state: PawlyState) -> str:
 
 async def critical_override_node(state: PawlyState) -> dict[str, Any]:
     """
-    Re-call Gemini with an explicit emergency override when the rule engine
-    classified RED but the LLM's structured triage was lower.
+    Prepend a deterministic safety banner to the LLM's existing response
+    when the rule engine forces a RED escalation but the LLM under-triaged.
 
-    Uses a focused override prompt to keep cost down.
+    Replaces the v1 behavior of re-calling the LLM with a CRITICAL OVERRIDE
+    system prompt. The banner is built from `matched_patterns` so the user
+    sees the specific signal that triggered escalation (e.g. "suspected
+    toxin ingestion") rather than a generic re-written reply. Saves one
+    LLM call and preserves the LLM's contextual reasoning intact.
     """
-    override_system = (
-        state["system_prompt"]
-        + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-        "by the safety system. You MUST treat this as URGENT. Set triage_level to RED. "
-        "Push immediate vet visit. Do not suggest home treatment."
+    matched = state.get("matched_patterns", [])
+    existing_response = state.get("response_text", "")
+    banner_response = prepend_safety_banner(existing_response, matched)
+    logger.warning(
+        "triage RED safety banner prepended",
+        pet_id=str(state["pet"].id) if state.get("pet") else None,
+        matched=matched,
     )
-    chat_model = _active_chat_model()
-    client = get_chat_client(chat_model)
-    try:
-        raw = await client.chat_structured(
-            system_prompt=override_system,
-            messages=state["messages"],
-            model=chat_model,
-        )
-        logger.warning(
-            "triage RED override re-call issued",
-            pet_id=str(state["pet"].id) if state.get("pet") else None,
-        )
-        return {
-            "response_text": raw.get("response_text", state.get("response_text", "")),
-            "llm_triage": TriageLevel.RED,
-            "input_tokens": state.get("input_tokens", 0) + raw.get("input_tokens", 0),
-            "output_tokens": state.get("output_tokens", 0) + raw.get("output_tokens", 0),
-        }
-    except Exception as exc:
-        logger.error("RED override re-call failed", error=str(exc))
-        return {}
+    return {
+        "response_text": banner_response,
+        # The banner forces RED visually; mark the LLM-side triage as RED
+        # too so downstream consumers (triage_record, telemetry) see a
+        # consistent picture. No extra LLM tokens consumed.
+        "llm_triage": TriageLevel.RED,
+    }
 
 
 # ── Node 6: finalize ────────────────────────────────────────────────────────

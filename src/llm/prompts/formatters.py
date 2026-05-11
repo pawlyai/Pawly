@@ -8,12 +8,104 @@ Output uses Telegram HTML parse mode (<b>, <i>, etc.).
 
 Public API:
     apply_response_format(text, triage) -> str
+    build_safety_banner(matched_rules) -> str
+    prepend_safety_banner(text, matched_rules) -> str
 """
 
 import html
 import re
 
 from src.db.models import TriageLevel
+
+
+# Human-readable labels for rule-engine matches. The banner concatenates
+# the labels of the rules that fired so the user understands which signal
+# escalated the conversation to RED. Anything not in this map is rendered
+# as the raw rule name with prefixes stripped (a graceful fallback rather
+# than a hard error — new rules just need their entry added here).
+_RULE_LABELS: dict[str, str] = {
+    "red:toxin_ingestion": "suspected toxin ingestion",
+    "red:toxin_poisoned": "possible poisoning",
+    "red:respiratory_distress": "difficulty breathing",
+    "red:gasping": "gasping for breath",
+    "red:labored_breathing": "labored breathing",
+    "red:cyanosis": "blue or pale gums",
+    "red:seizure_active": "active seizure",
+    "red:seizure_now": "seizure happening now",
+    "red:convulsion": "convulsion",
+    "red:collapsed": "collapse",
+    "red:unconscious": "unresponsive",
+    "red:heavy_bleeding": "heavy bleeding",
+    "red:bleeding_wont_stop": "bleeding that won't stop",
+    "red:hematemesis": "vomiting blood",
+    "red:blood_in_urine": "blood in urine",
+    "red:hemoptysis_coughing_blood": "coughing blood",
+    "red:hit_by_car": "vehicle trauma",
+    "red:vehicle_strike": "vehicle trauma",
+    "red:bloat_pacing": "possible bloat / GDV",
+    "red:non_productive_retching": "non-productive retching (possible GDV)",
+    "red:urinary_obstruction": "possible urinary obstruction",
+    "red:straining_litter_box": "straining in the litter box",
+    "red:paralysis_acute": "acute paralysis",
+    "red:dragging_legs": "leg dragging / hind-end weakness",
+    "red:cant_stand": "unable to stand or walk",
+    "red:heatstroke": "heatstroke",
+    "red:overheating_severe": "severe overheating",
+    "red:eye_prolapse": "eye prolapse",
+    "combo:bloody_diarrhea_lethargy": "bloody diarrhea with lethargy",
+    "combo:breathing_plus_other": "breathing difficulty with systemic signs",
+    "pet:male_cat_urinary_blockage": "male cat urinary blockage risk",
+    "pet:young_animal_anorexia": "young animal not eating",
+    "pet:young_animal_acute_gi": "young animal with acute GI signs",
+    "pet:brachycephalic_respiratory": "brachycephalic breed with breathing concern",
+}
+
+
+def _label_for_rule(rule_name: str) -> str:
+    if rule_name in _RULE_LABELS:
+        return _RULE_LABELS[rule_name]
+    # Fallback: strip category prefix, swap underscores for spaces.
+    bare = rule_name.split(":", 1)[-1] if ":" in rule_name else rule_name
+    return bare.replace("_", " ")
+
+
+def build_safety_banner(matched_rules: list[str]) -> str:
+    """Construct the deterministic safety banner shown when the rule engine
+    forces a RED escalation. Returns plain text (no HTML); the visual chrome
+    is added later by `apply_response_format`.
+    """
+    # Skip pure "context:" / "orange:" / "pet:age_escalation" entries — they
+    # carry no clinical signal worth surfacing.
+    skip_prefixes = ("context:", "orange:")
+    skip_exact = {"pet:age_escalation"}
+    surfaced = [
+        r for r in matched_rules
+        if not r.startswith(skip_prefixes) and r not in skip_exact
+    ]
+    if not surfaced:
+        return (
+            "Based on what you described, the safety check flagged this as "
+            "needing immediate vet attention — please contact an emergency "
+            "vet now."
+        )
+    labels = [_label_for_rule(r) for r in surfaced]
+    # Dedupe while preserving order (multiple rules can map to the same label)
+    seen: set[str] = set()
+    unique_labels = [lbl for lbl in labels if not (lbl in seen or seen.add(lbl))]
+    joined = ", ".join(unique_labels)
+    return (
+        f"Based on what you described ({joined}), this needs immediate "
+        f"emergency vet attention — please call ahead and go now."
+    )
+
+
+def prepend_safety_banner(response_text: str, matched_rules: list[str]) -> str:
+    """Prepend the deterministic safety banner to an LLM response. Used by
+    the orchestrator when the rule engine forces a RED escalation but the
+    LLM under-triaged — preserves the LLM's contextual reasoning instead of
+    regenerating with a 'CRITICAL OVERRIDE' system prompt."""
+    banner = build_safety_banner(matched_rules)
+    return f"{banner}\n\n{response_text}".strip()
 
 # Lines the LLM sometimes generates despite being told not to.
 # Matched case-insensitively; the whole line is removed before we apply

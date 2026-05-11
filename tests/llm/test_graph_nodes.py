@@ -254,10 +254,15 @@ async def test_full_graph_green_path() -> None:
 
 
 async def test_full_graph_red_path_triggers_override() -> None:
-    """RED + rules_stricter override → critical_override node re-calls Gemini."""
+    """RED + rules_stricter override → critical_override node prepends a
+    deterministic safety banner to the LLM's existing response.
+
+    Previously this node re-called Gemini with a CRITICAL OVERRIDE system
+    prompt; that path was replaced (see formatters.prepend_safety_banner)
+    so the LLM is now only called once and the banner is built in Python.
+    """
     from src.llm.graph.graph import build_graph
 
-    # First call: LLM says GREEN (benign response)
     normal_resp = {
         "response_text": "Looks fine, monitor at home.",
         "triage_level": "GREEN",
@@ -267,22 +272,12 @@ async def test_full_graph_red_path_triggers_override() -> None:
         "input_tokens": 30,
         "output_tokens": 20,
     }
-    # Second call (override): LLM says RED
-    override_resp = {
-        "response_text": "This is an emergency! Go to vet NOW.",
-        "triage_level": "RED",
-        "intent": "symptom_report",
-        "sentiment": "PANIC",
-        "symptom_tags": ["breathing difficulty"],
-        "input_tokens": 35,
-        "output_tokens": 25,
-    }
     call_count = 0
 
     async def mock_chat_structured(**kwargs):
         nonlocal call_count
         call_count += 1
-        return override_resp if call_count > 1 else normal_resp
+        return normal_resp
 
     with (
         patch("src.llm.graph.nodes.load_pet_context", new_callable=AsyncMock, return_value={}),
@@ -299,15 +294,18 @@ async def test_full_graph_red_path_triggers_override() -> None:
             {
                 "user": _user(),
                 "pet": _pet(),
-                "user_message": "my cat can't breathe",  # RED keyword
+                "user_message": "my cat can't breathe",  # RED-tier rule signal
                 "message_type": MessageType.TEXT,
                 "session": {},
                 "dialogue_id": "diag-2",
             }
         )
 
-    # Should have called Gemini twice (original + critical override)
-    assert call_count == 2
-    # Final response should have RED FLAG formatting applied
+    # Banner-prepend path: only one LLM call, deterministic banner injected.
+    assert call_count == 1
+    assert "immediate emergency vet attention" in final["response_text"]
+    # Original LLM body is preserved verbatim after the banner.
+    assert "Looks fine, monitor at home." in final["response_text"]
+    # apply_response_format wraps the whole thing in RED FLAG chrome.
     assert "RED FLAG ALERT" in final["response_text"]
     assert final["final_triage"] == TriageLevel.RED

@@ -27,7 +27,7 @@ from src.db.models import (
     User,
 )
 from src.llm.prompts.context import build_context_block
-from src.llm.prompts.formatters import apply_response_format
+from src.llm.prompts.formatters import apply_response_format, prepend_safety_banner
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
@@ -39,6 +39,7 @@ from src.llm.retrievers import (
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
+    audit_log_triage_divergence,
     classify_by_rules,
     compare_and_resolve,
     detect_triage_from_response,
@@ -56,6 +57,21 @@ def _active_chat_model() -> str:
     behaviour is identical to the previous Gemini-only path.
     """
     return settings.chat_model or settings.main_model
+
+
+# Mirror of src/llm/graph/nodes.py::_parse_triage_level so both paths
+# normalise the LLM's structured triage_level string the same way.
+_STRUCTURED_TRIAGE_MAP = {
+    "RED": TriageLevel.RED,
+    "ORANGE": TriageLevel.ORANGE,
+    "GREEN": TriageLevel.GREEN,
+}
+
+
+def _parse_structured_triage(raw: Any) -> Optional[TriageLevel]:
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return _STRUCTURED_TRIAGE_MAP.get(raw.strip().upper())
 
 # Lazy-built graph to avoid circular import (graph.nodes imports from this module)
 _graph = None
@@ -362,65 +378,140 @@ async def _generate_response_classic(
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
     # ── 4. CALL CHAT MODEL ────────────────────────────────────────────────────
+    # Try chat_structured first so the LLM can emit an authoritative
+    # triage_level alongside the response text. If that path fails (DeepSeek
+    # in particular sometimes returns malformed JSON when constrained to a
+    # response_format=json_object schema, see providers_deepseek.py:117 — a
+    # raw json.loads with no exception handling) we degrade gracefully to
+    # plain chat() and rely on the rule engine alone for triage. Same
+    # fallback message of last resort if both paths fail.
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
+    structured_triage: Optional[TriageLevel] = None
+    response_text = ""
+    in_tok = 0
+    out_tok = 0
+
     try:
-        raw = await client.chat(system_prompt=system, messages=messages, model=chat_model)
-        response_text = raw["text"]
-        in_tok = raw["input_tokens"]
-        out_tok = raw["output_tokens"]
-    except Exception as exc:
-        logger.error("llm call failed", error=str(exc))
-        response_text = (
-            "I'm having trouble connecting right now. Please try again in a moment."
+        raw = await client.chat_structured(
+            system_prompt=system, messages=messages, model=chat_model
         )
-        in_tok = out_tok = 0
+        response_text = (raw.get("response_text") or "").strip()
+        in_tok = raw.get("input_tokens", 0)
+        out_tok = raw.get("output_tokens", 0)
+        structured_triage = _parse_structured_triage(raw.get("triage_level"))
+        if not response_text:
+            # JSON parsed but response_text field was empty — model put
+            # everything in the metadata fields or the structured layer ate
+            # the body. Fall through to the plain chat() retry below.
+            raise ValueError("chat_structured returned empty response_text")
+    except Exception as exc:
+        logger.warning(
+            "chat_structured failed - falling back to plain chat",
+            error=str(exc),
+            chat_model=chat_model,
+        )
+        try:
+            raw = await client.chat(
+                system_prompt=system, messages=messages, model=chat_model
+            )
+            response_text = raw.get("text", "")
+            in_tok = raw.get("input_tokens", 0)
+            out_tok = raw.get("output_tokens", 0)
+            # No structured signal available on the fallback path; the
+            # resolver will rely on rule_classification alone (which is the
+            # safety floor anyway).
+            structured_triage = None
+        except Exception as exc2:
+            logger.error("plain chat fallback also failed", error=str(exc2))
+            response_text = (
+                "I'm having trouble connecting right now. Please try again in a moment."
+            )
+            in_tok = 0
+            out_tok = 0
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     rule_result = classify_by_rules(pet, user_message)
-    llm_triage = detect_triage_from_response(response_text)
+    # llm_triage is now sourced from the LLM's own structured output
+    # (triage_level field in the JSON response). detect_triage_from_response
+    # is still called below for telemetry — its substring scan can disagree
+    # with the structured signal, which is a useful diagnostic — but it
+    # never influences the resolved classification or the override decision.
+    llm_triage = structured_triage
+    response_keyword_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    if resolved.overridden and resolved.final_classification == TriageLevel.RED:
-        override_system = (
-            system
-            + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-            "by the safety system. You MUST treat this as URGENT. Push immediate vet visit. "
-            "Do not suggest home treatment."
+    # Safety-banner override (replaces the v1 LLM re-call path).
+    #
+    # When the rule engine — scanning the user's message — escalates to RED
+    # but the LLM under-triaged, we prepend a deterministic safety banner to
+    # the LLM's existing response instead of regenerating with a CRITICAL
+    # OVERRIDE system prompt. Three reasons:
+    #
+    #   1. The LLM's contextual reasoning (pet name, individual details,
+    #      tailored care advice) is preserved verbatim — re-generation would
+    #      throw all of that away.
+    #   2. A second LLM call doubles the cost and latency of the override
+    #      path; the banner is constructed in Python from `matched_rules`.
+    #   3. The banner is deterministic — it always names the exact triggers
+    #      that fired, so users see a specific reason ("suspected toxin
+    #      ingestion") rather than a generic "this is urgent" rewrite.
+    rule_red_with_llm_under = (
+        rule_result.classification == TriageLevel.RED
+        and llm_triage != TriageLevel.RED
+    )
+    if rule_red_with_llm_under:
+        response_text = prepend_safety_banner(response_text, rule_result.matched_rules)
+        logger.warning(
+            "triage RED safety banner prepended",
+            pet_id=pet_id_str,
+            rule=rule_result.classification.value,
+            llm=llm_triage.value if llm_triage else None,
+            matched=rule_result.matched_rules,
         )
-        try:
-            raw2 = await client.chat(
-                system_prompt=override_system, messages=messages, model=chat_model
-            )
-            response_text = raw2["text"]
-            in_tok += raw2["input_tokens"]
-            out_tok += raw2["output_tokens"]
-            logger.warning(
-                "triage RED override re-call issued",
-                pet_id=pet_id_str,
-                rule=rule_result.classification.value,
-                llm=llm_triage.value if llm_triage else None,
-            )
-        except Exception as exc:
-            logger.error("RED override re-call failed", error=str(exc))
 
-    # Apply Figma visual format based on resolved triage level
-    response_text = apply_response_format(response_text, resolved.final_classification)
+    # Emit a structured log line whenever the three triage sources diverge.
+    # This is the productive use of the deprecated `detect_triage_from_response`
+    # audit signal — surface offline review opportunities without letting
+    # them drive any user-visible behaviour.
+    audit_log_triage_divergence(
+        pet_id=pet_id_str,
+        structured_triage=structured_triage,
+        rule_classification=rule_result.classification,
+        response_keyword_triage=response_keyword_triage,
+        matched_rules=rule_result.matched_rules,
+        logger_=logger,
+    )
+
+    # Apply Figma visual format based on the rule-engine decision. Using
+    # resolved.final_classification here would leak response-keyword
+    # substring matches ("not urgent" → RED) into the user-visible banner,
+    # wrapping perfectly-fine replies in 🚨 RED FLAG ALERT chrome.
+    effective_triage = rule_result.classification
+    response_text = apply_response_format(response_text, effective_triage)
 
     triage_result = {
         "rule": rule_result.classification.value,
+        # LLM's own triage from structured output — authoritative LLM signal.
         "llm": llm_triage.value if llm_triage else None,
-        "final": resolved.final_classification.value,
+        # Audit-only: substring-scan of the LLM's reply. Useful for spotting
+        # cases where the LLM's wording disagreed with its structured triage
+        # (or the rule engine), but not part of the decision graph.
+        "llm_response_keywords": (
+            response_keyword_triage.value if response_keyword_triage else None
+        ),
+        "final": effective_triage.value,
         "overridden": resolved.overridden,
         "override_direction": resolved.override_direction,
         "matched_patterns": rule_result.matched_rules,
         "confidence": rule_result.confidence,
+        "score": getattr(rule_result, "score", 0.0),
     }
 
-    risk_level = map_triage_to_risk(resolved.final_classification)
+    risk_level = map_triage_to_risk(effective_triage)
 
     # Persist triage record for non-GREEN outcomes (or health queries)
-    if pet and (is_health or resolved.final_classification != TriageLevel.GREEN):
+    if pet and (is_health or effective_triage != TriageLevel.GREEN):
         try:
             await _store_triage_record(
                 pet_id=pet.id,
