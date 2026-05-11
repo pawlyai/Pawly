@@ -86,15 +86,51 @@ def _detach_router(router: Any) -> None:
     router._parent_router = None
 
 
-def _species(value: str) -> Species:
-    return Species(value)
+# OOS / non-pet cases in the regression corpus use placeholder pet_profile
+# values like {"species": "N/A", "gender": null, "neutered_status": null} —
+# the test is checking OOS handling, not pet-specific behavior, so the pet is
+# decorative. The strict Species(value)/Gender(value)/NeuteredStatus(value)
+# constructors would raise on those values and abort the case before any LLM
+# call. These helpers absorb the known placeholder shapes (and any future
+# unknown species like "rabbit") so the test runs and the OOS rubric gets
+# evaluated. Non-OOS cases still use proper enum values and are unaffected.
+def _species(value: str | None) -> Species:
+    if not value:
+        return Species.OTHER
+    normalized = str(value).strip().lower()
+    aliases = {
+        "small mammal": Species.OTHER,
+        "small mammals": Species.OTHER,
+        "rabbit": Species.OTHER,
+        "guinea pig": Species.OTHER,
+        "hamster": Species.OTHER,
+        "ferret": Species.OTHER,
+        "rodent": Species.OTHER,
+        "n/a": Species.OTHER,
+        "na": Species.OTHER,
+        "unknown": Species.OTHER,
+    }
+    if normalized in aliases:
+        return aliases[normalized]
+    try:
+        return Species(normalized)
+    except ValueError:
+        return Species.OTHER
 
 
-def _gender(value: str) -> Gender:
-    return Gender(value)
+def _gender(value: str | None) -> Gender:
+    if not value:
+        return Gender.UNKNOWN
+    normalized = str(value).strip().lower()
+    try:
+        return Gender(normalized)
+    except ValueError:
+        return Gender.UNKNOWN
 
 
-def _neutered_status(value: str) -> NeuteredStatus:
+def _neutered_status(value: str | None) -> NeuteredStatus:
+    if not value:
+        return NeuteredStatus.UNKNOWN
     normalized = str(value).strip().lower()
     aliases = {
         "neutered": NeuteredStatus.YES,
@@ -106,7 +142,10 @@ def _neutered_status(value: str) -> NeuteredStatus:
     }
     if normalized in aliases:
         return aliases[normalized]
-    return NeuteredStatus(normalized)
+    try:
+        return NeuteredStatus(normalized)
+    except ValueError:
+        return NeuteredStatus.UNKNOWN
 
 
 def _memory_type(value: str) -> MemoryType:
