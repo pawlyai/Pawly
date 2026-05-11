@@ -377,29 +377,58 @@ async def _generate_response_classic(
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
-    # ── 4. CALL CHAT MODEL (structured output) ───────────────────────────────
-    # Use chat_structured so the LLM emits an authoritative triage_level
-    # alongside the response text. This replaces the v1 path of inferring
-    # triage from the response wording via substring scan — the LLM can
-    # reason about context (negation, hypothetical, past tense) and produce
-    # a triage that matches what it actually meant.
+    # ── 4. CALL CHAT MODEL ────────────────────────────────────────────────────
+    # Try chat_structured first so the LLM can emit an authoritative
+    # triage_level alongside the response text. If that path fails (DeepSeek
+    # in particular sometimes returns malformed JSON when constrained to a
+    # response_format=json_object schema, see providers_deepseek.py:117 — a
+    # raw json.loads with no exception handling) we degrade gracefully to
+    # plain chat() and rely on the rule engine alone for triage. Same
+    # fallback message of last resort if both paths fail.
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
     structured_triage: Optional[TriageLevel] = None
+    response_text = ""
+    in_tok = 0
+    out_tok = 0
+
     try:
         raw = await client.chat_structured(
             system_prompt=system, messages=messages, model=chat_model
         )
-        response_text = raw.get("response_text", "")
+        response_text = (raw.get("response_text") or "").strip()
         in_tok = raw.get("input_tokens", 0)
         out_tok = raw.get("output_tokens", 0)
         structured_triage = _parse_structured_triage(raw.get("triage_level"))
+        if not response_text:
+            # JSON parsed but response_text field was empty — model put
+            # everything in the metadata fields or the structured layer ate
+            # the body. Fall through to the plain chat() retry below.
+            raise ValueError("chat_structured returned empty response_text")
     except Exception as exc:
-        logger.error("llm call failed", error=str(exc))
-        response_text = (
-            "I'm having trouble connecting right now. Please try again in a moment."
+        logger.warning(
+            "chat_structured failed - falling back to plain chat",
+            error=str(exc),
+            chat_model=chat_model,
         )
-        in_tok = out_tok = 0
+        try:
+            raw = await client.chat(
+                system_prompt=system, messages=messages, model=chat_model
+            )
+            response_text = raw.get("text", "")
+            in_tok = raw.get("input_tokens", 0)
+            out_tok = raw.get("output_tokens", 0)
+            # No structured signal available on the fallback path; the
+            # resolver will rely on rule_classification alone (which is the
+            # safety floor anyway).
+            structured_triage = None
+        except Exception as exc2:
+            logger.error("plain chat fallback also failed", error=str(exc2))
+            response_text = (
+                "I'm having trouble connecting right now. Please try again in a moment."
+            )
+            in_tok = 0
+            out_tok = 0
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     rule_result = classify_by_rules(pet, user_message)
