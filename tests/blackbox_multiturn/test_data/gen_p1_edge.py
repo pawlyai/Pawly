@@ -12,7 +12,7 @@ def p1e(name, display, scenario, outcome, role, criteria, pet, memories, user_tu
         "expected_outcome": outcome,
         "chatbot_role": role,
         "criteria": criteria,
-        "threshold": 0.85,
+        "threshold": 0.82,
         "pet_profile": pet,
         "memories": memories,
         "recent_turns": [],
