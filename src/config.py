@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     admin_telegram_ids: str = ""
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
+    # Feature flag for the general_kb hybrid retrieval (added 2026-05-11).
+    # Toggle to OFF to A/B test KB impact without redeploying — purpose-built
+    # for the Week-1 root-cause investigation of edge/emotional regressions.
+    kb_retrieval_enabled: bool = True
 
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""

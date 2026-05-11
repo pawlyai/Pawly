@@ -350,11 +350,15 @@ async def _generate_response_classic(
     red_flags = match_red_flags(user_message)
     # General-knowledge KB (hybrid keyword + vector). Empty result when the
     # KB has no rows or no branch finds a hit — caller drops the tag entirely.
-    try:
-        general_hits = await retrieve_general_kb(user_message)
-    except Exception as exc:
-        logger.warning("retrieve_general_kb failed, continuing without KB", error=str(exc))
-        general_hits = []
+    # Feature-flagged so we can A/B test KB impact without code changes;
+    # when disabled, behaves identically to pre-KB main.
+    general_hits: list = []
+    if settings.kb_retrieval_enabled:
+        try:
+            general_hits = await retrieve_general_kb(user_message)
+        except Exception as exc:
+            logger.warning("retrieve_general_kb failed, continuing without KB", error=str(exc))
+            general_hits = []
 
     system = build_system_prompt(
         user=user,
