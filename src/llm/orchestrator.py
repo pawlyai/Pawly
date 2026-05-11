@@ -378,10 +378,28 @@ async def _generate_response_classic(
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
     rule_result = classify_by_rules(pet, user_message)
+    # detect_triage_from_response substring-scans the assistant's reply for
+    # words like "urgent" / "emergency" / "critical". It has no negation
+    # handling, so phrases like "this is not urgent" classify as RED and the
+    # response keyword loop ends up overriding a perfectly fine reply with a
+    # hyper-urgent regeneration. Keep the call for telemetry (so we can see
+    # in the stored triage_result when the LLM's language disagreed with the
+    # rule engine), but do NOT let it gate the override re-call. The
+    # LangGraph path already only fires override on override_direction ==
+    # "rules_stricter"; this brings the classic path in line.
     llm_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    if resolved.overridden and resolved.final_classification == TriageLevel.RED:
+    # Override re-call fires only when the deterministic rule engine — scanning
+    # the user's message, not the assistant's reply — escalated to RED while
+    # the LLM under-triaged. This preserves the safety floor (LLM can't
+    # downplay a clear emergency) without amplifying false-positives from
+    # response-keyword substring matches.
+    rule_red_with_llm_under = (
+        rule_result.classification == TriageLevel.RED
+        and llm_triage != TriageLevel.RED
+    )
+    if rule_red_with_llm_under:
         override_system = (
             system
             + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
@@ -404,23 +422,30 @@ async def _generate_response_classic(
         except Exception as exc:
             logger.error("RED override re-call failed", error=str(exc))
 
-    # Apply Figma visual format based on resolved triage level
-    response_text = apply_response_format(response_text, resolved.final_classification)
+    # Apply Figma visual format based on the rule-engine decision. Using
+    # resolved.final_classification here would leak response-keyword
+    # substring matches ("not urgent" → RED) into the user-visible banner,
+    # wrapping perfectly-fine replies in 🚨 RED FLAG ALERT chrome.
+    effective_triage = rule_result.classification
+    response_text = apply_response_format(response_text, effective_triage)
 
     triage_result = {
         "rule": rule_result.classification.value,
+        # Kept as telemetry: surfaces when the LLM's wording disagreed with
+        # the rule engine. Useful for offline review but no longer drives
+        # any user-facing behavior.
         "llm": llm_triage.value if llm_triage else None,
-        "final": resolved.final_classification.value,
+        "final": effective_triage.value,
         "overridden": resolved.overridden,
         "override_direction": resolved.override_direction,
         "matched_patterns": rule_result.matched_rules,
         "confidence": rule_result.confidence,
     }
 
-    risk_level = map_triage_to_risk(resolved.final_classification)
+    risk_level = map_triage_to_risk(effective_triage)
 
     # Persist triage record for non-GREEN outcomes (or health queries)
-    if pet and (is_health or resolved.final_classification != TriageLevel.GREEN):
+    if pet and (is_health or effective_triage != TriageLevel.GREEN):
         try:
             await _store_triage_record(
                 pet_id=pet.id,
