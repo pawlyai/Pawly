@@ -27,7 +27,7 @@ from src.db.models import (
     User,
 )
 from src.llm.prompts.context import build_context_block
-from src.llm.prompts.formatters import apply_response_format
+from src.llm.prompts.formatters import apply_response_format, prepend_safety_banner
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
@@ -390,37 +390,34 @@ async def _generate_response_classic(
     llm_triage = detect_triage_from_response(response_text)
     resolved = compare_and_resolve(llm_triage, rule_result.classification)
 
-    # Override re-call fires only when the deterministic rule engine — scanning
-    # the user's message, not the assistant's reply — escalated to RED while
-    # the LLM under-triaged. This preserves the safety floor (LLM can't
-    # downplay a clear emergency) without amplifying false-positives from
-    # response-keyword substring matches.
+    # Safety-banner override (replaces the v1 LLM re-call path).
+    #
+    # When the rule engine — scanning the user's message — escalates to RED
+    # but the LLM under-triaged, we prepend a deterministic safety banner to
+    # the LLM's existing response instead of regenerating with a CRITICAL
+    # OVERRIDE system prompt. Three reasons:
+    #
+    #   1. The LLM's contextual reasoning (pet name, individual details,
+    #      tailored care advice) is preserved verbatim — re-generation would
+    #      throw all of that away.
+    #   2. A second LLM call doubles the cost and latency of the override
+    #      path; the banner is constructed in Python from `matched_rules`.
+    #   3. The banner is deterministic — it always names the exact triggers
+    #      that fired, so users see a specific reason ("suspected toxin
+    #      ingestion") rather than a generic "this is urgent" rewrite.
     rule_red_with_llm_under = (
         rule_result.classification == TriageLevel.RED
         and llm_triage != TriageLevel.RED
     )
     if rule_red_with_llm_under:
-        override_system = (
-            system
-            + "\n\nCRITICAL OVERRIDE: This situation has been classified as an emergency "
-            "by the safety system. You MUST treat this as URGENT. Push immediate vet visit. "
-            "Do not suggest home treatment."
+        response_text = prepend_safety_banner(response_text, rule_result.matched_rules)
+        logger.warning(
+            "triage RED safety banner prepended",
+            pet_id=pet_id_str,
+            rule=rule_result.classification.value,
+            llm=llm_triage.value if llm_triage else None,
+            matched=rule_result.matched_rules,
         )
-        try:
-            raw2 = await client.chat(
-                system_prompt=override_system, messages=messages, model=chat_model
-            )
-            response_text = raw2["text"]
-            in_tok += raw2["input_tokens"]
-            out_tok += raw2["output_tokens"]
-            logger.warning(
-                "triage RED override re-call issued",
-                pet_id=pet_id_str,
-                rule=rule_result.classification.value,
-                llm=llm_triage.value if llm_triage else None,
-            )
-        except Exception as exc:
-            logger.error("RED override re-call failed", error=str(exc))
 
     # Apply Figma visual format based on the rule-engine decision. Using
     # resolved.final_classification here would leak response-keyword
