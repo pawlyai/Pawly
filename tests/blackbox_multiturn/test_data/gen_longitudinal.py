@@ -36,7 +36,16 @@ def lon(name, display, scenario, outcome, role, criteria, pet, memories, recent_
     }
 
 def mem(role, content):
-    return {"role": role, "content": content}
+    # Past-session turn distilled as a long-term memory record so the
+    # production prompt builder (context.py) renders it under "Health history".
+    # field name disambiguates user-stated facts vs assistant-recommendations
+    # so the LLM can tell them apart inside the rendered context block.
+    return {
+        "memory_type": "snapshot",
+        "memory_term": "long",
+        "field": f"prior_session_{role}",
+        "value": content,
+    }
 
 CASES = []
 
