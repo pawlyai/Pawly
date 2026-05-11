@@ -11,22 +11,371 @@
 #   - exact array match over keywords_en / keywords_cn
 # Results are fused via RRF and injected into <retrieved_general_knowledge>.
 #
-# Schema per entry:
-#   - id           snake_case slug, MUST be unique (used as primary key)
-#   - domain       one of: care, behavior, stage, region, nutrition, breed_care
-#   - content      50-150 word factual paragraph, evergreen, no diagnosis
-#   - keywords_en  list of phrases / words that trigger the exact-keyword branch
-#   - keywords_cn  list of Chinese trigger phrases (matched as substring)
-#   - citations    optional source list (e.g. AAFP guideline, AVSAB position)
-#
-# Coverage targets the gap topics from eval p1_general where the keyword-only
-# followups.yaml has no coverage: indoor enrichment, separation anxiety, life-
-# stage milestones, breed care, region (Singapore HDB / climate), basic nutrition.
-#
 # DO NOT include symptom-triage or emergency content — those live in
-# followups.yaml + special_rules.yaml and are routed through the SOP.
-#
-# This file is intentionally empty pending content review. Add entries below
-# the `entries:` key as a YAML list.
+# followups.yaml + special_rules.yaml.
 
-entries: []
+entries:
+
+  # ── Domain: care ─────────────────────────────────────────────────────────────
+
+  - id: indoor_cat_enrichment
+    domain: care
+    keywords_en: [indoor cat, enrichment, bored cat, mental stimulation, cat boredom, vertical space, cat tree, puzzle feeder, indoor only]
+    keywords_cn: [室内猫, 无聊, 丰容, 猫爬架, 智力, 益智, 解闷]
+    content: |
+      Indoor-only cats need active enrichment to prevent stress and boredom-driven behaviour (over-grooming, aggression, inappropriate elimination). Daily targets: 2–3 short play sessions of 5–10 minutes each with wand or wand-replacement toys, ending in a "catch" so the hunt cycle completes; rotate toys weekly so they stay novel. Vertical space (cat trees, window perches, shelves above 1.5 m) is critical — cats survey territory from height. Puzzle feeders and treat-dispensing balls convert a portion of daily food into mental work; aim for 20–50% of dry kibble fed this way. Scent enrichment (cat-safe herbs, rotating cardboard boxes) costs nothing and adds variety.
+    citations: [AAFP/ISFM 2013 Environmental Needs Guidelines]
+
+  - id: litter_box_setup
+    domain: care
+    keywords_en: [litter box, litter tray, n+1 rule, cat toilet, litter location, litter depth, scoop frequency]
+    keywords_cn: [猫砂盆, 厕所, 猫砂, 铲屎, 砂盆位置]
+    content: |
+      The standard guideline is n+1 litter boxes for n cats (e.g. 3 boxes for 2 cats), placed in separate quiet locations — never all clustered in one room. Box size should be 1.5× the length of the cat from nose to base of tail; most commercial trays are too small for adult cats. Litter depth 5–8 cm of unscented clumping clay or a low-tracking alternative. Scoop at least once daily, full litter replacement every 1–2 weeks. Avoid hooded boxes for cats prone to inappropriate elimination — many cats find them ammonia-trapping and confining. Sudden avoidance of the box usually has a medical or environmental cause, not a behaviour issue.
+    citations: [AAFP/ISFM 2014 Inappropriate Elimination]
+
+  - id: dog_mental_stimulation
+    domain: care
+    keywords_en: [bored dog, dog enrichment, dog mental stimulation, sniff walk, puzzle feeder, kong, decompression]
+    keywords_cn: [遛狗, 嗅闻, 智力玩具, 狗无聊, 解闷, 益智]
+    content: |
+      Dogs need both physical and mental exercise daily; mental work tires them as much as a long walk. Add 10–15 min of "sniffari" walks (loose-lead, dog choosing the route, sniffing at will) to reduce arousal and improve sleep quality. Frozen Kongs or lick mats stretch a meal into 15–30 min of foraging. Snuffle mats, scatter-feeds on grass, and short scent-search games (hide a treat, cue "find it") are low-effort enrichment. For breeds bred to work (herding, retrievers, terriers), under-stimulation often presents as destructive chewing, hyper-vocalisation, or counter-surfing.
+    citations: [AVSAB Position Statement on Enrichment]
+
+  - id: grooming_basics_by_coat
+    domain: care
+    keywords_en: [grooming, brushing, coat type, double coat, shedding, mats, matted fur, undercoat]
+    keywords_cn: [梳毛, 美容, 毛打结, 掉毛, 双层毛]
+    content: |
+      Grooming frequency depends on coat type, not breed prestige. Short single coats (e.g. Labrador, beagle, domestic shorthair): weekly brushing during seasonal shed, otherwise as needed. Double coats (husky, golden retriever, Maine Coon): brush 2–3× weekly, daily during shed, never shave — the undercoat regulates temperature. Long coats (poodle, Shih Tzu, Persian): daily brushing to prevent mats; mats trap moisture and pull on skin. Wire-haired (terriers): hand-stripping or trimming every 8–12 weeks. Bathing more than monthly strips protective skin oils for most breeds; spot-clean instead. If mats are tight against the skin, see a groomer — cutting them at home risks lacerating the skin.
+
+  - id: nail_trimming
+    domain: care
+    keywords_en: [nail trimming, nail clipping, quick, dewclaw, cat claws, dog nails, dremel]
+    keywords_cn: [剪指甲, 剪甲, 趾甲, 血线, 狼爪]
+    content: |
+      Nails should be trimmed often enough that you can't hear them clicking on hard floors — for most dogs every 3–4 weeks, for indoor cats every 2–4 weeks (front paws more often than back). Use sharp clippers sized for the animal; dull clippers crush the nail. Trim a small amount at a time to avoid the "quick" (the pink blood vessel visible in light nails, invisible in black nails). A Dremel-style rotary tool is gentler on dark-nailed dogs but requires acclimation. Don't forget dewclaws — they don't wear down naturally and can curl into the pad. If you cut the quick, apply styptic powder or cornflour with firm pressure for 30–60 seconds.
+
+  - id: dental_care_routine
+    domain: care
+    keywords_en: [dental care, brushing teeth, dog teeth, cat teeth, tartar, plaque, dental chew, oral hygiene]
+    keywords_cn: [刷牙, 口腔, 牙结石, 牙菌斑, 洁牙, 口臭]
+    content: |
+      Periodontal disease is the most common health condition in dogs and cats over age 3. Daily toothbrushing with a pet-safe enzymatic paste (never human toothpaste — fluoride is toxic) is the single most effective home prevention. Start slowly: finger-rub the gum line for a few days, then progress to a soft brush or finger-brush. Dental chews and water additives reduce plaque but do not replace brushing. VOHC-accepted products (Veterinary Oral Health Council seal) have evidence behind them. Signs that need a vet: persistent bad breath, red/swollen gums, drooling, pawing at mouth, dropping food, or visible tartar at the gumline. Most adult pets benefit from a professional scaling under anaesthesia every 1–3 years.
+    citations: [VOHC, AVDC Stage 2+ guidelines]
+
+  - id: hot_weather_safety
+    domain: care
+    keywords_en: [heat, hot weather, heatstroke, summer, dog in car, hot pavement, panting, brachycephalic heat]
+    keywords_cn: [中暑, 高温, 热, 夏天, 狗车里, 烫脚]
+    content: |
+      Heatstroke can kill dogs within 30 minutes; brachycephalic breeds (pug, bulldog, Persian cat) overheat at temperatures most people find comfortable. Pavement temperature test: place the back of your hand on the asphalt for 7 seconds — if you can't hold it, it will burn paw pads. Walk in early morning or after sunset in tropical climates. Never leave a pet in a parked car even briefly; interior temperatures rise 10°C in 10 minutes. Provide constant access to shade and fresh water; freeze water bowls or add ice cubes during peak heat. Cooling mats and shallow paddling pools help heavy-coated dogs. Cats hide their distress — watch for open-mouth panting (abnormal in cats), drooling, or lethargy.
+    citations: [AVMA Heat Safety Guidelines]
+
+  - id: cold_weather_safety
+    domain: care
+    keywords_en: [cold weather, winter, hypothermia, frostbite, snow, paw care winter, ice melt salt]
+    keywords_cn: [寒冷, 冬天, 冻伤, 体温过低, 雪]
+    content: |
+      Below ~7°C, small dogs, short-coated breeds, puppies, senior pets, and any cat outdoors are at risk for cold stress. Below freezing, limit outdoor exposure to 10–15 min for high-risk pets and use a coat. Frostbite affects extremities first — ear tips, tail tip, paw pads, scrotum; signs are pale/grey skin that may darken to black over days. Ice-melt salts and antifreeze on roads are toxic if licked off paws; wipe paws after every winter walk or use boots. Antifreeze (ethylene glycol) is sweet-tasting and fatal in tiny amounts — clean spills immediately. Outdoor cats need an insulated shelter (straw, not blankets which retain moisture) raised off the ground.
+
+  - id: multi_pet_introduction
+    domain: care
+    keywords_en: [new cat, new dog, multi-pet, introduction, resident pet, scent swap, gradual introduction]
+    keywords_cn: [新猫, 新狗, 介绍, 多宠, 同居, 混养, 适应]
+    content: |
+      New-pet introductions should take 2–4 weeks for cats, 1–2 weeks for dogs — rushing creates inter-pet aggression that can take months to undo. Stage 1 (days 1–3): new pet stays in a separate room with all resources; pets do not see each other. Stage 2 (days 3–7): scent swap — exchange bedding or rub a cloth on each pet and place in the other's space. Stage 3 (days 7–14, cats): visual contact through a baby gate or cracked door; reward calm. Stage 4: brief supervised face-to-face meetings, separating before either animal escalates. Resident-pet resources (food bowl, sleeping spot, litter boxes) must be duplicated, not shared. Hissing/growling at first meeting is normal; sustained stalking, lunging, or shutdown means slowing down.
+
+  - id: cat_scratching_alternatives
+    domain: care
+    keywords_en: [scratching post, cat scratching furniture, sisal, declaw, scratch pad, vertical scratcher]
+    keywords_cn: [猫抓板, 抓沙发, 猫挠墙, 抓柱]
+    content: |
+      Scratching is a hard-wired feline behaviour — it stretches the body, sheds the outer claw sheath, and marks territory with scent glands in the paws. Cats do not scratch furniture out of spite; they scratch where it feels good. Provide one sturdy vertical post (sisal rope or rough wood, at least as tall as the cat fully stretched) per cat, near sleeping and feeding areas where they naturally scratch on waking. Some cats prefer horizontal cardboard scratchers — observe your cat's preference. Discourage furniture scratching by making the surface unappealing (double-sided sticky tape, foil) while making the post more appealing (catnip, treats on top). Declawing is amputation of the last digit bone and is contraindicated by AVMA position.
+    citations: [AVMA Position on Declawing]
+
+  # ── Domain: behavior ────────────────────────────────────────────────────────
+
+  - id: separation_anxiety_basics
+    domain: behavior
+    keywords_en: [separation anxiety, dog crying when alone, destructive when alone, home alone, leaving the house, alone training]
+    keywords_cn: [分离焦虑, 出门哭, 独处, 一个人在家, 拆家]
+    content: |
+      Separation-related distress (the umbrella term clinical behaviourists prefer over "separation anxiety") shows as vocalising, destruction near exits, soiling, drooling, refusing food, or self-injury when the owner leaves. Mild cases respond to gradual desensitisation: start with departures of seconds (pick up keys, walk to door, return) and slowly extend duration, always returning before the pet escalates. Pair departures with a long-lasting food puzzle. Severe cases need a structured plan from a veterinary behaviourist; medication is often part of the treatment, not the whole of it. Do NOT punish anxious behaviour — it amplifies the anxiety. Getting another pet rarely fixes it because the bond is owner-specific.
+    citations: [AVSAB Separation Anxiety Guidelines]
+
+  - id: resource_guarding
+    domain: behavior
+    keywords_en: [resource guarding, food aggression, growling over food, possessive, toy guarding, bed guarding]
+    keywords_cn: [护食, 护资源, 护东西, 占有欲]
+    content: |
+      Resource guarding (growling, snapping, freezing over food, toys, beds, or owners) is a normal canine communication, not a dominance problem. Trying to "show them who's boss" by taking the resource away makes the behaviour worse — the dog learns that humans approaching predict losing things. The protocol: when the dog is eating, walk past and drop a higher-value treat from a safe distance, then leave. Repeat until the dog looks up happily when you approach. Never punish a growl — a dog that has been punished for warning is more likely to bite without warning. Severe or escalating guarding (bites with no inhibition, or guarding food from a child) needs a certified trainer immediately.
+
+  - id: cat_aggression_inter
+    domain: behavior
+    keywords_en: [cat fighting, cat aggression, two cats fighting, attacking other cat, inter-cat aggression, redirected aggression]
+    keywords_cn: [猫打架, 猫吵架, 同伴攻击, 转移性攻击]
+    content: |
+      Sudden aggression between cats that previously got along often has an environmental trigger — outdoor cat visible from window, household stress, illness in one cat. Separate the cats fully (different rooms, separate resources) and re-introduce as if they were strangers over 2–4 weeks. Reduce competition: more litter boxes (n+1), separate feeding stations, multiple high perches. Pheromone diffusers (Feliway Multicat) help some cats but are not a cure. If one cat has chronic pain (dental, urinary, arthritis), they may become the aggressor or the target — a vet check is part of behavioural triage. Never separate fighting cats with bare hands; use a board, blanket, or loud noise.
+
+  - id: crate_training_basics
+    domain: behavior
+    keywords_en: [crate training, crate, kennel training, crate puppy, crate at night]
+    keywords_cn: [笼内训练, 关笼子, 笼训, 适应笼子]
+    content: |
+      A correctly-introduced crate is a safe den, not a punishment. Place the crate in a quiet but social area (not isolated in a basement). Feed all meals inside the open crate for the first week. Then progress: brief closed-door sessions while you sit beside, then leave the room, then leave the house. Build up slowly — most puppies can hold their bladder roughly one hour per month of age plus one, up to about 6–8 hours. A whining puppy who has been crated too long is communicating a need, not testing limits — ignoring whining at this stage backfires. Adult dogs with separation distress should not be crated as a first intervention; some panic and injure themselves.
+
+  - id: inappropriate_elimination_cat
+    domain: behavior
+    keywords_en: [cat peeing outside box, cat marking, urine spraying, cat soiling, not using litter]
+    keywords_cn: [乱尿, 乱拉, 不用砂盆, 喷尿, 标记]
+    content: |
+      A cat who suddenly stops using the litter box should see a vet first — urinary tract infections, idiopathic cystitis, kidney disease, and arthritis (the cat finds the box painful to step into) cause this. If medical causes are excluded, common triggers are: dirty box, too few boxes (n+1 rule), inaccessible location, wrong litter texture (cats often prefer fine unscented clumping), or stress from another cat / household change. Spraying (small amounts on vertical surfaces, tail twitching) is a marking behaviour and differs from peeing (large puddles on horizontal surfaces). Unneutered males spray most; neutering reduces this in 90% of cases. Punishment makes the behaviour worse — the cat learns to hide it.
+    citations: [AAFP/ISFM Inappropriate Elimination 2014]
+
+  - id: barking_causes
+    domain: behavior
+    keywords_en: [excessive barking, dog barking, demand barking, alarm barking, barking at strangers]
+    keywords_cn: [狂叫, 乱叫, 警戒吠, 兴奋叫]
+    content: |
+      Barking is a category of behaviour with several distinct motivations: alert/territorial (someone at the door), demand (dog wants attention or food), boredom/frustration (under-stimulation), fear, and excitement. Treatment depends on the motivation. Alarm barking responds to managing visual triggers (window film, blocking sightlines). Demand barking responds to ignoring it completely and reinforcing quiet — any response, even scolding, rewards it. Boredom responds to enrichment and exercise. Fear-based barking needs counter-conditioning, not suppression. Anti-bark collars (citronella, shock, ultrasonic) treat the symptom and often create anxiety; AVSAB explicitly opposes shock collars.
+
+  - id: dog_jumping_on_people
+    domain: behavior
+    keywords_en: [dog jumping, jumping up, jumping on guests, jumping on me, dog jumps]
+    keywords_cn: [扑人, 跳起来, 扑客人]
+    content: |
+      Dogs jump on people because the behaviour has historically been rewarded — attention (even pushing them down), excitement, eye contact. The fix is teaching an alternative that earns the same reward. Cue the dog to "sit" before greeting and reward heavily; ignore (turn back, no eye contact) any jumping. Guests must follow the protocol or training is unstable. For dogs that jump hard enough to injure children or elderly people, use a leash or gate during the greeting and back-tie them so they cannot rehearse the unwanted behaviour. Kneeing the dog in the chest or stepping on toes is widely advised online but causes injury and damages trust.
+
+  - id: counter_surfing_dogs
+    domain: behavior
+    keywords_en: [counter surfing, dog stealing food, dog jumping on counter, food on counter]
+    keywords_cn: [偷吃, 跳台子, 上桌, 偷食]
+    content: |
+      Counter surfing is self-rewarding — every successful theft reinforces the behaviour, so management is essential alongside training. Never leave food unattended on accessible surfaces; even one successful steal can rebuild the habit. Use baby gates to restrict kitchen access during food prep. Teach a strong "leave it" cue from low to high distractions, rewarded with a separate high-value treat. For persistent offenders, motion-activated air-puff or aluminium-can-on-counter setups create a self-correcting consequence; never use these for fearful or noise-sensitive dogs. The dog's nose is more capable than your willpower — set up the environment so they cannot rehearse.
+
+  - id: chewing_destructive
+    domain: behavior
+    keywords_en: [destructive chewing, puppy chewing, dog chewing furniture, teething, chewing shoes]
+    keywords_cn: [乱啃, 拆家, 磨牙, 啃东西, 撕咬家具]
+    content: |
+      Chewing is normal — puppies teethe (peak 4–6 months), adolescents explore, adults relieve stress or boredom. The intervention is providing a legal outlet, not suppressing the drive. Rotate 3–4 chew toys of different textures (rubber, rope, edible) so they stay novel. Frozen wet washcloths or chilled Kongs soothe teething puppies. For high-value items the dog has stolen, do not chase — that turns it into a game; instead trade for something equal or better. Punishing chewing after the fact does not work (dogs do not connect punishment with past behaviour) and erodes trust. Adolescent (6–18 months) destructive chewing often signals insufficient exercise/enrichment.
+
+  # ── Domain: stage ───────────────────────────────────────────────────────────
+
+  - id: puppy_socialization_window
+    domain: stage
+    keywords_en: [puppy socialization, socialization window, puppy 3-16 weeks, exposing puppy, puppy class]
+    keywords_cn: [幼犬社会化, 社会化窗口期, 幼犬训练]
+    content: |
+      The critical socialisation window in dogs is 3–14 weeks, with a softer extension to 16 weeks. Positive exposure during this period to people of varied ages and appearances, other vaccinated dogs, household noises, surfaces, and handling builds a confident adult. The AVSAB position is explicit: the risk of behavioural problems from under-socialisation outweighs the small infectious risk of leaving the house before the final vaccine. Carry the puppy in public, attend puppy classes that require core vaccines, host visitors at home. Avoid forced exposure — let the puppy approach voluntarily. The window closes around 16 weeks; dogs socialised after that age can still learn, but base wariness is harder to rewrite.
+    citations: [AVSAB Position on Puppy Socialization]
+
+  - id: kitten_socialization
+    domain: stage
+    keywords_en: [kitten socialization, kitten 2-7 weeks, handling kitten, kitten temperament]
+    keywords_cn: [幼猫社会化, 小猫社会化]
+    content: |
+      The feline socialisation window is shorter and earlier than dogs: 2–7 weeks. Kittens handled by multiple humans for 5–15 minutes daily during this window become significantly friendlier adults. After 7 weeks the window narrows; feral kittens taken at 8+ weeks are markedly harder to tame than those taken at 4–6 weeks. Expose kittens to handling of paws and mouth (groundwork for nail trimming and tooth brushing), the carrier (leave it out as a normal piece of furniture), and brief absences. Single-kitten adoption tends to produce a more dependent, sometimes nippy adult; adopting two littermates or pairing with a resident young cat reduces play-aggression toward humans.
+
+  - id: adolescent_dog_period
+    domain: stage
+    keywords_en: [adolescent dog, teenage dog, dog 6-18 months, regression, ignoring commands, second fear period]
+    keywords_cn: [青少年期狗, 6到18个月, 青春期, 狗叛逆]
+    content: |
+      Dogs hit adolescence around 6 months and the phase extends to 18–24 months in larger breeds. Owners often describe it as "all his training disappeared overnight" — the dog is not being defiant, the prefrontal cortex is being rewired and hormones are surging. A second fear period (around 6–14 months) can briefly amplify novel-stimulus reactivity even in well-socialised dogs. Maintenance: keep training short and high-reward, manage the environment to prevent rehearsal of unwanted behaviours, and exercise enough but not excessively. Adolescents need more sleep than people realise (16–18 h/day for some breeds); over-stimulation produces frantic, snappy behaviour. Most well-trained adolescents settle into adult composure between 18 months and 3 years.
+
+  - id: senior_dog_signs
+    domain: stage
+    keywords_en: [senior dog, old dog, dog 7+ years, aging signs, dog cognitive dysfunction, geriatric dog]
+    keywords_cn: [老年犬, 老狗, 高龄, 认知障碍]
+    content: |
+      Dogs are "senior" at approximately 7 years for medium breeds, 5–6 years for giant breeds, 9–10 years for small breeds. Signs that warrant a vet visit: weight changes, increased thirst/urination (kidney, diabetes, Cushing's), new lumps, stiffness on rising, behaviour changes (disorientation, sleeping more, accidents in the house — possible canine cognitive dysfunction), reduced exercise tolerance. Twice-yearly vet exams (instead of annual) catch problems earlier. Dental disease, arthritis, kidney disease, and heart murmurs are the most common geriatric findings. Diet often needs adjustment for joint support, lower phosphorus (kidney-supportive), or lower calorie if activity has dropped.
+
+  - id: senior_cat_signs
+    domain: stage
+    keywords_en: [senior cat, old cat, cat 10+ years, kidney disease cat, hyperthyroid, cat cognitive]
+    keywords_cn: [老年猫, 高龄猫, 老猫, 肾病, 甲亢]
+    content: |
+      Cats are senior around 10 years, geriatric around 15. The "big three" senior cat diseases are chronic kidney disease, hyperthyroidism, and diabetes — all show overlapping signs: increased water consumption, increased urine output (larger litter clumps), weight loss despite good appetite, hair coat decline. Routine blood + urine at 10+ years annually, every 6 months at 13+, catches these early when treatment is most effective. Arthritis is widely underdiagnosed in cats — they hide it well. Signs: jumping less, hesitating before jumping, sleeping in more accessible spots, reduced grooming of the lower back. Cognitive decline shows as night-time vocalising, disorientation, or litter-box mishaps.
+    citations: [AAFP Senior Care Guidelines]
+
+  - id: spay_neuter_timing
+    domain: stage
+    keywords_en: [spay, neuter, desex, when to spay, when to neuter, large breed neuter, neuter age]
+    keywords_cn: [绝育, 节育, 去势, 卵巢摘除]
+    content: |
+      Optimal spay/neuter timing is now breed- and size-specific, not "6 months for all". Small breeds (<20 kg adult weight): traditional 6–9 months is reasonable for both sexes. Large/giant breeds (golden retriever, Labrador, Rottweiler, German shepherd): newer studies suggest waiting until growth plates close around 12–18 months may reduce orthopaedic disease (CCL rupture, hip dysplasia) and certain cancers in males. Female dogs spayed before the first heat have a near-zero risk of mammary cancer; risk rises with each heat cycle. Cats: routine spay/neuter at 4–6 months is well-established. Discuss timing with your vet based on breed, lifestyle, and whether confinement to prevent breeding is feasible.
+
+  - id: puppy_vaccination_schedule
+    domain: stage
+    keywords_en: [puppy vaccines, puppy shots, dhpp, rabies, core vaccines puppy, vaccination schedule]
+    keywords_cn: [幼犬疫苗, 狗打针, 三联, 四联, 狂犬]
+    content: |
+      Core canine vaccines (DHPP/DAPP — distemper, adenovirus, parvovirus, parainfluenza) start at 6–8 weeks, repeat every 3–4 weeks until 16 weeks of age, with a booster at 1 year. Rabies is given at 12–16 weeks per local law, then 1- or 3-year boosters. Maternal antibodies can interfere with vaccine response until 14–16 weeks, which is why the series doesn't end earlier. Non-core vaccines (leptospirosis, Bordetella, Lyme, canine influenza) are recommended based on regional exposure and lifestyle. Mild lethargy or soreness for 24 hours post-vaccine is normal; facial swelling, vomiting, or collapse within hours is a vaccine reaction and warrants vet evaluation.
+    citations: [WSAVA Vaccination Guidelines 2024]
+
+  - id: kitten_vaccination_schedule
+    domain: stage
+    keywords_en: [kitten vaccines, kitten shots, fvrcp, core cat vaccines, kitten vaccination]
+    keywords_cn: [幼猫疫苗, 猫三联, 猫四联, 狂犬, 猫打针]
+    content: |
+      Core feline vaccines (FVRCP — herpesvirus, calicivirus, panleukopenia) start at 6–8 weeks, repeat every 3–4 weeks until 16–20 weeks, booster at 1 year. Rabies per local law. Feline leukemia virus (FeLV) vaccination is recommended for kittens (high-risk life stage) and adults with outdoor exposure. Adjuvanted vaccines should be administered in the distal hindlimb due to a rare but well-documented risk of injection-site sarcoma in cats. Adult cats with stable indoor lifestyle and current titres can often extend the booster interval — discuss titre testing with your vet.
+    citations: [AAFP Feline Vaccination Guidelines 2020]
+
+  # ── Domain: region (Singapore-focused; expand if other regions added) ───────
+
+  - id: singapore_hdb_approved_dog_breeds
+    domain: region
+    keywords_en: [HDB, hdb dog, singapore dog, approved breeds, HDB approved, project ADORE, condo dog]
+    keywords_cn: [HDB, 新加坡, 组屋, 公寓, 养狗规定]
+    content: |
+      In Singapore, HDB flats are restricted to one approved small-breed dog per flat under the standard scheme (61 approved breeds, generally <10 kg adult weight). Project ADORE extends adoption rights to medium-sized rescue dogs (max 50 cm shoulder height, 15 kg adult weight) that have passed an obedience assessment. Condominiums have their own rules set by the management committee — typically more permissive than HDB but always check the by-laws before adopting. All dogs in Singapore must be licensed with NParks AVS (Animal & Veterinary Service) annually. Cats: HDB historically prohibited cats in flats; this is being reviewed under the Cat Management Framework — check current AVS guidance, as the policy is evolving.
+
+  - id: singapore_tropical_climate_pet_care
+    domain: region
+    keywords_en: [singapore weather, tropical heat, heatstroke pet, humid, singapore vet, monsoon, haze]
+    keywords_cn: [新加坡, 热带, 高温, 湿热, 雨季, 烟霾]
+    content: |
+      Singapore's year-round 27–34°C with high humidity is harder on pets than temperate climates because there is no cool season to recover in. Walk dogs at sunrise or after 7pm; the 7-second pavement test (back of hand on concrete) is non-negotiable for paw safety. Brachycephalic breeds (pug, French bulldog, Persian) cannot thermoregulate effectively here — owners must commit to climate-controlled indoor time, indoor enrichment, and short outdoor sessions only. Monsoon season (Nov–Jan) increases tick load and dermatophyte risk; tick prevention is year-round. During PSI haze events (>100), keep pets indoors with windows closed and air purifiers running — animals have respiratory tracts more sensitive than ours.
+
+  - id: singapore_avs_imports
+    domain: region
+    keywords_en: [import pet singapore, AVS, dog import singapore, cat import, quarantine singapore, pet permit]
+    keywords_cn: [新加坡进口宠物, AVS, 检疫, 入境]
+    content: |
+      Pets entering Singapore are categorised by country of origin into Category A/B/C/D, each with different import requirements. Category A countries (e.g. Australia, UK, NZ) allow direct entry with minimal quarantine if microchip, rabies vaccine, and import licence are in order. Category D countries require longer quarantine and additional blood tests. The full process takes 4–7 months from start. All applications go through NParks Animal & Veterinary Service (AVS). Banned breeds (e.g. pit bull, Akita) cannot be imported regardless of category. Always start the timeline at least 6 months before travel and confirm requirements directly with AVS — rules change.
+
+  - id: singapore_emergency_vet
+    domain: region
+    keywords_en: [emergency vet singapore, 24 hour vet, urgent care singapore, after hours vet]
+    keywords_cn: [新加坡急诊, 24小时兽医, 紧急]
+    content: |
+      Singapore has a handful of 24-hour emergency veterinary clinics (the major ones are in Bukit Timah, the East Coast area, and around the Botanic Gardens — the specific names and locations change; verify the closest one to your home now, not at 2am). Save the phone number and an alternative in your phone before an emergency occurs. Standard clinic hours typically end at 7–9pm and reopen 9am; weekend hours vary. Emergency consultation fees are noticeably higher than daytime — budget S$200–400 for the visit alone before treatment costs. For toxic ingestion or trauma, call ahead so the team can prepare; for non-life-threatening issues outside hours, the message line at your usual clinic often has overnight guidance.
+
+  # ── Domain: nutrition ──────────────────────────────────────────────────────
+
+  - id: life_stage_nutrition_dog
+    domain: nutrition
+    keywords_en: [puppy food, adult dog food, senior dog food, large breed puppy, AAFCO, complete and balanced]
+    keywords_cn: [幼犬粮, 成犬粮, 老年犬粮, 大型犬幼犬粮]
+    content: |
+      Puppies need food formulated for "growth" or "all life stages" per AAFCO labelling — adult maintenance formulas are calorically and nutritionally inadequate for growth. Large- and giant-breed puppies (adult weight >25 kg) specifically need "large breed puppy" formulas with controlled calcium and energy to slow skeletal growth; standard puppy food causes orthopaedic problems. Adult dogs transition to adult maintenance at roughly 12 months (small) to 18–24 months (large/giant). Senior diets are not a regulatory category — "senior" labels mean whatever the manufacturer decides. If a senior dog has no specific medical issue, a high-quality adult maintenance diet plus weight management is usually appropriate. WSAVA Global Nutrition Committee has a vendor evaluation checklist for food selection.
+    citations: [WSAVA Global Nutrition Committee, AAFCO 2024]
+
+  - id: life_stage_nutrition_cat
+    domain: nutrition
+    keywords_en: [kitten food, adult cat food, senior cat food, cat AAFCO, complete and balanced cat]
+    keywords_cn: [幼猫粮, 成猫粮, 老年猫粮]
+    content: |
+      Kittens require food formulated for "growth" or "all life stages" — adult maintenance lacks the protein and calorie density growing kittens need. Most kittens transition to adult food around 12 months. Cats are obligate carnivores: protein should be a primary ingredient (animal-source preferred), and they have specific dietary needs for taurine, arachidonic acid, and pre-formed vitamin A — feeding a dog food causes deficiency disease over weeks to months. Senior cat formulas vary widely; a thin senior cat with kidney disease has different needs than an overweight senior. Wet food contributes meaningfully to total water intake — important because cats have a low natural thirst drive.
+
+  - id: wet_vs_dry_food
+    domain: nutrition
+    keywords_en: [wet food, dry food, kibble, canned food, mixed feeding, dental kibble myth]
+    keywords_cn: [湿粮, 干粮, 罐头, 混喂]
+    content: |
+      Both wet and dry diets can be complete and balanced; the choice is about practical fit, not health superiority. Dry food's main advantages: lower cost per calorie, easier to free-feed, longer shelf life after opening. Wet food's main advantages: higher water content (70–80% vs 8–10%) which benefits cats and pets with reduced thirst drive, often more palatable for picky eaters or sick pets, easier to chew for dental-compromised seniors. The claim that "dry kibble cleans teeth" is largely myth — most kibble shatters rather than scrubs; only specifically engineered dental diets (look for VOHC seal) have demonstrated dental benefit. Mixed feeding is fine, especially for cats — many do best on mostly wet with dry as the puzzle-feeder portion.
+
+  - id: body_condition_scoring
+    domain: nutrition
+    keywords_en: [body condition score, BCS, dog weight, cat weight, ideal weight, overweight pet, ribs check]
+    keywords_cn: [体型评分, 体重, 肥胖, 太瘦]
+    content: |
+      Body Condition Score (BCS) on a 1–9 scale is more useful than the scale alone. Ideal is 4–5/9: ribs felt easily with light pressure, visible waist when viewed from above, slight abdominal tuck from the side. 6/9 (ribs felt with moderate pressure, waist faint): start a 10% calorie reduction. 7+/9 is obese — significantly raises risk of diabetes, osteoarthritis, urinary disease, and shortens lifespan by 1–2 years on average. 3/9 or below (visible ribs, prominent spine, no fat over pelvis): vet workup for underlying disease before increasing food. Re-weigh every 2 weeks during weight management; safe loss rate is 1–2% body weight per week.
+    citations: [WSAVA Body Condition Score Guidelines]
+
+  - id: treat_ratio_rule
+    domain: nutrition
+    keywords_en: [treats, dog treats, cat treats, 10 percent rule, training treats, healthy treats]
+    keywords_cn: [零食, 奖励, 10%规则, 训练零食]
+    content: |
+      Treats should make up no more than 10% of total daily calories — beyond that, the balanced base diet's nutritional contribution gets diluted. For training, use lower-calorie treat options or break standard treats into pea-sized pieces. A 5 kg dog needs roughly 250 kcal/day total, so the 10% treat budget is 25 kcal — that's about 3 small commercial treats, or one small slice of plain cooked chicken. Many "natural" or "raw" treats like dried liver or jerky are calorie-dense; check the label. Use a portion of the daily kibble allowance as the "training treat" if you train multiple times daily to avoid overfeeding.
+
+  - id: toxic_foods_overview
+    domain: nutrition
+    keywords_en: [toxic food, chocolate, grapes, xylitol, onion garlic, foods dogs cannot eat, foods cats cannot eat, raisins]
+    keywords_cn: [中毒食物, 巧克力, 葡萄, 木糖醇, 洋葱, 不能吃]
+    content: |
+      Common household foods that are toxic to dogs and/or cats include: chocolate (theobromine; dark and baking chocolate worst), grapes and raisins (idiopathic kidney failure in dogs, mechanism unknown), xylitol (in sugar-free gum, peanut butter, some breath mints; causes hypoglycaemia and liver failure in dogs from tiny amounts), onion and garlic (haemolytic anaemia; cooked, raw, or powdered), macadamia nuts (dogs), alcohol, caffeine, raw bread dough, large amounts of dairy. For cats specifically: lilies (Lilium and Hemerocallis species) cause kidney failure from any part of the plant including pollen; even brushing against pollen and grooming can be fatal. Suspected ingestion = call the vet or pet poison hotline immediately; do not wait for symptoms.
+
+  - id: hydration_baseline
+    domain: nutrition
+    keywords_en: [water intake, hydration, drinking water, polyuria, polydipsia, how much water]
+    keywords_cn: [喝水, 饮水量, 多尿, 多饮]
+    content: |
+      Baseline water intake for dogs is approximately 50–60 ml/kg/day; cats around 50 ml/kg/day total water (most coming from food in wet-fed cats). Both are affected by diet (dry food increases drinking 2–3x), temperature, exercise, and lactation. Measuring is easier than people think: fill the bowl to a known level once a day and note refills. Sustained intake above ~100 ml/kg/day is "polydipsia" and warrants a vet workup — common causes are kidney disease, diabetes, Cushing's, hyperthyroidism (cats), or pyometra (intact females). Cats often drink more from a wide ceramic bowl, away from the food bowl, or from a circulating fountain. Multiple water stations in multi-pet households reduce competition.
+
+  - id: pet_dehydration_signs
+    domain: nutrition
+    keywords_en: [dehydration, skin tent, sticky gums, dry nose, dehydrated pet]
+    keywords_cn: [脱水, 皮肤回弹, 牙龈干]
+    content: |
+      Dehydration is hard to assess at home with precision but rough markers help. Skin tent: lift the loose skin between the shoulder blades; in a hydrated pet it snaps back instantly, mild dehydration (5%) makes it return in 1–2 seconds, moderate (8%) in 2–5 seconds with persistent doughy feel. Gums should be slick and pink — sticky or tacky gums indicate dehydration. Capillary refill time (press a finger on the gum, count seconds until pink returns): normal is under 2 seconds. A pet that is lethargic, has sunken eyes, or won't drink despite obvious thirst needs vet evaluation. Subcutaneous fluids at the vet rehydrate most cases quickly; severe cases need IV fluids.
+
+  - id: exercise_requirements
+    domain: nutrition
+    keywords_en: [exercise, daily walk, how much exercise, dog exercise needs, breed exercise]
+    keywords_cn: [运动, 遛狗, 锻炼, 运动量]
+    content: |
+      Dog exercise needs vary dramatically by breed and life stage, not size. Working/sporting breeds (Border collie, Labrador, husky, Vizsla) need 60–90 minutes of structured exercise plus mental work daily. Companion/short-faced breeds (pug, French bulldog, Cavalier KC spaniel) need 20–30 minutes split across the day and tire faster in heat. Puppies should not do forced sustained exercise — the "5-minute per month of age, twice a day" rule is a safe baseline up to about a year. Senior dogs benefit from shorter, more frequent walks. Cats: indoor adults need 30–40 minutes of active play daily, broken into short sessions. Insufficient exercise is a frequent root cause of behaviour complaints.
+
+  # ── Domain: breed_care ─────────────────────────────────────────────────────
+
+  - id: brachycephalic_breed_care
+    domain: breed_care
+    keywords_en: [brachycephalic, flat faced, pug, bulldog, french bulldog, persian cat, BOAS, breathing problems breed]
+    keywords_cn: [短鼻, 扁脸, 巴哥, 斗牛, 法斗, 加菲, 呼吸困难]
+    content: |
+      Brachycephalic (flat-faced) breeds — pug, French and English bulldog, boxer, Boston terrier, Pekingese, Shih Tzu, Persian and Exotic Shorthair cats — have congenital airway abnormalities (Brachycephalic Obstructive Airway Syndrome, BOAS) of varying severity. Snoring, snorting, exercise intolerance, blue tongue under exertion, sleeping with the head up, and regurgitation are common but NOT normal — they indicate BOAS. Heat, humidity, excitement, and obesity all worsen symptoms. Many benefit from corrective surgery (soft palate resection, stenotic nares widening); ask a vet about a BOAS assessment if signs are moderate to severe. These breeds also have higher rates of eye ulceration (proptosis risk) and dystocia (most require C-sections). Air travel cargo is contraindicated.
+
+  - id: giant_breed_growth
+    domain: breed_care
+    keywords_en: [giant breed puppy, large breed growth, panosteitis, growing pains, great dane puppy, mastiff puppy]
+    keywords_cn: [大型犬幼犬, 巨型犬, 成长痛]
+    content: |
+      Giant breeds (Great Dane, Mastiff, Newfoundland, Saint Bernard, Irish wolfhound — adult weight >40 kg) reach full skeletal maturity at 18–24 months, with growth plates closing latest at the proximal humerus and distal radius. Feeding a regular puppy food causes excessive growth velocity and increases the risk of developmental orthopaedic disease (osteochondritis dissecans, hip and elbow dysplasia, hypertrophic osteodystrophy). Use a large/giant-breed puppy formula with controlled calcium (1.0–1.5% on dry matter basis) and avoid free-feeding. Avoid forced repetitive exercise (long jogging, jumping on/off high surfaces) until 18 months. Many panosteitis episodes (shifting-leg lameness with no x-ray findings) resolve on their own by 18 months.
+
+  - id: long_back_breed_care
+    domain: breed_care
+    keywords_en: [dachshund, corgi, basset hound, IVDD, intervertebral disc, long back, back problems breed]
+    keywords_cn: [腊肠, 柯基, 巴塞, 椎间盘, 背伤]
+    content: |
+      Chondrodystrophic breeds (Dachshund, Corgi, French bulldog, Pekingese, Shih Tzu, Beagle, Basset hound) have a much higher genetic risk of intervertebral disc disease (IVDD). Daily-life modifications reduce risk: ramps instead of jumping on/off sofas and beds, full-body chest harness instead of neck collar, no stairs for puppies, weight management — every extra kilogram amplifies spinal load. Signs of an IVDD episode: sudden reluctance to move, hunched back, crying when touched on the spine, wobbly or dragging hind end, loss of bladder control. Loss of motor function or deep pain perception is a surgical emergency — the window for full recovery narrows by the hour.
+
+  - id: persian_himalayan_care
+    domain: breed_care
+    keywords_en: [persian cat, himalayan, flat face cat, eye discharge, tear staining, long hair cat care]
+    keywords_cn: [波斯猫, 加菲, 异短, 眼泪痕, 长毛猫]
+    content: |
+      Persian, Himalayan, and Exotic Shorthair breeds combine brachycephalic anatomy with long coats and shallow eye sockets. Daily care: wipe under the eyes morning and evening to prevent tear staining and skin maceration; daily comb through to prevent mats, especially behind the ears, under the chin, and on the trunk near the tail. Hairballs are more frequent in long-haired breeds — regular brushing reduces ingested hair more than diet alone. Watch for breathing difficulty (BOAS — see brachycephalic_breed_care), corneal ulcers (eye held closed, increased tearing — vet same day), and polycystic kidney disease (familial, screen with ultrasound from age 10 months in breeding lines).
+
+  # ── Domain: care (miscellaneous catch-alls) ─────────────────────────────────
+
+  - id: pet_microchip_basics
+    domain: care
+    keywords_en: [microchip, pet identification, ID, lost pet, register chip]
+    keywords_cn: [芯片, 植入芯片, 宠物身份]
+    content: |
+      Microchips are rice-grain-sized identifiers implanted subcutaneously between the shoulder blades; reading requires a scanner at a vet, shelter, or animal control. The chip carries only a number — that number must be registered with your contact details on the manufacturer's database. The single biggest reason pets are not reunited with owners isn't missing chips but unregistered or out-of-date chips. Update your address and phone after any move. Microchips do not function as GPS — they only return contact info when actively scanned. Pair microchipping with a visible collar and tag for the fastest reunion.
+
+  - id: travel_carrier_acclimation
+    domain: care
+    keywords_en: [pet carrier, cat carrier, dog carrier, getting cat in carrier, travel anxiety, car ride training]
+    keywords_cn: [航空箱, 出门, 装猫, 坐车]
+    content: |
+      Carriers should be a normal piece of household furniture, not something that only appears before vet visits. Leave it out year-round with the door open, soft bedding inside, and a fed-only-in-the-carrier protocol for a week or two. For cats: spray Feliway 15 minutes before the trip; cover the carrier with a familiar cloth. For dogs: short positive car trips (5 minutes to nowhere, with treats) before any vet trip de-couples the car from the vet visit. Never feed a full meal in the 3 hours before a long car ride — motion sickness is much more common on a full stomach. For air travel in cargo, check breed restrictions (banned for most brachycephalic breeds) and crate sizing requirements ahead of time.
+
+  - id: parasite_prevention_baseline
+    domain: care
+    keywords_en: [flea, tick, heartworm, parasite prevention, dewormer, monthly prevention, broad spectrum parasiticide]
+    keywords_cn: [跳蚤, 蜱虫, 心丝虫, 驱虫, 体内外驱虫]
+    content: |
+      Most companion animals in tropical and temperate climates need year-round broad-spectrum parasite prevention. The product class depends on local risk: a flea-tick-heartworm combination (e.g. Bravecto + Heartgard, or a single oral like NexGard Spectra) is widely used. Cats: indoor cats still benefit from prevention — fleas hitchhike on humans and other pets. Heartworm prevention is critical in mosquito-prevalent regions because treating established heartworm disease in dogs is expensive and risky; in cats there is no approved treatment. Intestinal worm prevention is often bundled with the monthly product. Discuss the specific product with your vet based on regional parasites and your pet's lifestyle.
+
+  - id: when_to_call_vet_general
+    domain: care
+    keywords_en: [when to call vet, when to see vet, urgent vs not urgent, pet emergency signs]
+    keywords_cn: [什么时候看医生, 急诊, 何时就医]
+    content: |
+      Always-go-now situations: difficulty breathing, blue or grey gums, collapse, repeated seizures, suspected toxin ingestion, unproductive retching with a distended abdomen (possible GDV in deep-chested dogs), trauma, eye injury, no urine output for 24 h or straining to urinate with no output (especially male cats — life-threatening urinary obstruction), uncontrolled bleeding, body temperature above 40°C. Same-day appointment: 24+ h vomiting/diarrhoea, refusing food >24 h, lameness with severe pain, sudden behaviour change, possible bite wounds, eye held closed. Routine appointment (within a week): mild intermittent symptoms, new lumps that aren't growing fast, dental tartar, weight changes. When in doubt, call the clinic — phone triage is part of what the team does.
