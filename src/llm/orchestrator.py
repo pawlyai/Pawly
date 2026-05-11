@@ -36,6 +36,7 @@ from src.llm.retrievers import (
     match_followups,
     match_red_flags,
 )
+from src.llm.safety_postfilter import apply_safety_postfilter
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
@@ -403,6 +404,19 @@ async def _generate_response_classic(
             )
         except Exception as exc:
             logger.error("RED override re-call failed", error=str(exc))
+
+    # Deterministic safety post-filter (RED triage only). Strips forbidden
+    # home-treatment guidance and ensures urgency phrasing is present.
+    # Runs BEFORE format wrapping so it operates on plain text, not HTML.
+    response_text, postfilter_actions = apply_safety_postfilter(
+        response_text, resolved.final_classification,
+    )
+    if postfilter_actions:
+        logger.info(
+            "safety post-filter applied",
+            actions=postfilter_actions,
+            triage=resolved.final_classification.value,
+        )
 
     # Apply Figma visual format based on resolved triage level
     response_text = apply_response_format(response_text, resolved.final_classification)
