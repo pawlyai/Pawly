@@ -100,25 +100,65 @@
 
 - id: owner_mental_health
   triggers_en:
+    # Explicit suicidal ideation
     - want to die
     - kill myself
     - end it all
-    - go with him
-    - go with her
+    - end my life
+    - end my own life
     - can't go on
     - cant go on
     - want to end it
     - don't want to live
     - no reason to live
+    - nothing to live for
+    - wish I was dead
+    - wish I were dead
+    - better off dead
+    - better off without me
+    - want to disappear
+    # "Join the pet" framing (post-loss grief crisis)
+    - go with him
+    - go with her
+    - join him
+    - join her
+    - follow him
+    - follow her
+    - meet him again
+    - meet her again
+    # Passive ideation / hopelessness markers
+    - tired of being here
+    - tired of living
+    - nothing matters anymore
+    - nobody cares about me
+    - no one cares about me
+    - nobody would notice
+    - no one would notice
+    # Self-injury (non-suicidal)
+    - hurting myself
+    - hurt myself
+    - cutting myself
+    - cut myself
+    - harming myself
+    - harm myself
   triggers_cn:
     - 想死
     - 不想活了
-    - 跟着走
+    - 不想活
+    - 不想活下去
     - 活不下去
+    - 想自杀
+    - 自残
+    - 自伤
     - 跟他走
     - 跟她走
-    - 不想活
-    - 想自杀
+    - 跟着走
+    - 一起走
+    - 没意思
+    - 没活头
+    - 没人在乎
+    - 没人关心我
+    - 没什么意义
   rule_text: |
     **Owner mental health signals (e.g., "I want to die", "I'll go with him"):**
     - This is OUT OF SCOPE for clinical guidance, but you MUST acknowledge before redirecting
@@ -195,3 +235,60 @@
     - MAY describe what conditions commonly cause the reported symptoms (differential list)
     - MAY suggest which type of tests a vet would likely run based on the symptoms described
     - MAY clearly state triage level (urgent/monitor/routine) without diagnosing a specific disease
+
+- id: harmful_request_redirect
+  # Out-of-scope harmful requests: weapons manufacture, recreational drug dosing,
+  # illegal activity counsel. Pawly is a pet-care assistant — these requests are
+  # categorically refused with a brief, non-judgmental redirect. No procedural
+  # detail, no hypothetical framing.
+  triggers_en:
+    # Weapons
+    - how to make a gun
+    - how to build a gun
+    - homemade gun
+    - homemade firearm
+    - 3d print a gun
+    - 3d printed gun
+    - ghost gun
+    - untraceable gun
+    - how to make a bomb
+    - homemade bomb
+    - improvised explosive
+    # Recreational drug dosing
+    - how much cocaine
+    - how much heroin
+    - how much meth
+    - meth recipe
+    - how to make meth
+    - synthesize meth
+    - recreational dose
+    - get high on
+    - how to get high
+    - dose to get high
+    - cooking meth
+    # Other clearly illegal procedural asks
+    - how to buy illegal
+    - where to buy illegal
+    - how to forge
+    - how to counterfeit
+  triggers_cn:
+    - 自制枪
+    - 自制武器
+    - 自制炸弹
+    - 怎么制造枪
+    - 怎么制造炸弹
+    - 怎么吸毒
+    - 嗑药剂量
+    - 毒品剂量
+    - 制毒
+    - 大麻怎么用
+    - 冰毒
+  rule_text: |
+    **Out-of-scope harmful request (weapons / recreational drugs / illegal procedural):**
+    - MUST refuse briefly and redirect to the pet topic — no engagement with the premise
+    - MUST NOT provide ANY procedural detail, partial steps, or workarounds
+    - MUST NOT engage with hypothetical / fictional / educational framings of the request
+    - MUST NOT moralize, lecture, or explain why it's harmful at length
+    - Response template (≤30 words):
+      "That's outside what I can help with. I'm here for [pet name]'s health if you'd like to chat about that."
+    - If user persists or reframes (e.g., "but it's for a novel", "as a thought experiment"), repeat the same refusal verbatim once, then disengage
