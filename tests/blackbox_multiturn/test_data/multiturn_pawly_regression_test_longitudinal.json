@@ -17,42 +17,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."
+        "role": "user",
+        "content": "Luna was overweight at 5.8 kg when Emma first consulted; vet's target weight is 4.5 kg."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Recommended reducing caloric intake by 20% using a high-protein low-carb wet food and eliminating dry kibble entirely."
+        "role": "assistant",
+        "content": "Recommended reducing caloric intake by 20% using a high-protein low-carb wet food and eliminating dry kibble entirely."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Emma mentioned Luna shows loose stools with grain-containing food — suspected grain intolerance."
+        "role": "user",
+        "content": "Emma mentioned Luna shows loose stools with grain-containing food — suspected grain intolerance."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."
+        "role": "assistant",
+        "content": "Suggested grain-free wet food options and scheduled a weight re-check at 4 weeks."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "It's been 4 weeks — Luna now weighs 5.4 kg."
+        "role": "user",
+        "content": "It's been 4 weeks — Luna now weighs 5.4 kg."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Great progress — 0.4 kg lost in 4 weeks is within the safe rate of 0.1–0.2 kg per week. Continue the grain-free wet food plan."
+        "role": "assistant",
+        "content": "Great progress — 0.4 kg lost in 4 weeks is within the safe rate of 0.1–0.2 kg per week. Continue the grain-free wet food plan."
       }
     ],
     "user_turns": [
@@ -88,42 +76,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."
+        "role": "user",
+        "content": "Luna developed hives and facial swelling 6 weeks ago after switching to a chicken-based wet food."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Advised immediate vet visit and switching to a novel-protein elimination diet (rabbit or venison) for 8 weeks minimum."
+        "role": "assistant",
+        "content": "Advised immediate vet visit and switching to a novel-protein elimination diet (rabbit or venison) for 8 weeks minimum."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Vet confirmed it was a food allergy reaction; prescribed antihistamine and started hydrolysed protein food."
+        "role": "user",
+        "content": "Vet confirmed it was a food allergy reaction; prescribed antihistamine and started hydrolysed protein food."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Elimination trial began; instructed Emma to avoid all chicken, chicken meal, or poultry-based ingredients for 8 weeks."
+        "role": "assistant",
+        "content": "Elimination trial began; instructed Emma to avoid all chicken, chicken meal, or poultry-based ingredients for 8 weeks."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna has been fine on the hydrolysed food for 6 weeks now — no symptoms."
+        "role": "user",
+        "content": "Luna has been fine on the hydrolysed food for 6 weeks now — no symptoms."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Excellent recovery. Continue the elimination trial through the full 8 weeks before any reintroduction."
+        "role": "assistant",
+        "content": "Excellent recovery. Continue the elimination trial through the full 8 weeks before any reintroduction."
       }
     ],
     "user_turns": [
@@ -159,48 +135,34 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna was overweight at 5.8 kg; now 4.7 kg after 3 months on grain-free low-calorie wet food."
+        "role": "user",
+        "content": "Luna was overweight at 5.8 kg; now 4.7 kg after 3 months on grain-free low-calorie wet food."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Dietary intervention successful. Recommend maintaining current grain-free diet and annual weight monitoring."
+        "role": "assistant",
+        "content": "Dietary intervention successful. Recommend maintaining current grain-free diet and annual weight monitoring."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna had a chicken-protein allergic reaction 3 months ago; now on hydrolysed protein long-term."
+        "role": "user",
+        "content": "Luna had a chicken-protein allergic reaction 3 months ago; now on hydrolysed protein long-term."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Chicken and poultry proteins confirmed allergens; advised lifelong avoidance."
+        "role": "assistant",
+        "content": "Chicken and poultry proteins confirmed allergens; advised lifelong avoidance."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna shows soft stools when any grain is present in food; grain-free management has resolved GI symptoms."
+        "role": "user",
+        "content": "Luna shows soft stools when any grain is present in food; grain-free management has resolved GI symptoms."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Luna's annual vet check is next week — what should I tell the vet?"
+        "role": "user",
+        "content": "Luna's annual vet check is next week — what should I tell the vet?"
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "I can help you compile a full health history summary for the visit."
+        "role": "assistant",
+        "content": "I can help you compile a full health history summary for the visit."
       }
     ],
     "user_turns": [
@@ -236,42 +198,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."
+        "role": "user",
+        "content": "Rex was diagnosed with bilateral hip dysplasia at age 4; moderately severe on X-ray."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Recommended glucosamine 500 mg + chondroitin 400 mg daily, fish oil 1000 mg, and low-impact exercise (swimming, slow walks)."
+        "role": "assistant",
+        "content": "Recommended glucosamine 500 mg + chondroitin 400 mg daily, fish oil 1000 mg, and low-impact exercise (swimming, slow walks)."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "David noticed Rex hesitated at the stairs 2 months ago; that was the trigger for the vet visit."
+        "role": "user",
+        "content": "David noticed Rex hesitated at the stairs 2 months ago; that was the trigger for the vet visit."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Stair hesitation is a classic early sign of hip pain. Physio/hydrotherapy was also suggested as an adjunct."
+        "role": "assistant",
+        "content": "Stair hesitation is a classic early sign of hip pain. Physio/hydrotherapy was also suggested as an adjunct."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "It's been 2 months — Rex is going up the stairs without hesitation now."
+        "role": "user",
+        "content": "It's been 2 months — Rex is going up the stairs without hesitation now."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Great improvement. Continue the joint supplements and maintain low-impact exercise."
+        "role": "assistant",
+        "content": "Great improvement. Continue the joint supplements and maintain low-impact exercise."
       }
     ],
     "user_turns": [
@@ -307,42 +257,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."
+        "role": "user",
+        "content": "Rex was diagnosed with hip dysplasia; has been on joint supplements for 4 months."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Pain-induced aggression is possible in dogs with chronic orthopaedic pain — especially if unexpectedly touched near the hips."
+        "role": "assistant",
+        "content": "Pain-induced aggression is possible in dogs with chronic orthopaedic pain — especially if unexpectedly touched near the hips."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "David mentioned Rex has snapped once before when patted on the lower back — attributed to hip sensitivity."
+        "role": "user",
+        "content": "David mentioned Rex has snapped once before when patted on the lower back — attributed to hip sensitivity."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Advised teaching family members to approach from the side and avoid patting the lower back/hindquarters."
+        "role": "assistant",
+        "content": "Advised teaching family members to approach from the side and avoid patting the lower back/hindquarters."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "A neighbour's child ran up and hugged Rex from behind — Rex growled loudly."
+        "role": "user",
+        "content": "A neighbour's child ran up and hugged Rex from behind — Rex growled loudly."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "That context matters — being grabbed from behind can startle and hurt a dog with hip pain. Growling was a warning, not random aggression."
+        "role": "assistant",
+        "content": "That context matters — being grabbed from behind can startle and hurt a dog with hip pain. Growling was a warning, not random aggression."
       }
     ],
     "user_turns": [
@@ -378,42 +316,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."
+        "role": "user",
+        "content": "Rex is 5 years old with bilateral hip dysplasia; on glucosamine/chondroitin + fish oil."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Large breeds like German Shepherds are considered senior around 7–8 years; monitoring kidney, cardiac, and joint health becomes more important."
+        "role": "assistant",
+        "content": "Large breeds like German Shepherds are considered senior around 7–8 years; monitoring kidney, cardiac, and joint health becomes more important."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Rex has annual bloodwork done; last results were normal except slightly elevated liver enzymes — vet said to recheck in 6 months."
+        "role": "user",
+        "content": "Rex has annual bloodwork done; last results were normal except slightly elevated liver enzymes — vet said to recheck in 6 months."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Elevated liver enzymes noted — worth monitoring; could be related to long-term NSAID use if any has been prescribed."
+        "role": "assistant",
+        "content": "Elevated liver enzymes noted — worth monitoring; could be related to long-term NSAID use if any has been prescribed."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Rex turns 6 next month — should I start thinking about senior food?"
+        "role": "user",
+        "content": "Rex turns 6 next month — should I start thinking about senior food?"
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Not yet mandatory at 6 for GSDs, but it's a good time to review his nutritional needs given his hip condition."
+        "role": "assistant",
+        "content": "Not yet mandatory at 6 for GSDs, but it's a good time to review his nutritional needs given his hip condition."
       }
     ],
     "user_turns": [
@@ -449,42 +375,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."
+        "role": "user",
+        "content": "Mochi had a UTI confirmed by urinalysis 4 weeks ago; was prescribed amoxicillin for 10 days."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "After completing antibiotics, a follow-up urine culture at 4 weeks is essential to confirm resolution."
+        "role": "assistant",
+        "content": "After completing antibiotics, a follow-up urine culture at 4 weeks is essential to confirm resolution."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mochi drinks very little water and eats only dry kibble — identified as a risk factor for UTI recurrence."
+        "role": "user",
+        "content": "Mochi drinks very little water and eats only dry kibble — identified as a risk factor for UTI recurrence."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."
+        "role": "assistant",
+        "content": "Recommended transitioning to wet food and adding a cat water fountain to increase moisture intake."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mochi finished the antibiotics 3 weeks ago and seems fine now."
+        "role": "user",
+        "content": "Mochi finished the antibiotics 3 weeks ago and seems fine now."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Good — but schedule the 4-week post-treatment urine culture this week if you haven't yet."
+        "role": "assistant",
+        "content": "Good — but schedule the 4-week post-treatment urine culture this week if you haven't yet."
       }
     ],
     "user_turns": [
@@ -520,42 +434,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."
+        "role": "user",
+        "content": "Mochi's UTI 6 weeks ago was likely stress-triggered — she was hiding after a family visit."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Stress is a known trigger for feline lower urinary tract disease (FLUTD). Environmental stability is important for Mochi."
+        "role": "assistant",
+        "content": "Stress is a known trigger for feline lower urinary tract disease (FLUTD). Environmental stability is important for Mochi."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Sarah mentioned Mochi hides under the bed whenever there is any disruption to her routine."
+        "role": "user",
+        "content": "Sarah mentioned Mochi hides under the bed whenever there is any disruption to her routine."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Recommended a safe hiding space and consistent feeding schedule as environmental anchors during stressful periods."
+        "role": "assistant",
+        "content": "Recommended a safe hiding space and consistent feeding schedule as environmental anchors during stressful periods."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "I have a move coming up — Mochi is already acting weird just from seeing packing boxes."
+        "role": "user",
+        "content": "I have a move coming up — Mochi is already acting weird just from seeing packing boxes."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "That's a red flag given her stress history. Let's plan the move carefully."
+        "role": "assistant",
+        "content": "That's a red flag given her stress history. Let's plan the move carefully."
       }
     ],
     "user_turns": [
@@ -591,42 +493,30 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."
+        "role": "user",
+        "content": "Mochi had a professional dental cleaning last year (12 months ago); two teeth were extracted due to resorptive lesions."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Feline tooth resorption (FTR) tends to recur — cats who have had lesions once are at higher risk for further lesions. Annual dental checks are recommended."
+        "role": "assistant",
+        "content": "Feline tooth resorption (FTR) tends to recur — cats who have had lesions once are at higher risk for further lesions. Annual dental checks are recommended."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Sarah mentioned Mochi sometimes drops food when eating or chews only on one side."
+        "role": "user",
+        "content": "Sarah mentioned Mochi sometimes drops food when eating or chews only on one side."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Dropping food or unilateral chewing can indicate oral pain; flagged for the vet to examine at next visit."
+        "role": "assistant",
+        "content": "Dropping food or unilateral chewing can indicate oral pain; flagged for the vet to examine at next visit."
       }
     ],
     "recent_turns": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "It's been a year since Mochi's last dental — she seems fine eating."
+        "role": "user",
+        "content": "It's been a year since Mochi's last dental — she seems fine eating."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Cats often mask oral pain — a dental exam is still warranted given her resorptive lesion history."
+        "role": "assistant",
+        "content": "Cats often mask oral pain — a dental exam is still warranted given her resorptive lesion history."
       }
     ],
     "user_turns": [

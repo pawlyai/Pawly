@@ -17,10 +17,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Karen normally chats with Pawly about her dog Buddy."
+        "role": "user",
+        "content": "Karen normally chats with Pawly about her dog Buddy."
       }
     ],
     "recent_turns": [],
@@ -54,10 +52,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Marcus chats with Pawly about Coco's litter habits."
+        "role": "user",
+        "content": "Marcus chats with Pawly about Coco's litter habits."
       }
     ],
     "recent_turns": [],
@@ -91,10 +87,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Vincent's pet is Rocky, a Beagle."
+        "role": "user",
+        "content": "Vincent's pet is Rocky, a Beagle."
       }
     ],
     "recent_turns": [],
@@ -128,10 +122,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Sophie sometimes asks Pawly about her pet hamster Hamtaro."
+        "role": "user",
+        "content": "Sophie sometimes asks Pawly about her pet hamster Hamtaro."
       }
     ],
     "recent_turns": [],
@@ -165,10 +157,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Helen's cat Whiskers eats grain-free wet food."
+        "role": "user",
+        "content": "Helen's cat Whiskers eats grain-free wet food."
       }
     ],
     "recent_turns": [],
@@ -202,10 +192,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Tina has been chatting with Pawly weekly about Mochi's grooming."
+        "role": "user",
+        "content": "Tina has been chatting with Pawly weekly about Mochi's grooming."
       }
     ],
     "recent_turns": [],
@@ -239,10 +227,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Daniel asks about Bella's training routine."
+        "role": "user",
+        "content": "Daniel asks about Bella's training routine."
       }
     ],
     "recent_turns": [],
@@ -276,10 +262,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Robert chats about Tiger's high-energy behavior."
+        "role": "user",
+        "content": "Robert chats about Tiger's high-energy behavior."
       }
     ],
     "recent_turns": [],
@@ -313,10 +297,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Nadia owns a rabbit named Snowball."
+        "role": "user",
+        "content": "Nadia owns a rabbit named Snowball."
       }
     ],
     "recent_turns": [],
@@ -350,10 +332,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "James chats about Pepper's training."
+        "role": "user",
+        "content": "James chats about Pepper's training."
       }
     ],
     "recent_turns": [],
@@ -387,10 +367,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mr Lim is a senior pet owner."
+        "role": "user",
+        "content": "Mr Lim is a senior pet owner."
       }
     ],
     "recent_turns": [],
@@ -424,16 +402,12 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Anna's dog Lucky passed away last week."
+        "role": "user",
+        "content": "Anna's dog Lucky passed away last week."
       },
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_assistant",
-        "value": "Pawly previously offered grief support resources."
+        "role": "assistant",
+        "content": "Pawly previously offered grief support resources."
       }
     ],
     "recent_turns": [],
@@ -467,10 +441,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Tom mentioned he has been struggling for months."
+        "role": "user",
+        "content": "Tom mentioned he has been struggling for months."
       }
     ],
     "recent_turns": [],
@@ -504,10 +476,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mei has been chatting about her cat Kuro for months."
+        "role": "user",
+        "content": "Mei has been chatting about her cat Kuro for months."
       }
     ],
     "recent_turns": [],
@@ -541,10 +511,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Riya is a teen user."
+        "role": "user",
+        "content": "Riya is a teen user."
       }
     ],
     "recent_turns": [],
@@ -578,10 +546,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Leon owns a Rottweiler named Max."
+        "role": "user",
+        "content": "Leon owns a Rottweiler named Max."
       }
     ],
     "recent_turns": [],
@@ -615,10 +581,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Akira has chatted about cat care."
+        "role": "user",
+        "content": "Akira has chatted about cat care."
       }
     ],
     "recent_turns": [],
@@ -652,10 +616,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Patrick is planning to travel with Bruno."
+        "role": "user",
+        "content": "Patrick is planning to travel with Bruno."
       }
     ],
     "recent_turns": [],
@@ -689,10 +651,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "User has previously asked about Spike."
+        "role": "user",
+        "content": "User has previously asked about Spike."
       }
     ],
     "recent_turns": [],
@@ -726,10 +686,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "User chats casually about Princess."
+        "role": "user",
+        "content": "User chats casually about Princess."
       }
     ],
     "recent_turns": [],

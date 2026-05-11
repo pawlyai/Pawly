@@ -17,10 +17,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Priya has been feeding Mango kibble but is curious about raw after reading a pet blog."
+        "role": "user",
+        "content": "Priya has been feeding Mango kibble but is curious about raw after reading a pet blog."
       }
     ],
     "recent_turns": [],
@@ -57,10 +55,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "James switched to grain-free kibble 6 months ago after a friend's recommendation."
+        "role": "user",
+        "content": "James switched to grain-free kibble 6 months ago after a friend's recommendation."
       }
     ],
     "recent_turns": [],
@@ -97,10 +93,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Aisha is budget-conscious and believes home cooking is healthier."
+        "role": "user",
+        "content": "Aisha is budget-conscious and believes home cooking is healthier."
       }
     ],
     "recent_turns": [],
@@ -137,10 +131,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Noodle has been eating the same adult kibble for 3 years; recently lost 0.4 kg over 2 months."
+        "role": "user",
+        "content": "Noodle has been eating the same adult kibble for 3 years; recently lost 0.4 kg over 2 months."
       }
     ],
     "recent_turns": [],
@@ -177,10 +169,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mei follows a vegan lifestyle and wants her pet's diet to align with her values."
+        "role": "user",
+        "content": "Mei follows a vegan lifestyle and wants her pet's diet to align with her values."
       }
     ],
     "recent_turns": [],
@@ -217,10 +207,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Ravi gives Charlie treats during training and as rewards — approximately 10 treats per day."
+        "role": "user",
+        "content": "Ravi gives Charlie treats during training and as rewards — approximately 10 treats per day."
       }
     ],
     "recent_turns": [],
@@ -257,10 +245,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Sophie's family recently switched from dry to wet food because Boba drinks more water now."
+        "role": "user",
+        "content": "Sophie's family recently switched from dry to wet food because Boba drinks more water now."
       }
     ],
     "recent_turns": [],
@@ -297,10 +283,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Thomas competes in agility trials with Rocky 3 times per week."
+        "role": "user",
+        "content": "Thomas competes in agility trials with Rocky 3 times per week."
       }
     ],
     "recent_turns": [],
@@ -337,10 +321,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Marshmallow was diagnosed with stage 2 CKD at the last vet visit; currently eating regular adult food."
+        "role": "user",
+        "content": "Marshmallow was diagnosed with stage 2 CKD at the last vet visit; currently eating regular adult food."
       }
     ],
     "recent_turns": [],
@@ -377,10 +359,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Cookie has had recurring ear infections for 8 months despite treatment; vet suspects environmental or food allergy."
+        "role": "user",
+        "content": "Cookie has had recurring ear infections for 8 months despite treatment; vet suspects environmental or food allergy."
       }
     ],
     "recent_turns": [],
@@ -417,10 +397,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Oreo goes to the dog park twice a week and Anna bathes him roughly once a month."
+        "role": "user",
+        "content": "Oreo goes to the dog park twice a week and Anna bathes him roughly once a month."
       }
     ],
     "recent_turns": [],
@@ -457,10 +435,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Ben has never trimmed Simba's nails; Simba scratched the sofa last week."
+        "role": "user",
+        "content": "Ben has never trimmed Simba's nails; Simba scratched the sofa last week."
       }
     ],
     "recent_turns": [],
@@ -497,10 +473,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Grace adopted Luna 3 months ago; Luna has never had her teeth brushed."
+        "role": "user",
+        "content": "Grace adopted Luna 3 months ago; Luna has never had her teeth brushed."
       }
     ],
     "recent_turns": [],
@@ -537,10 +511,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Archie blows coat twice a year; Tom spends 30 minutes vacuuming daily during shedding season."
+        "role": "user",
+        "content": "Archie blows coat twice a year; Tom spends 30 minutes vacuuming daily during shedding season."
       }
     ],
     "recent_turns": [],
@@ -577,10 +549,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Clara adopted Mochi 6 months ago; Mochi had one ear infection treated 2 months ago."
+        "role": "user",
+        "content": "Clara adopted Mochi 6 months ago; Mochi had one ear infection treated 2 months ago."
       }
     ],
     "recent_turns": [],
@@ -617,10 +587,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Yusuf lives in Singapore and walks Ziggy at noon on weekdays due to his work schedule."
+        "role": "user",
+        "content": "Yusuf lives in Singapore and walks Ziggy at noon on weekdays due to his work schedule."
       }
     ],
     "recent_turns": [],
@@ -657,10 +625,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Nina just adopted Cloud and has never owned a cat before."
+        "role": "user",
+        "content": "Nina just adopted Cloud and has never owned a cat before."
       }
     ],
     "recent_turns": [],
@@ -697,10 +663,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Duke used to run for an hour daily but lately he stops after 20 minutes and pants heavily."
+        "role": "user",
+        "content": "Duke used to run for an hour daily but lately he stops after 20 minutes and pants heavily."
       }
     ],
     "recent_turns": [],
@@ -737,10 +701,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Irene has tried scolding Pepper for barking but it makes the behavior worse."
+        "role": "user",
+        "content": "Irene has tried scolding Pepper for barking but it makes the behavior worse."
       }
     ],
     "recent_turns": [],
@@ -777,10 +739,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Mike injured his shoulder last month due to Rex's pulling; currently using a collar."
+        "role": "user",
+        "content": "Mike injured his shoulder last month due to Rex's pulling; currently using a collar."
       }
     ],
     "recent_turns": [],
@@ -817,10 +777,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago."
+        "role": "user",
+        "content": "Coco has been left alone 8 hours daily since Amy returned to the office 3 months ago."
       }
     ],
     "recent_turns": [],
@@ -857,10 +815,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Delia moved apartments 3 weeks ago; Whiskers started missing the litter box last week."
+        "role": "user",
+        "content": "Delia moved apartments 3 weeks ago; Whiskers started missing the litter box last week."
       }
     ],
     "recent_turns": [],
@@ -897,10 +853,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Kevin's elderly mother visits weekly and is afraid of being knocked down by Buddy."
+        "role": "user",
+        "content": "Kevin's elderly mother visits weekly and is afraid of being knocked down by Buddy."
       }
     ],
     "recent_turns": [],
@@ -937,10 +891,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Ginger was rescued 1 year ago; she growls at Rachel's husband when he approaches her food bowl."
+        "role": "user",
+        "content": "Ginger was rescued 1 year ago; she growls at Rachel's husband when he approaches her food bowl."
       }
     ],
     "recent_turns": [],
@@ -977,10 +929,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Andy bought a carpeted cat tree but Mocha ignores it and still scratches the sofa."
+        "role": "user",
+        "content": "Andy bought a carpeted cat tree but Mocha ignores it and still scratches the sofa."
       }
     ],
     "recent_turns": [],
@@ -1017,10 +967,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "A 10-week-old Beagle puppy arrived 3 days ago; Snow now hides and hisses."
+        "role": "user",
+        "content": "A 10-week-old Beagle puppy arrived 3 days ago; Snow now hides and hisses."
       }
     ],
     "recent_turns": [],
@@ -1057,10 +1005,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Liam just adopted Peanut and has never owned a dog before."
+        "role": "user",
+        "content": "Liam just adopted Peanut and has never owned a dog before."
       }
     ],
     "recent_turns": [],
@@ -1097,10 +1043,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Diana noticed Felix scratching and found live fleas; she has a carpeted apartment."
+        "role": "user",
+        "content": "Diana noticed Felix scratching and found live fleas; she has a carpeted apartment."
       }
     ],
     "recent_turns": [],
@@ -1137,10 +1081,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Bella goes to the dog park 3 times per week; Sam last dewormed her 8 months ago."
+        "role": "user",
+        "content": "Bella goes to the dog park 3 times per week; Sam last dewormed her 8 months ago."
       }
     ],
     "recent_turns": [],
@@ -1177,10 +1119,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Natalie's previous dog was spayed at 6 months without issue, but she heard newer research recommends waiting."
+        "role": "user",
+        "content": "Natalie's previous dog was spayed at 6 months without issue, but she heard newer research recommends waiting."
       }
     ],
     "recent_turns": [],
@@ -1217,10 +1157,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Paul found a tick on Milo after a hike in a forested area; Milo is not on tick prevention."
+        "role": "user",
+        "content": "Paul found a tick on Milo after a hike in a forested area; Milo is not on tick prevention."
       }
     ],
     "recent_turns": [],
@@ -1257,10 +1195,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Daisy has never had a professional dental cleaning; Zoe brushes her teeth once a week."
+        "role": "user",
+        "content": "Daisy has never had a professional dental cleaning; Zoe brushes her teeth once a week."
       }
     ],
     "recent_turns": [],
@@ -1297,10 +1233,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Fred is getting Titan his first vet visit next week and wants to know what to expect."
+        "role": "user",
+        "content": "Fred is getting Titan his first vet visit next week and wants to know what to expect."
       }
     ],
     "recent_turns": [],
@@ -1337,10 +1271,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat."
+        "role": "user",
+        "content": "Princess weighs 6.2 kg; ideal weight is 4.5 kg according to the vet; she is an indoor cat."
       }
     ],
     "recent_turns": [],
@@ -1377,10 +1309,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Victor noticed Echo has started spraying in the apartment; vet recommended neutering."
+        "role": "user",
+        "content": "Victor noticed Echo has started spraying in the apartment; vet recommended neutering."
       }
     ],
     "recent_turns": [],
@@ -1417,10 +1347,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Claire recently moved to Singapore from a non-endemic country and is unsure if heartworm prevention is needed."
+        "role": "user",
+        "content": "Claire recently moved to Singapore from a non-endemic country and is unsure if heartworm prevention is needed."
       }
     ],
     "recent_turns": [],
@@ -1457,10 +1385,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Matt just brought Spark home; he works from home and has time to focus on socialization."
+        "role": "user",
+        "content": "Matt just brought Spark home; he works from home and has time to focus on socialization."
       }
     ],
     "recent_turns": [],
@@ -1497,10 +1423,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Ellen has had Mittens since she was a kitten; Mittens is indoor-only and eats adult kibble."
+        "role": "user",
+        "content": "Ellen has had Mittens since she was a kitten; Mittens is indoor-only and eats adult kibble."
       }
     ],
     "recent_turns": [],
@@ -1537,10 +1461,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Bean graduated puppy class at 4 months; now he ignores recall commands and chews furniture."
+        "role": "user",
+        "content": "Bean graduated puppy class at 4 months; now he ignores recall commands and chews furniture."
       }
     ],
     "recent_turns": [],
@@ -1577,10 +1499,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Cherry is indoor-outdoor and may have encountered a male cat; Petra noticed nipple enlargement."
+        "role": "user",
+        "content": "Cherry is indoor-outdoor and may have encountered a male cat; Petra noticed nipple enlargement."
       }
     ],
     "recent_turns": [],
@@ -1617,10 +1537,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Robin adopted Basil from a shelter; shelter was feeding him kitten wet food."
+        "role": "user",
+        "content": "Robin adopted Basil from a shelter; shelter was feeding him kitten wet food."
       }
     ],
     "recent_turns": [],
@@ -1657,10 +1575,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Daffy has been incontinent at night for the past 2 weeks; she seems otherwise bright and alert."
+        "role": "user",
+        "content": "Daffy has been incontinent at night for the past 2 weeks; she seems otherwise bright and alert."
       }
     ],
     "recent_turns": [],
@@ -1697,10 +1613,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Carl's furniture and shoes have bite marks; Tigger seems more restless at night."
+        "role": "user",
+        "content": "Carl's furniture and shoes have bite marks; Tigger seems more restless at night."
       }
     ],
     "recent_turns": [],
@@ -1737,10 +1651,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Nova just came home from the clinic 2 hours ago; she is groggy from anaesthesia."
+        "role": "user",
+        "content": "Nova just came home from the clinic 2 hours ago; she is groggy from anaesthesia."
       }
     ],
     "recent_turns": [],
@@ -1777,10 +1689,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days."
+        "role": "user",
+        "content": "Alice found the vinegar advice on a popular pet blog; Coco has been shaking her head for 2 days."
       }
     ],
     "recent_turns": [],
@@ -1817,10 +1727,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Marcus follows a wellness Instagram account that promotes coconut oil for dogs daily."
+        "role": "user",
+        "content": "Marcus follows a wellness Instagram account that promotes coconut oil for dogs daily."
       }
     ],
     "recent_turns": [],
@@ -1857,10 +1765,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Ivy found the article on a natural-remedies website; Nugget has a small scabby patch on his neck."
+        "role": "user",
+        "content": "Ivy found the article on a natural-remedies website; Nugget has a small scabby patch on his neck."
       }
     ],
     "recent_turns": [],
@@ -1897,10 +1803,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Shadow has had soft stools for 3 days after a change in kibble brand."
+        "role": "user",
+        "content": "Shadow has had soft stools for 3 days after a change in kibble brand."
       }
     ],
     "recent_turns": [],
@@ -1937,10 +1841,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Pumpkin was diagnosed with diabetes last week; Fiona is worried about giving daily injections."
+        "role": "user",
+        "content": "Pumpkin was diagnosed with diabetes last week; Fiona is worried about giving daily injections."
       }
     ],
     "recent_turns": [],
@@ -1977,10 +1879,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Wei is considering adopting a dog for the first time and lives in an HDB flat."
+        "role": "user",
+        "content": "Wei is considering adopting a dog for the first time and lives in an HDB flat."
       }
     ],
     "recent_turns": [],
@@ -2017,10 +1917,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Hui is a student on a tight budget; Mimi is a stray she adopted informally."
+        "role": "user",
+        "content": "Hui is a student on a tight budget; Mimi is a stray she adopted informally."
       }
     ],
     "recent_turns": [],
@@ -2057,10 +1955,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Jun is relocating in 3 months; Astro has current rabies vaccination and microchip."
+        "role": "user",
+        "content": "Jun is relocating in 3 months; Astro has current rabies vaccination and microchip."
       }
     ],
     "recent_turns": [],
@@ -2097,10 +1993,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Siti walks Brownie at lunchtime due to her schedule; Singapore temperature is typically 30–34°C midday."
+        "role": "user",
+        "content": "Siti walks Brownie at lunchtime due to her schedule; Singapore temperature is typically 30–34°C midday."
       }
     ],
     "recent_turns": [],
@@ -2137,10 +2031,8 @@
     },
     "memories": [
       {
-        "memory_type": "snapshot",
-        "memory_term": "long",
-        "field": "prior_session_user",
-        "value": "Dave witnessed his neighbour kicking a stray cat and wants to report it."
+        "role": "user",
+        "content": "Dave witnessed his neighbour kicking a stray cat and wants to report it."
       }
     ],
     "recent_turns": [],
