@@ -422,3 +422,40 @@ class Reminder(Base):
     is_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+# ---------------------------------------------------------------------------
+# General KB (hybrid keyword + vector retrieval). Populated from
+# src/llm/prompts/general_kb.yaml via scripts/kb_ingest.py.
+# ---------------------------------------------------------------------------
+
+try:
+    from pgvector.sqlalchemy import Vector  # type: ignore[import-not-found]
+    _VECTOR_AVAILABLE = True
+except ImportError:  # pragma: no cover — runtime should have pgvector installed
+    _VECTOR_AVAILABLE = False
+
+
+class GeneralKbEntry(Base):
+    __tablename__ = "general_kb_entry"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    domain: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    keywords_en: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, server_default="{}"
+    )
+    keywords_cn: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, server_default="{}"
+    )
+    citations: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False, default=list, server_default="{}"
+    )
+    if _VECTOR_AVAILABLE:
+        embedding: Mapped[Optional[list[float]]] = mapped_column(
+            Vector(768), nullable=True
+        )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

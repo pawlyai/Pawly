@@ -207,6 +207,7 @@ def build_system_prompt(
     pending_confirmation: str = "",
     retrieved_followups: str = "",
     special_scenarios: str = "",
+    retrieved_general_knowledge: str = "",
 ) -> str:
     """Assemble the full DeepSeek V4 v0 system prompt for a given turn.
 
@@ -240,6 +241,8 @@ def build_system_prompt(
         parts.append(_xml("retrieved_followups", retrieved_followups.strip()))
     if special_scenarios.strip():
         parts.append(_xml("special_scenarios", special_scenarios.strip()))
+    if retrieved_general_knowledge.strip():
+        parts.append(_xml("retrieved_general_knowledge", retrieved_general_knowledge.strip()))
 
     parts += [
         _xml("pet_behavior_consultation", sections["pet_behavior_consultation"]),

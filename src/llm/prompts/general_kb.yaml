@@ -1,0 +1,32 @@
+# General pet-care knowledge base.
+#
+# Populated by `python scripts/kb_ingest.py` which:
+#   1. Reads this file
+#   2. Calls gemini text-embedding-004 on the `content` field
+#   3. Upserts each entry into the general_kb_entry table
+#
+# At retrieval time (src/memory/kb_retrieval.py) we do a 3-branch hybrid:
+#   - vector cosine top-k over `content` embedding
+#   - postgres FTS top-k over `content`
+#   - exact array match over keywords_en / keywords_cn
+# Results are fused via RRF and injected into <retrieved_general_knowledge>.
+#
+# Schema per entry:
+#   - id           snake_case slug, MUST be unique (used as primary key)
+#   - domain       one of: care, behavior, stage, region, nutrition, breed_care
+#   - content      50-150 word factual paragraph, evergreen, no diagnosis
+#   - keywords_en  list of phrases / words that trigger the exact-keyword branch
+#   - keywords_cn  list of Chinese trigger phrases (matched as substring)
+#   - citations    optional source list (e.g. AAFP guideline, AVSAB position)
+#
+# Coverage targets the gap topics from eval p1_general where the keyword-only
+# followups.yaml has no coverage: indoor enrichment, separation anxiety, life-
+# stage milestones, breed care, region (Singapore HDB / climate), basic nutrition.
+#
+# DO NOT include symptom-triage or emergency content — those live in
+# followups.yaml + special_rules.yaml and are routed through the SOP.
+#
+# This file is intentionally empty pending content review. Add entries below
+# the `entries:` key as a YAML list.
+
+entries: []

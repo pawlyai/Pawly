@@ -37,6 +37,7 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.llm.safety_postfilter import apply_safety_postfilter
+from src.memory.kb_retrieval import format_general_kb, retrieve_general_kb
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.rules_engine import (
@@ -347,6 +348,13 @@ async def _generate_response_classic(
 
     followups = match_followups(user_message)
     red_flags = match_red_flags(user_message)
+    # General-knowledge KB (hybrid keyword + vector). Empty result when the
+    # KB has no rows or no branch finds a hit — caller drops the tag entirely.
+    try:
+        general_hits = await retrieve_general_kb(user_message)
+    except Exception as exc:
+        logger.warning("retrieve_general_kb failed, continuing without KB", error=str(exc))
+        general_hits = []
 
     system = build_system_prompt(
         user=user,
@@ -357,6 +365,7 @@ async def _generate_response_classic(
         marketing_context=(session or {}).get("marketing_context"),
         retrieved_followups=format_followups(followups),
         special_scenarios=format_special_rules(red_flags),
+        retrieved_general_knowledge=format_general_kb(general_hits),
     )
 
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────

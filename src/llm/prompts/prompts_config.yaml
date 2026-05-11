@@ -171,6 +171,13 @@ knowledge_safety: |
   Use established veterinary knowledge only. Avoid folk remedies or unverified claims.
   When uncertain, say so and recommend the vet — do not invent.
 
+  If <retrieved_general_knowledge> appears earlier in this prompt and is non-empty,
+  treat each `[entry_id] ...` block as a trusted reference point for general
+  husbandry / behaviour / life-stage / region-specific questions. Use the
+  content to inform your answer; do not quote it verbatim. If the retrieved
+  entries don't apply to the user's question, ignore them and answer from
+  your own knowledge.
+
 final_reminders: |
   Critical do/don'ts (重复一遍, DeepSeek 容易丢中段指令):
   - Don't flag during clarification turns

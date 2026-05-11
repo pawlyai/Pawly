@@ -17,6 +17,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29.0",
     "alembic>=1.13.0",
+    "pgvector>=0.2.5",
     # Redis
     "redis[asyncio]>=5.0.0",
     # Background jobs
