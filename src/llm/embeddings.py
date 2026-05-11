@@ -1,9 +1,16 @@
 """
-Gemini text-embedding-004 wrapper.
+Gemini gemini-embedding-001 wrapper (768-dim).
 
 Used for ingesting the general_kb_entry table and embedding user queries
 at retrieval time. Supports both the modern `google-genai` SDK and the
 legacy `google.generativeai` package — same pattern as src/llm/client.py.
+
+Model notes:
+    `gemini-embedding-001` is the current GA embedding model. It supports
+    Matryoshka Representation Learning, so we request 768-dim output
+    explicitly (otherwise it returns 3072). The schema in
+    alembic/versions/0003_add_general_kb.py uses vector(768) — change
+    both together if you want higher dim.
 
 Public API:
     async embed_document(text: str) -> list[float]      # for indexing
@@ -19,7 +26,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-EMBEDDING_MODEL = "text-embedding-004"
+EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_DIM = 768
 
 
@@ -71,9 +78,12 @@ class _EmbeddingClient:
     def _embed_genai(self, text: str, task_type: str) -> list[float]:
         from google.genai import types
         response = self._client.models.embed_content(  # type: ignore[union-attr]
-            model=f"models/{EMBEDDING_MODEL}",
+            model=EMBEDDING_MODEL,
             contents=text,
-            config=types.EmbedContentConfig(task_type=task_type),
+            config=types.EmbedContentConfig(
+                task_type=task_type,
+                output_dimensionality=EMBEDDING_DIM,
+            ),
         )
         # The new SDK returns ContentEmbedding objects with `.values`.
         emb = response.embeddings[0]
@@ -85,6 +95,7 @@ class _EmbeddingClient:
             model=f"models/{EMBEDDING_MODEL}",
             content=text,
             task_type=task_type,
+            output_dimensionality=EMBEDDING_DIM,
         )
         # Legacy SDK returns a dict with "embedding": list[float]
         emb = response["embedding"]
