@@ -36,6 +36,7 @@ SECTION_KEYS: tuple[str, ...] = (
     "pet_behavior_consultation",
     "followup_reminder_support",
     "knowledge_safety",
+    "special_population_modifiers",
     "final_reminders",
 )
 
@@ -245,6 +246,7 @@ def build_system_prompt(
         _xml("pet_behavior_consultation", sections["pet_behavior_consultation"]),
         _xml("followup_reminder_support", sections["followup_reminder_support"]),
         _xml("knowledge_safety", sections["knowledge_safety"]),
+        _xml("special_population_modifiers", sections["special_population_modifiers"]),
         _xml("final_reminders", sections["final_reminders"]),
     ]
 

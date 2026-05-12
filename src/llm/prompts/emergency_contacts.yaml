@@ -1,0 +1,47 @@
+# Emergency contacts — Appendix A of SOP v2.0
+# Used by orchestrator to inject region-appropriate contacts into urgent responses.
+# Add new regions by appending a new entry; do NOT remove existing entries.
+
+- region: singapore
+  default: true
+  contacts:
+    - name: "Mt Pleasant Mandai 24h"
+      type: vet_er
+      phone: "+65 6262-1900"
+    - name: "Beecroft Animal Specialist & Emergency Hospital"
+      type: vet_er
+      phone: "+65 6262-9919"
+    - name: "AVS Animal Response Centre"
+      type: animal_welfare
+      phone: "1800-476-1600"
+      notes: "24/7 — for animal welfare concerns and stray animal reports"
+
+- region: north_america
+  contacts:
+    - name: "ASPCA Animal Poison Control"
+      type: poison_control
+      phone: "+1-888-426-4435"
+      notes: "24/7; consultation fee applies"
+    - name: "Pet Poison Helpline"
+      type: poison_control
+      phone: "+1-855-764-7661"
+      notes: "24/7"
+
+- region: uk
+  contacts:
+    - name: "Animal PoisonLine"
+      type: poison_control
+      phone: "+44 1202 509000"
+
+- region: australia
+  contacts:
+    - name: "Animal Poisons Centre"
+      type: poison_control
+      phone: "1300 869 738"
+      notes: "24/7"
+
+- region: hong_kong
+  contacts:
+    - name: "SPCA HK 24h Emergency"
+      type: vet_er
+      phone: "+852 2711-1000"
