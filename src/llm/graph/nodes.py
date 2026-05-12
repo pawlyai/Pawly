@@ -22,6 +22,7 @@ from src.llm.prompts.formatters import apply_response_format, prepend_safety_ban
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
+    build_retrieval_context,
     format_followups,
     format_special_rules,
     match_followups,
@@ -127,8 +128,10 @@ async def load_context_node(state: PawlyState) -> dict[str, Any]:
         pending=ctx.get("pending_confirmations", []),
     )
 
-    followups = match_followups(user_message)
-    red_flags = match_red_flags(user_message)
+    recent_turns_for_retrieval: list[dict] = ctx.get("recent_turns", [])
+    retrieval_ctx = build_retrieval_context(recent_turns_for_retrieval, user_message)
+    followups = match_followups(retrieval_ctx)
+    red_flags = match_red_flags(retrieval_ctx)
 
     system_prompt = build_system_prompt(
         user=user,
