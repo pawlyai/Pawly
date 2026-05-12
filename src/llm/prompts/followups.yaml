@@ -25,6 +25,16 @@
     - ate xylitol
     - ate chocolate
     - ate grapes
+    - ate macadamia
+    - macadamia nut
+    - ate avocado
+    - ate raw dough
+    - ate yeast dough
+    - ate oleander
+    - ate cycad
+    - sago palm
+    - slug bait
+    - snail bait
   keywords_cn:
     - 误食
     - 咬了
@@ -38,6 +48,13 @@
     - 喝了
     - 啃了
     - 吃了东西
+    - 夏威夷果
+    - 牛油果
+    - 生面团
+    - 发酵面团
+    - 夹竹桃
+    - 苏铁
+    - 蜗牛药
   questions:
     - "What specifically did they eat or lick? Be as precise as possible — product name or ingredient if known."
     - "Roughly how much? (Number of pieces, grams/ml, or portion size — even an estimate helps.)"
@@ -45,7 +62,7 @@
     - "Approximately how long ago did this happen?"
     - "Any symptoms right now: vomiting, drooling more than usual, stumbling, seizure, or extremely agitated/extremely sleepy?"
     - "Can you find any leftover substance or packaging? A photo will help the vet enormously."
-  escalation_hint: "→ ER if: known high-toxicity item (xylitol, grapes/raisins, lily [cats], onion/garlic concentrate, ibuprofen, acetaminophen, antidepressants, rodenticides, antifreeze, pyrethrin flea products on cats) OR any symptom now regardless of amount OR unknown ingestion + pet already showing signs."
+  escalation_hint: "→ ER if: zero-dose toxins (any amount = ER): xylitol, grapes/raisins, lily [cats], onion/garlic concentrate, antifreeze, pyrethrin flea products on cats, ibuprofen/acetaminophen/antidepressants, oleander, cycad/sago palm, slug/snail bait (metaldehyde). Thresholds: dark chocolate (>70%) >1 g/kg body weight → ER; milk chocolate >5 g/kg → ER. Salt >2 g/kg → ER (hypernatraemia/cerebral oedema). Macadamia nuts → treat as urgent. OR any symptom now regardless of amount. OR unknown ingestion + pet already showing signs. SG 24h ER: Mt Pleasant Mandai +65 6262-1900."
 
 - id: medication_ingestion
   system: toxicology
@@ -73,7 +90,7 @@
     - "How long ago did this happen?"
     - "Any symptoms right now: trembling, seizure, excessive drooling, agitation, unusual sleepiness, or vomiting?"
     - "Can you photograph the medication bottle or packaging to bring to the vet?"
-  escalation_hint: "→ ER if: any dose of acetaminophen (cats especially fatal), antidepressants, ADHD meds, vitamin D, chemo drugs, insulin, or pyrethrin flea product on a cat OR NSAID above therapeutic dose OR unknown drug + any symptom OR wrong flea product species mismatch."
+  escalation_hint: "→ ER if: any dose of acetaminophen/paracetamol (cats: 1 tablet lethal — Heinz body anaemia + liver failure), antidepressants, ADHD meds, vitamin D3/cholecalciferol (latency 24–72 h; hypercalcaemia → renal failure), chemo drugs including topical 5-FU cream/Efudex (lethal if licked), insulin, or pyrethrin/permethrin flea product on a cat (first-aid: rinse with warm water + dish soap within 30 min, then ER) OR ibuprofen (>50 mg/kg GI symptoms; >100 mg/kg kidney failure) OR unknown drug + any symptom OR wrong flea product species mismatch."
 
 - id: unknown_ingestion
   system: toxicology
@@ -125,7 +142,7 @@
     - "How long ago?"
     - "Is there any string/thread visible hanging from the mouth or protruding from the anus? (Do NOT pull it.)"
     - "Weight, breed, and age?"
-  escalation_hint: "→ ER if: breathing difficulty or blue tongue OR linear foreign body (string/thread) visible OR sharp bone/glass/needle/metal OR large object OR repeated retching + drooling + can't keep water down (esophageal obstruction) OR belly distended + persistent vomiting (intestinal obstruction sign)."
+  escalation_hint: "→ ER if: breathing difficulty or blue tongue OR linear foreign body (string/thread) visible — never pull it OR sharp bone/glass/needle/metal (keep fasted; vomiting could cause perforation) OR large object OR repeated retching + drooling + can't keep water down (esophageal obstruction) OR belly distended + persistent vomiting (intestinal obstruction sign). For smooth small objects only with no symptoms: soft wet food + pumpkin puree may aid passage; watch for vomiting, appetite loss, or belly distension over 24 h — any of these → ER."
 
 - id: post_home_treatment_ingestion
   system: toxicology
@@ -180,7 +197,7 @@
     - "Any of these too: diarrhea, not eating, lethargic, unproductive retching (heaving with nothing coming up), or a visibly bloated belly?"
     - "In the past 24 h, did they get into anything — garbage, new food, medication, chemicals, or plants?"
     - "Weight, age, and breed? And gum color — pink, white/pale, blue/purple, or yellow?"
-  escalation_hint: "→ ER if: blood/coffee-grounds in vomit OR unproductive retching + bloated belly (GDV) OR 3+ episodes/2 h OR gums pale/purple/yellow OR puppy under 6 mo + lethargic OR suspected ingestion."
+  escalation_hint: "→ ER if: blood/coffee-grounds in vomit OR unproductive retching + bloated belly (GDV) OR 3+ episodes/2 h OR gums pale/purple/yellow OR any pet under 6 months + lethargy OR senior/chronically ill pet (especially diabetic) + vomiting + not eating OR suspected ingestion."
 
 - id: chronic_vomiting
   system: gi
@@ -1006,8 +1023,8 @@
     - "How long ago, and where on the body?"
     - "Swelling size and location — is the face swelling?"
     - "Any systemic signs: breathing difficulty, collapse, vomiting, diarrhea, or extreme agitation?"
-    - "Geographic region — regional snake species matter enormously."
-  escalation_hint: "→ ER if: any known venomous snake — do NOT cut/suck/tourniquet, keep pet still OR multiple bee stings OR facial swelling + breathing difficulty (anaphylactic shock) OR unknown insect + systemic symptoms."
+    - "Geographic region — regional snake species matter. (If in Singapore: King Cobra, Spitting Cobra, Blue Malayan Coral Snake are venomous; Reticulated Python is non-venomous but a constriction risk.)"
+  escalation_hint: "→ ER if: any known venomous snake — do NOT cut/suck/tourniquet/apply cold; keep pet still (movement spreads venom) OR multiple bee stings OR facial swelling + breathing difficulty (anaphylactic shock) OR unknown insect + systemic symptoms. Singapore-specific: Spitting Cobra can spray venom into eyes — rinse immediately with water then go to ER. Antivenom availability in SG is limited — go to the nearest 24h vet ER without delay."
 
 # ── H. Skin/Eyes/Ears/Mouth ───────────────────────────────────────────────────
 
@@ -1029,12 +1046,12 @@
     - 脸肿
     - 全身起包
   questions:
+    - "SHORT-CIRCUIT: Is their breathing normal right now — or fast, labored, or noisy? Any drooling, pale gums, or collapse? (If yes to any → ER immediately.)"
     - "How quickly did this develop — minutes or hours?"
     - "Location and appearance: facial swelling, full-body hives, localized redness, or pustules?"
-    - "Any difficulty breathing, drooling, or collapse (anaphylactic shock)?"
     - "Likely trigger: vaccine, new food, insect bite, plant, or medication?"
     - "Breed and age?"
-  escalation_hint: "→ ER if: facial swelling + breathing difficulty/drooling/collapse (anaphylaxis — can be fatal within minutes) OR acute progression expanding within 1 h OR cellulitis + fever."
+  escalation_hint: "→ ER if: facial swelling + breathing difficulty/drooling/collapse (anaphylaxis — can be fatal within minutes) OR acute progression expanding within 1 h OR cellulitis + fever. Always check breathing in any acute swelling/allergy case — anaphylaxis can escalate quickly from skin signs alone."
 
 - id: chronic_skin
   system: skin
@@ -1136,7 +1153,7 @@
     - "Location and size — compare to a coin if possible."
     - "Painful, warm, or broken open/oozing? Intact unspayed female + mammary lump?"
     - "Breed, age, and neutered/spayed status?"
-  escalation_hint: "→ ER/urgent within 48 h if: rapidly growing (<1 month doubled) OR hard and fixed OR open/bleeding/pus OR 5+ new growths OR intact female + mammary lump (50% malignancy rate) OR lump + weight loss/lethargy."
+  escalation_hint: "→ ER/urgent within 48 h if: rapidly growing (<1 month doubled) OR hard and fixed OR open/bleeding/pus OR 5+ new growths OR intact female + mammary lump (50% malignancy rate) OR lump + weight loss/lethargy. For any intact female regardless of today's chief complaint: recommend monthly mammary self-check (axillary to inguinal, all 4 pairs; any new nodule → photograph + measure + consult immediately)."
 
 - id: hair_loss
   system: skin
