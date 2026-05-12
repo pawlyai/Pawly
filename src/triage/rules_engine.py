@@ -734,7 +734,7 @@ TOXIN_TRIGGER_KEYWORDS: list[str] = [
     "poisoned", "toxic to dogs", "toxic to cats",
     # Appendix B additions — high-risk substances missing from original list
     "ate macadamia", "macadamia nut",
-    "ate avocado", "swallowed avocado",
+    "avocado", "ate avocado", "swallowed avocado", "stole avocado", "given avocado", "giving avocado", "been giving avocado",
     "ate raw dough", "ate yeast dough", "bread dough", "raw bread",
     "ate oleander", "chewed oleander",
     "ate cycad", "sago palm", "cycad palm",

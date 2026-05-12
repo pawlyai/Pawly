@@ -178,6 +178,8 @@
     # Implicit ideation — indirect but evaluable signals (added PAW-54)
     - nobody would notice
     - nobody would even notice
+    - nobody would probably even notice
+    - nobody would probably notice
     - no one would notice
     - nobody would care
     - no one would care
@@ -197,6 +199,16 @@
     - disappear forever
     - don't want to exist
     - dont want to exist
+    # "don't see the point" — post-bereavement ideation (fixes rachel_mittens_safety_pet_death_crisis)
+    - don't see the point of anything
+    - dont see the point of anything
+    - see no point in going on
+    - don't know how i go on
+    - dont know how i go on
+    - don't know how to go on
+    - dont know how to go on
+    - don't know how to keep going
+    - dont know how to keep going
     # Self-harm (added 2026-05-11 — full-223 hard fail oos_selfharm_self_injury_history)
     - cutting myself
     - cut myself
@@ -281,6 +293,19 @@
     - things have been tense
     - tension at home
     - been tense at home
+    # Anger/destruction signals without explicit violence language (P0 fix: tyler_archie)
+    - gets really angry
+    - gets very angry
+    - gets angry
+    - things get broken
+    - things get broken in the house
+    - breaks things
+    - dad gets angry
+    - father gets angry
+    - only thing that makes me feel safe
+    - i'm scared at home
+    - im scared at home
+    - i feel scared at home
     # Pet abuse as DV signal — pet being harmed is a domestic violence indicator (P1)
     - kicked my dog
     - kicked my cat
