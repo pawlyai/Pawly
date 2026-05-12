@@ -1,0 +1,118 @@
+# Specialist referral table — Appendix D of SOP v2.0
+# Maps symptom patterns to veterinary specialist types.
+# Pawly uses this only when confidence is HIGH that the case falls in the specialist's scope.
+# Low-confidence cases always go to general practitioner first.
+# Not a diagnosis — a triage routing suggestion only.
+
+- id: neurology
+  specialist: "veterinary neurologist"
+  symptom_patterns:
+    - "recurring seizures / progressive gait abnormality / sudden behavioural change / cranial nerve signs"
+  representative_conditions:
+    - "epilepsy"
+    - "brain tumour"
+    - "vestibular disease"
+    - "IVDD (intervertebral disc disease)"
+  referral_confidence: high
+
+- id: dermatology
+  specialist: "veterinary dermatologist"
+  symptom_patterns:
+    - "recurrent skin infections / failed food elimination trial / chronic uncontrolled pruritus"
+  representative_conditions:
+    - "atopic dermatitis"
+    - "food allergy"
+    - "autoimmune skin disease"
+  referral_confidence: high
+
+- id: ophthalmology
+  specialist: "veterinary ophthalmologist"
+  symptom_patterns:
+    - "recurrent corneal ulcer not healing / sudden vision loss / chronic ocular discharge"
+  representative_conditions:
+    - "cataract"
+    - "glaucoma"
+    - "retinal detachment"
+    - "dry eye (KCS)"
+  referral_confidence: high
+
+- id: cardiology
+  specialist: "veterinary cardiologist"
+  symptom_patterns:
+    - "recurrent syncope / progressive exercise intolerance / cardiac cough / confirmed heart murmur follow-up"
+  representative_conditions:
+    - "mitral valve disease"
+    - "dilated cardiomyopathy (DCM)"
+    - "hypertrophic cardiomyopathy (HCM)"
+    - "arrhythmia"
+  referral_confidence: high
+
+- id: oncology
+  specialist: "veterinary oncologist"
+  symptom_patterns:
+    - "confirmed tumour diagnosis / chemotherapy management / post-tumour surgery follow-up"
+  representative_conditions:
+    - "lymphoma"
+    - "mast cell tumour"
+    - "osteosarcoma"
+  referral_confidence: high
+
+- id: internal_medicine
+  specialist: "veterinary internist"
+  symptom_patterns:
+    - "multi-system chronic disease / undiagnosed after GP workup / complex endocrine or immune disease"
+  representative_conditions:
+    - "immune-mediated disease"
+    - "complex endocrinopathy"
+    - "chronic gastrointestinal disease"
+  referral_confidence: moderate
+
+- id: behaviour
+  specialist: "veterinary behaviourist"
+  symptom_patterns:
+    - "severe aggression / complex anxiety / OCD-type compulsive behaviour"
+  representative_conditions:
+    - "dominance aggression"
+    - "separation anxiety"
+    - "compulsive disorder"
+  referral_confidence: high
+
+- id: rehabilitation
+  specialist: "veterinary rehabilitation specialist / physiotherapist"
+  symptom_patterns:
+    - "post-orthopaedic surgery recovery / IVDD rehab / chronic osteoarthritis mobility"
+  representative_conditions:
+    - "post-TPLO"
+    - "post-IVDD decompression"
+    - "severe OA"
+  referral_confidence: high
+
+- id: orthopaedics
+  specialist: "veterinary orthopaedic surgeon"
+  symptom_patterns:
+    - "complex fracture / hip dysplasia surgical evaluation / cruciate ligament rupture / spinal surgery"
+  representative_conditions:
+    - "TPLO / TTA"
+    - "total hip replacement (THR)"
+    - "disc decompression"
+  referral_confidence: high
+
+- id: nephrology
+  specialist: "veterinary nephrologist / internist"
+  symptom_patterns:
+    - "recurrent urolithiasis / CKD management / protein-losing nephropathy"
+  representative_conditions:
+    - "CKD (chronic kidney disease)"
+    - "urinary stones"
+    - "ureteral obstruction"
+  referral_confidence: moderate
+
+- id: reproduction
+  specialist: "veterinary reproduction specialist"
+  symptom_patterns:
+    - "dystocia / recurrent miscarriage / fertility issues / neonatal care"
+  representative_conditions:
+    - "dystocia"
+    - "infertility"
+    - "neonatal disease"
+  referral_confidence: moderate

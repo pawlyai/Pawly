@@ -100,13 +100,12 @@ def test_memory_pet_profile_populated_from_pet_record() -> None:
     assert "Weight: 32.0 kg" in prompt
 
 
-def test_memory_owner_profile_uses_fallback_in_pr2() -> None:
-    """PR 6 will populate this slot; PR 2 just leaves the fallback string."""
+def test_memory_owner_profile_populated_from_user() -> None:
+    """owner_profile is built from User fields (locale, display_name, etc.)."""
     prompt = build_system_prompt(user=_user(), pet=_pet())
-    assert (
-        f"<memory_owner_profile>\n{MEMORY_NO_PROFILE}\n</memory_owner_profile>"
-        in prompt
-    )
+    assert "<memory_owner_profile>" in prompt
+    assert "Language: en" in prompt
+    assert "Name: Owner" in prompt
 
 
 def test_memory_recent_episodes_falls_back_when_empty() -> None:

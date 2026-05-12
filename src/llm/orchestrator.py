@@ -31,6 +31,7 @@ from src.llm.prompts.formatters import apply_response_format, prepend_safety_ban
 from src.llm.prompts.system import build_system_prompt
 from src.llm.providers import get_chat_client
 from src.llm.retrievers import (
+    build_retrieval_context,
     format_followups,
     format_special_rules,
     match_followups,
@@ -366,8 +367,9 @@ async def _generate_response_classic(
         pending=pending,
     )
 
-    followups = match_followups(user_message)
-    red_flags = match_red_flags(user_message)
+    retrieval_ctx = build_retrieval_context(recent_turns, user_message)
+    followups = match_followups(retrieval_ctx)
+    red_flags = match_red_flags(retrieval_ctx)
 
     system = build_system_prompt(
         user=user,
