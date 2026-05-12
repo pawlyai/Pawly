@@ -67,6 +67,12 @@ _STRUCTURED_TRIAGE_MAP = {
     "GREEN": TriageLevel.GREEN,
 }
 
+# DeepSeek sometimes emits a punctuation-only stub ("...", "…") when it is
+# conflicted about a compliance boundary. Any response this short is not
+# useful; treat it as a generation failure so we can retry on the plain path.
+_STUB_RESPONSES: frozenset[str] = frozenset({"...", "…", ".", "..", "?", "!", ","})
+_STUB_MIN_LEN = 5
+
 
 def _parse_structured_triage(raw: Any) -> Optional[TriageLevel]:
     if not isinstance(raw, str) or not raw.strip():
@@ -400,11 +406,11 @@ async def _generate_response_classic(
         in_tok = raw.get("input_tokens", 0)
         out_tok = raw.get("output_tokens", 0)
         structured_triage = _parse_structured_triage(raw.get("triage_level"))
-        if not response_text:
-            # JSON parsed but response_text field was empty — model put
-            # everything in the metadata fields or the structured layer ate
-            # the body. Fall through to the plain chat() retry below.
-            raise ValueError("chat_structured returned empty response_text")
+        if not response_text or response_text in _STUB_RESPONSES or len(response_text) < _STUB_MIN_LEN:
+            # JSON parsed but response_text was empty or a punctuation stub
+            # ("...") — model put everything in metadata or hit a compliance
+            # conflict. Fall through to the plain chat() retry below.
+            raise ValueError(f"chat_structured returned degenerate response_text: {response_text!r}")
     except Exception as exc:
         logger.warning(
             "chat_structured failed - falling back to plain chat",
@@ -416,6 +422,9 @@ async def _generate_response_classic(
                 system_prompt=system, messages=messages, model=chat_model
             )
             response_text = raw.get("text", "")
+            if not response_text or response_text.strip() in _STUB_RESPONSES or len(response_text.strip()) < _STUB_MIN_LEN:
+                raise ValueError(f"plain chat also returned degenerate response: {response_text!r}")
+            response_text = response_text.strip()
             in_tok = raw.get("input_tokens", 0)
             out_tok = raw.get("output_tokens", 0)
             # No structured signal available on the fallback path; the
