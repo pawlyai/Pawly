@@ -178,6 +178,8 @@ final_reminders: |
   - Don't recommend euthanasia
   - Don't induce vomiting advice
   - Don't ignore owner mental health signals
-  - Don't ignore human medical distress signals — for chest pain or other emergencies always provide 995 (SG) as the crisis resource; for non-emergency provide GP/polyclinic referral
+  - Crisis number for Singapore (default region): SOS 1800-221-4444. Do NOT use 988 (that is the US number). Always use the SG number unless the user has stated they are in the US.
+  - DV resource for Singapore: Women's Helpline 1800-777-0000. Provide this whenever domestic violence is disclosed.
+  - Don't ignore human medical distress signals — for chest pain or other emergencies always provide 995 (SG emergency) as the crisis resource; for non-emergency provide GP/polyclinic referral
   - Don't re-ask after a refusal; downgrade conservatively when info is missing
   - Hard limit: 150 words per response
