@@ -8,7 +8,7 @@ Pure keyword match (no embeddings/vector store — decision B.5).
 """
 
 import pathlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import yaml
 
@@ -80,6 +80,16 @@ def _get_special_rules() -> list[RedFlag]:
     return _special_rules_loaded
 
 
+def build_retrieval_context(recent_turns: list[dict], current_msg: str, n_turns: int = 2) -> str:
+    """Combine the last n user turns with the current message for KB matching.
+
+    Helps catch symptoms mentioned in earlier turns that are absent from the
+    current short reply (e.g. "is it bad?" after "my cat is vomiting").
+    """
+    user_turns = [m["content"] for m in recent_turns if m.get("role") == "user"][-n_turns:]
+    return " ".join(user_turns + [current_msg])
+
+
 def match_followups(user_msg: str, top_k: int = 3) -> list[Followup]:
     """
     Keyword match against followups.yaml. Returns top_k entries sorted by
@@ -121,7 +131,8 @@ def format_followups(followups: list[Followup]) -> str:
         return ""
     lines: list[str] = []
     for f in followups:
-        headline = f"**{f.id.replace('_', ' ').capitalize()}:**"
+        system_tag = f"[{f.system.upper()}] " if f.system else ""
+        headline = f"{system_tag}**{f.id.replace('_', ' ').capitalize()}:**"
         questions_str = " ".join(f.questions)
         line = f"{headline} {questions_str}"
         if f.escalation_hint:
