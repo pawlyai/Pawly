@@ -151,6 +151,28 @@
     - better off without me
     - life isn't worth
     - life isnt worth
+    # Implicit ideation — indirect but evaluable signals (added PAW-54)
+    - nobody would notice
+    - nobody would even notice
+    - no one would notice
+    - nobody would care
+    - no one would care
+    - wouldn't be missed
+    - wouldn't miss me
+    - won't be missed
+    - what's the point of taking care
+    - whats the point of taking care
+    - what's the point of caring for
+    - whats the point of caring for
+    - what does any of it matter
+    - what's the point of anything
+    - whats the point of anything
+    - what is the point of it all
+    - wish i could disappear
+    - wish i could just disappear
+    - disappear forever
+    - don't want to exist
+    - dont want to exist
     # Self-harm (added 2026-05-11 — full-223 hard fail oos_selfharm_self_injury_history)
     - cutting myself
     - cut myself
@@ -162,6 +184,23 @@
     - hiding the marks
     - hide the cuts
     - cutting again
+    # Domestic violence disclosures — require DV helpline resource (added PAW-54)
+    - he threatened to hurt
+    - she threatened to hurt
+    - threatens to hurt
+    - threatened to hurt my
+    - afraid to go home
+    - not safe at home
+    - my partner hurts me
+    - my boyfriend hurts me
+    - my husband hurts me
+    - he hits me
+    - she hits me
+    - he hurt me
+    - domestic violence
+    - domestic abuse
+    - he's been threatening
+    - she's been threatening
   triggers_cn:
     - 想死
     - 不想活了
@@ -176,18 +215,28 @@
     - 想消失
     - 不想醒来
   rule_text: |
-    **Owner mental health signals (e.g., "I want to die", "I'll go with him"):**
+    **Owner mental health signals — explicit, passive, or implicit ideation; self-harm; domestic violence:**
     - This is OUT OF SCOPE for clinical guidance, but you MUST acknowledge before redirecting
-    - MUST NOT ignore the signal
+    - MUST NOT ignore the signal, even if the statement is indirect ("nobody would notice I was gone", "what's the point of anything")
     - MUST NOT give therapy or coping advice
-    - Response template:
-      "I hear how much pain you're in. That's something I'm not equipped to help with the way you deserve, but please reach out to someone who is — [REGION_HOTLINE]. I'll be here for [pet name]."
-    - For US: 988 Suicide & Crisis Lifeline
-    - For SG: Samaritans of Singapore 1800-221-4444 (also 1767); Singapore Women's Helpline 1800-777-0000
-    - For CN: 北京心理危机研究与干预中心 010-82951332
-    - When the user is in Singapore (default region), provide the SG number explicitly — do NOT default to US 988/911
-    - MUST NOT pivot to vet care or pet topics in this turn — pet advice can resume only if the owner re-engages on it later
-    - After redirecting, return to the pet topic only if owner re-engages on it
+    - MUST NOT pivot to vet care or pet topics in this turn — pet advice can resume ONLY if the owner re-engages on it later
+
+    **For suicidal ideation (any level — explicit, passive, or implicit):**
+    - Response shape: [Genuine warmth for the owner] + [Crisis resource] + ["I'll be here for [pet name]."]
+    - Singapore (DEFAULT region — use this unless the user has stated a different country):
+      "I hear how much pain you're in. That's something I'm not equipped to help with the way you deserve, but please reach out to someone who is — Samaritans of Singapore 1800-221-4444 (24-hour). I'll be here for [pet name]."
+    - CRITICAL: default region = Singapore. Use the SG number 1800-221-4444. Do NOT use the US line 988 unless the user has explicitly said they are in the US.
+    - US: 988 Suicide & Crisis Lifeline
+    - CN: 北京心理危机研究与干预中心 010-82951332
+
+    **For domestic violence disclosures (threats to harm owner or pet, fear at home):**
+    - Acknowledge the owner's safety as the FIRST priority
+    - Provide DV resource before returning to pet topics: Singapore Women's Helpline 1800-777-0000 (24-hour); or Police emergency 999
+    - Do NOT focus exclusively on the pet's behaviour or wellbeing without first addressing the owner's safety
+
+    **For self-harm signals (cutting, hurting self, hiding marks):**
+    - Same response shape as suicidal ideation
+    - Use SOS 1800-221-4444 as the resource for SG
 
 - id: human_medical_oos
   # Added PAW-53: fires when a user asks Pawly for advice about their own health.
