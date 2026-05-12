@@ -732,4 +732,17 @@ TOXIN_TRIGGER_KEYWORDS: list[str] = [
     "swallowed chocolate", "swallowed xylitol", "got into the chocolate",
     "rat poison", "rodenticide",
     "poisoned", "toxic to dogs", "toxic to cats",
+    # Appendix B additions — high-risk substances missing from original list
+    "ate macadamia", "macadamia nut",
+    "ate avocado", "swallowed avocado",
+    "ate raw dough", "ate yeast dough", "bread dough", "raw bread",
+    "ate oleander", "chewed oleander",
+    "ate cycad", "sago palm", "cycad palm",
+    "slug bait", "snail bait", "metaldehyde",
+    "brodifacoum", "bromethalin", "second generation rodenticide",
+    "vitamin d3 bait", "cholecalciferol bait", "cholecalciferol poison",
+    "fluorouracil", "5-fu cream", "efudex",
+    "e-cigarette liquid", "vape juice", "nicotine liquid", "vape liquid",
+    "ate cannabis", "ate marijuana", "ate weed", "weed edible",
+    "licked antifreeze", "swallowed antifreeze", "ethylene glycol",
 ]

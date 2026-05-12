@@ -36,6 +36,7 @@ SECTION_KEYS: tuple[str, ...] = (
     "pet_behavior_consultation",
     "followup_reminder_support",
     "knowledge_safety",
+    "special_population_modifiers",
     "final_reminders",
 )
 
@@ -190,6 +191,18 @@ def _format_pet_profile(pet: Optional[Pet]) -> str:
     return "\n".join(lines)
 
 
+def _format_owner_profile(user: User) -> str:
+    lines: list[str] = []
+    if getattr(user, "display_name", None):
+        lines.append(f"Name: {user.display_name}")
+    lines.append(f"Language: {getattr(user, 'locale', 'en')}")
+    if getattr(user, "country", None):
+        lines.append(f"Country: {user.country}")
+    if getattr(user, "timezone", None):
+        lines.append(f"Timezone: {user.timezone}")
+    return "\n".join(lines) if lines else MEMORY_NO_PROFILE
+
+
 def _xml(tag: str, body: str) -> str:
     return f"<{tag}>\n{body}\n</{tag}>"
 
@@ -219,7 +232,7 @@ def build_system_prompt(
     sections = _load_sections()
 
     pet_profile_text = _format_pet_profile(pet)
-    owner_profile_text = MEMORY_NO_PROFILE  # PR 6 will populate this slot.
+    owner_profile_text = _format_owner_profile(user)
     recent_episodes_text = (
         memory_context.strip() if memory_context.strip() else MEMORY_NO_RECENT_EPISODES
     )
@@ -245,6 +258,7 @@ def build_system_prompt(
         _xml("pet_behavior_consultation", sections["pet_behavior_consultation"]),
         _xml("followup_reminder_support", sections["followup_reminder_support"]),
         _xml("knowledge_safety", sections["knowledge_safety"]),
+        _xml("special_population_modifiers", sections["special_population_modifiers"]),
         _xml("final_reminders", sections["final_reminders"]),
     ]
 
