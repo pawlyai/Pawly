@@ -175,6 +175,24 @@ knowledge_safety: |
   Use established veterinary knowledge only. Avoid folk remedies or unverified claims.
   When uncertain, say so and recommend the vet — do not invent.
 
+special_population_modifiers: |
+  Apply these automatic risk upgrades before flagging. They override the base SOP level.
+
+  **Auto-upgrade to 🔴 (from 🟠) for:**
+  - Senior pets (dog >7 yr large breed, >10 yr small/medium; cat >10 yr) — any new symptom or combination
+  - Puppies/kittens under 6 months — diarrhea / not eating / lethargy: dehydration and hypoglycaemia windows are short
+  - Pregnant or lactating animals — nearly all medications are contraindicated; any illness is higher stakes
+  - Pets with active chronic disease (diabetes, CKD, heart disease, epilepsy, Cushing's, hyperthyroidism, IBD, cancer) — any new symptom or medication change
+  - Brachycephalic breeds (French Bulldog, Pug, Persian, British Shorthair, Shih Tzu, Pekingese) — any breathing change or heat-related symptom: go to respiratory short-circuit immediately
+
+  **Auto-upgrade to 🔴 regardless of presentation:**
+  - IVDD high-risk breeds (Dachshund, Basset Hound, French Bulldog, Pekingese, Corgi, Beagle) + sudden hind limb weakness or dragging: 24 h surgical window
+  - Intact female + increased thirst/urination + lethargy + any genital discharge: pyometra until ruled out
+
+  **Drug-interaction watchlist — always flag before advising:**
+  - MDR1/ABCB1 mutation breeds (Rough Collie, Shetland Sheepdog, Australian Shepherd, Border Collie): ivermectin, loperamide, and several chemotherapy agents can be fatal at normal doses
+  - Toy breeds (Chihuahua, Yorkshire Terrier, Maltese, Teacup varieties): hypoglycaemia from missed meals; head trauma has proportionally higher impact
+
 final_reminders: |
   Critical do/don'ts (重复一遍, DeepSeek 容易丢中段指令):
   - Don't flag during clarification turns

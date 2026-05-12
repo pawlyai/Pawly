@@ -98,22 +98,57 @@
     - 吃了
     - 巧克力
     - 葡萄
+    - 葡萄干
     - 百合
     - 木糖醇
     - 中毒
     - 毒
+    - 洋葱
+    - 大蒜
+    - 夏威夷果
+    - 牛油果
+    - 蜗牛药
+    - 杀鼠剂
+    - 夹竹桃
+    - 苏铁
+    - 生面团
+    - 发酵面团
+    - 电子烟液
+    - 尼古丁液
+    - 大麻
+    - 防冻液
+    - 乙二醇
   uses_rules_engine_keywords: true
   rule_text: |
     **Suspected toxin ingestion:**
-    - Always 🔴 Urgent regardless of amount when:
-      - Xylitol (any amount)
-      - Lily (cat, any part of plant)
-      - Antifreeze
-      - Human medications: ibuprofen, acetaminophen, ADHD stimulants, antidepressants
-      - Grapes/raisins (dog)
-      - Onion/garlic concentrated form
-    - Chocolate: provide ASPCA Poison Control number, calculate concern level by chocolate type + dog weight + amount, but defer specific decontamination to vet/poison control
-    - Do NOT recommend inducing vomiting at home (can be dangerous; depends on substance)
+
+    **Zero-dose rule — ANY amount = 🔴 Urgent, no threshold:**
+    - Xylitol (any amount — dogs: acute hypoglycaemia + liver failure)
+    - Lily — all parts including pollen and vase water (cats: acute renal failure)
+    - Antifreeze / ethylene glycol (4–6 h golden window)
+    - Grapes/raisins (dogs — unpredictable acute renal failure)
+    - Onion/garlic concentrated form (oxidative haemolytic anaemia; 2–7 day delay)
+    - Pyrethrin/permethrin flea products on cats (any application)
+    - Human medications: ibuprofen/NSAIDs, acetaminophen/paracetamol, ADHD stimulants, antidepressants (SSRIs/SNRIs/TCAs)
+
+    **Dose-dependent but high-risk — use thresholds below:**
+    - Dark chocolate (>70%): >1 g/kg body weight → ER; milk chocolate: >5 g/kg → ER (theobromine cardiotoxicity + CNS)
+    - Salt: >2 g/kg → ER (hypernatraemia/cerebral oedema)
+    - Macadamia nuts (dogs): neurological/hind limb weakness — treat as urgent
+    - Avocado (birds, rabbits: myocardial toxin; dogs/cats lower risk but avoid)
+    - Raw/yeast dough: gastric expansion + ethanol toxicity
+    - Oleander, azalea, cycad/sago palm: cardiac arrhythmia or acute liver failure — any ingestion → ER
+    - Slug/snail bait (metaldehyde): seizures + hyperthermia — any ingestion → ER
+    - Rodenticides: anticoagulant type (brodifacoum) delayed 3–5 days; neurological type (bromethalin) more acute — both urgent
+    - Vitamin D3/cholecalciferol rodenticide: latency 24–72 h, hypercalcaemia → acute renal failure — any exposure → ER
+    - Topical 5-FU cream (Efudex, fluorouracil): lethal if licked in small amounts → ER immediately
+    - E-cigarette/vape liquid or nicotine concentrate: rapid tremors + cardiac → ER immediately
+    - Cannabis/THC edibles: ataxia, sedation, urinary incontinence — usually 🟠 but large dose → 🔴
+
+    **Response rules:**
+    - Provide ASPCA Animal Poison Control 24/7: +1-888-426-4435; Singapore 24h vet ER: Mt Pleasant Mandai +65 6262-1900
+    - Do NOT recommend inducing vomiting at home (contraindicated for corrosives, petroleum products, sharp objects)
+    - Permethrin on cat: immediate first aid is rinsing with warm water + dish soap (not pet shampoo) within 30 min, then ER — include this in response
     - Pawly's role: get them to act fast, not to treat
 
 - id: owner_mental_health
