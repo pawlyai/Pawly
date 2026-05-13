@@ -30,8 +30,10 @@ from src.llm.retrievers import (
 )
 from src.memory.reader import load_pet_context, load_related_memories
 from src.triage.rules_engine import (
+    _shows_resolution,
     classify_by_rules,
     compare_and_resolve,
+    get_red_floor,
 )
 from src.utils.logger import get_logger
 
@@ -210,12 +212,31 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
 # ── Node 4: resolve_triage ──────────────────────────────────────────────────
 
 async def resolve_triage_node(state: PawlyState) -> dict[str, Any]:
-    """Combine rule-based and LLM-inferred triage, taking the stricter result."""
+    """Combine rule-based and LLM-inferred triage, taking the stricter result.
+
+    Also applies the conversation-level RED floor (carry-forward). The floor
+    can't be applied in ``rule_triage_node`` because that node runs in parallel
+    with ``load_context_node``, so ``recent_turns`` aren't yet available.
+    Here both have completed, so we can scan history for a prior 🔴 Urgent.
+    """
+    rule_triage = state.get("rule_triage", TriageLevel.GREEN)
+    recent_turns: list[dict] = state.get("pet_context", {}).get("recent_turns", [])
+    user_message: str = state.get("user_message", "")
+
+    floor = get_red_floor(recent_turns)
+    if (
+        floor == TriageLevel.RED
+        and rule_triage != TriageLevel.RED
+        and not _shows_resolution(user_message)
+    ):
+        rule_triage = TriageLevel.RED
+
     resolved = compare_and_resolve(
         llm_triage=state.get("llm_triage"),
-        rule_classification=state.get("rule_triage", TriageLevel.GREEN),
+        rule_classification=rule_triage,
     )
     return {
+        "rule_triage": rule_triage,  # surface the floored value
         "final_triage": resolved.final_classification,
         "triage_overridden": resolved.overridden,
         "override_direction": resolved.override_direction,
