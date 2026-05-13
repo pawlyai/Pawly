@@ -71,6 +71,89 @@ ResolveResult = CompareResult
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Conversation-level RED state (carried forward across turns by rule_engine)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Detect LLM-written "🔴 Urgent" banner in a prior assistant turn.
+#
+# This pattern is deliberately specific:
+#   - Sentence-case "Urgent" — that's what the LLM writes per response_format
+#     YAML ("Open with the flag: 🔴 **Urgent**").
+#   - All-caps "URGENT" is what apply_response_format adds as part of the
+#     "🚨 RED FLAG ALERT · 🔴 URGENT" wrapper when triage is RED. We DO NOT
+#     want to match that wrapper, otherwise the floor self-propagates:
+#       floor fires → formatter wraps next turn with "🔴 URGENT" → next floor
+#       detects it → fires again → forever.
+#   - Matching only the sentence-case LLM banner means the floor's seed is
+#     "the LLM/system genuinely flagged Urgent at some prior turn", not "the
+#     formatter slapped a wrapper on a floor-induced banner".
+_LLM_RED_BANNER_RE = re.compile(r"🔴\s*\*{0,2}\s*Urgent\b")
+
+# How many recent assistant turns to scan for the LLM-written banner. The
+# floor decays naturally — if N consecutive assistant turns have no LLM-
+# written 🔴 Urgent, the situation is treated as faded and the floor lifts.
+_RED_FLOOR_TURNS = 3
+
+# Patterns that lift the floor immediately when present in the current user
+# message. Intentionally conservative — these are explicit "the emergency is
+# handled" signals, not just topic switches. (Full resolution detection will
+# be handled by a future proactive-followup feature.)
+_RESOLUTION_RE = re.compile(
+    r"""
+    \b(at\s+the\s+(vet|clinic|hospital|er|emergency)
+     | on\s+(our\s+)?way\s+to\s+the\s+(vet|clinic|hospital|emergency)
+     | already\s+at\s+the\s+(vet|clinic|hospital)
+     | just\s+arrived\s+at
+     | drove\s+(him|her|them)\s+to\s+the
+    )
+    | \bvet\s+(said|told|confirmed|checked|gave|saw|looked)
+    | \bdoctor\s+(said|told|confirmed|checked)
+    | \b(he|she|they|it)'?s?\s+(okay|fine|better|stable|recovering)\s+(now|today|already)\b
+    | \b(everything|all)\s+(is\s+|'s\s+)?(fine|okay|good|normal)\s+(now|today)\b
+    | \bfalse\s+alarm\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+_RESOLUTION_RE_CN = re.compile(
+    r"到急诊了|在医院了|去了急诊|进急诊了|已经到了"
+    r"|兽医说|医生说|兽医看了|医生看了"
+    r"|好多了|没事了|稳定了|恢复了|康复了|好转了|虚惊一场|没问题了",
+)
+
+
+def _shows_resolution(text: str) -> bool:
+    """Return True if the current user message explicitly signals resolution."""
+    return bool(_RESOLUTION_RE.search(text) or _RESOLUTION_RE_CN.search(text))
+
+
+def get_red_floor(recent_turns: list[dict]) -> Optional[TriageLevel]:
+    """Return RED if a recent assistant turn shows the LLM-written 🔴 Urgent.
+
+    Walks back through assistant messages only (skipping user turns), up to
+    ``_RED_FLOOR_TURNS`` of them, looking for the sentence-case
+    ``🔴 Urgent`` banner that the LLM writes per its response_format instruction.
+
+    Excludes the all-caps ``🔴 URGENT`` wrapper that ``apply_response_format``
+    prepends when triage is RED — that wrapper can be floor-induced and
+    matching it would create a self-propagation loop.
+
+    Decays naturally: once N consecutive assistant turns lack the LLM banner,
+    the floor lifts and the rule engine returns to its normal classification.
+    """
+    checked = 0
+    for turn in reversed(recent_turns):
+        if turn.get("role") != "assistant":
+            continue
+        if _LLM_RED_BANNER_RE.search(turn.get("content", "")):
+            return TriageLevel.RED
+        checked += 1
+        if checked >= _RED_FLOOR_TURNS:
+            break
+    return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Suppression cues — these zero out otherwise-matching signals
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -439,13 +522,24 @@ ORANGE_THRESHOLD = 0.30
 ORANGE_CONTRIBUTION_CAP = 0.50
 
 
-def classify_by_rules(pet: Optional[Pet], description: str) -> TriageRuleResult:
+def classify_by_rules(
+    pet: Optional[Pet],
+    description: str,
+    context_floor: Optional[TriageLevel] = None,
+) -> TriageRuleResult:
     """Classify *description* with pattern matching + multi-signal scoring.
 
     Suppression cues (past tense, hypothetical, owner-self) zero the score
     early so educational and reflective phrasings don't escalate. Pet-aware
     rules add weight when the species / breed / life stage materially changes
     the urgency of an otherwise ORANGE pattern.
+
+    ``context_floor`` carries forward a conversation-level RED state. When the
+    caller (orchestrator) detects via :func:`get_red_floor` that a recent
+    assistant turn flagged 🔴 Urgent, it passes ``TriageLevel.RED`` here.
+    Unless the current message contains an explicit resolution signal
+    (:func:`_shows_resolution`), the final classification is floored to RED so
+    follow-up messages within the same unresolved episode keep their banner.
 
     Returns the same TriageRuleResult shape as v1 (with the addition of a
     `score` field) so callers don't need to change.
@@ -557,22 +651,37 @@ def classify_by_rules(pet: Optional[Pet], description: str) -> TriageRuleResult:
 
     # ── Map score → triage level ──────────────────────────────────────────────
     if score >= RED_THRESHOLD:
-        return TriageRuleResult(TriageLevel.RED, matched, confidence=0.95, score=round(score, 2))
-    if score >= ORANGE_THRESHOLD:
-        # Vulnerable life stage bumps confidence (not classification)
+        result = TriageRuleResult(TriageLevel.RED, matched, confidence=0.95, score=round(score, 2))
+    elif score >= ORANGE_THRESHOLD:
         is_vulnerable = pet is not None and getattr(pet, "stage", None) in (
             LifeStage.PUPPY, LifeStage.KITTEN, LifeStage.SENIOR,
         )
         if is_vulnerable:
             matched.append("pet:age_escalation")
-        return TriageRuleResult(
+        result = TriageRuleResult(
             TriageLevel.ORANGE,
             matched,
             confidence=0.8 if is_vulnerable else 0.7,
             score=round(score, 2),
         )
+    else:
+        result = TriageRuleResult(TriageLevel.GREEN, matched, confidence=0.5, score=round(score, 2))
 
-    return TriageRuleResult(TriageLevel.GREEN, matched, confidence=0.5, score=round(score, 2))
+    # ── Conversation-level RED floor ──────────────────────────────────────────
+    # If a recent assistant turn flagged 🔴 Urgent (per get_red_floor) and the
+    # user's current message gives no resolution signal, maintain RED so the
+    # banner persists across follow-up questions, topic switches, and analytical
+    # asks within the same unresolved episode.
+    if (
+        context_floor == TriageLevel.RED
+        and result.classification != TriageLevel.RED
+        and not _shows_resolution(text)
+    ):
+        result.classification = TriageLevel.RED
+        result.matched_rules = result.matched_rules + ["context:red_floor_sticky"]
+        result.confidence = max(result.confidence, 0.75)
+
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════════════
