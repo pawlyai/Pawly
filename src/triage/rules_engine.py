@@ -71,6 +71,71 @@ ResolveResult = CompareResult
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# Resolution cues — indicate the emergency has been resolved / handled
+# ══════════════════════════════════════════════════════════════════════════════
+
+# When a conversation's previous turn was RED, these patterns in the current
+# user message allow the RED floor to be lifted. They must be conservative:
+# "should I go to the vet?" is NOT resolution — "we're at the vet now" is.
+_RESOLUTION_RE = re.compile(
+    r"""
+    # Physical arrival / transit to care
+    \b(at\s+the\s+(vet|clinic|hospital|er|emergency)
+     | on\s+(our\s+)?way\s+to\s+the
+     | heading\s+to\s+the\s+(vet|clinic|hospital|emergency)
+     | already\s+at\s+the
+     | just\s+arrived\s+at
+     | drove\s+(him|her|them)\s+to
+     | dropped\s+(him|her|them)\s+off\s+at
+    )
+    # Vet has spoken / outcome confirmed
+    | \bvet\s+(said|told|confirmed|checked|gave|saw|looked)
+    | \bdoctor\s+(said|told|confirmed|checked)
+    # Pet recovery / stability — require "now"/"today"/"already" or explicit milestone
+    | \b(he|she|they|it)'?s?\s+(okay|fine|better|stable|recovering|alright|improving)\s+(now|today|already)\b
+    | \b(he|she|they|it)\s+(survived|recovered|pulled\s+through|made\s+it)\b
+    | \bpet\s+(is\s+)?(okay|fine|stable|recovering)\s+(now|today)\b
+    # New clinical context that changes the risk picture — "it turned out…", "he didn't eat it"
+    | \b(it\s+(was|turned\s+out\s+(to\s+be)?))\s+just\b
+    | \b(actually|turns?\s+out)\s+(it\s+(was|is)|he|she|they)\b
+    | \b(he|she|they|it)\s+(didn'?t|did\s+not|hasn'?t|has\s+not)\s+(actually\s+)?(eat|swallow|ingest|consume)\b
+    | \b(didn'?t\s+actually|never\s+actually)\s+(eat|swallow|ingest)\b
+    # Symptom cessation / behavioural normalisation
+    | \b(stopped?\s+(vomiting|throwing\s+up|bleeding|seizing|having\s+seizures|fitting))\b
+    | \b(acting|behaving)\s+(normal(ly)?|fine|well|okay|as\s+usual)\s+(now|again|today)?\b
+    | \b(completely|totally|absolutely|perfectly)\s+(fine|okay|normal|well)\b
+    | \bno\s+(symptoms?|signs?|issues?|problems?|concerns?)\s+(now|anymore|at\s+all)?\b
+    # Explicit all-clear language
+    | \b(everything|all)\s+(is\s+|'s\s+)?(fine|okay|good|clear|normal)\s*(now|today)?\b
+    | \bfalse\s+alarm\b
+    | \bnot\s+(an?\s+)?(emergency|urgent)\s+after\s+all\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+_RESOLUTION_RE_CN = re.compile(
+    # Physical arrival
+    r"到急诊了|在医院了|在路上了|去了急诊|进急诊了|已经到了|到诊所了"
+    # Vet confirmed
+    r"|兽医说|医生说|兽医看了|医生看了|兽医检查了"
+    # Pet status OK
+    r"|好多了|没事了|稳定了|恢复了|康复了|好转了|虚惊一场|没问题了|好了"
+    # New clinical context / false alarm
+    r"|其实没吃|其实没有吃|它没有真的吃|根本没吃进去|发现没有吃"
+    r"|原来是|其实是|搞错了|误会了"
+    # Symptom resolved
+    r"|不吐了|停止呕吐|出血止住了|抽搐停了|精神完全正常|行为正常了|状态正常了"
+    r"|没有任何症状|没有症状了",
+)
+
+
+def _shows_resolution(text: str) -> bool:
+    """Return True if the message indicates the acute emergency has been handled."""
+    return bool(_RESOLUTION_RE.search(text) or _RESOLUTION_RE_CN.search(text))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Suppression cues — these zero out otherwise-matching signals
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -439,13 +504,24 @@ ORANGE_THRESHOLD = 0.30
 ORANGE_CONTRIBUTION_CAP = 0.50
 
 
-def classify_by_rules(pet: Optional[Pet], description: str) -> TriageRuleResult:
+def classify_by_rules(
+    pet: Optional[Pet],
+    description: str,
+    context_floor: Optional[TriageLevel] = None,
+) -> TriageRuleResult:
     """Classify *description* with pattern matching + multi-signal scoring.
 
     Suppression cues (past tense, hypothetical, owner-self) zero the score
     early so educational and reflective phrasings don't escalate. Pet-aware
     rules add weight when the species / breed / life stage materially changes
     the urgency of an otherwise ORANGE pattern.
+
+    ``context_floor`` — when the previous assistant turn was RED, pass
+    ``TriageLevel.RED`` here so that follow-up messages within the same acute
+    episode don't silently downgrade to GREEN. The floor is lifted only when
+    the user's message contains an explicit resolution signal (arrived at vet,
+    pet is stable now, etc.) — see ``_shows_resolution()``. A follow-up
+    question ("which vet should I go to?") is NOT resolution and keeps RED.
 
     Returns the same TriageRuleResult shape as v1 (with the addition of a
     `score` field) so callers don't need to change.
@@ -565,14 +641,30 @@ def classify_by_rules(pet: Optional[Pet], description: str) -> TriageRuleResult:
         )
         if is_vulnerable:
             matched.append("pet:age_escalation")
-        return TriageRuleResult(
+        result = TriageRuleResult(
             TriageLevel.ORANGE,
             matched,
             confidence=0.8 if is_vulnerable else 0.7,
             score=round(score, 2),
         )
+    else:
+        result = TriageRuleResult(TriageLevel.GREEN, matched, confidence=0.5, score=round(score, 2))
 
-    return TriageRuleResult(TriageLevel.GREEN, matched, confidence=0.5, score=round(score, 2))
+    # ── Sticky RED floor (conversation continuity) ────────────────────────────
+    # If the previous turn was RED and the current message gives no new signal
+    # itself, maintain RED unless the owner explicitly signals resolution
+    # ("we're at the vet", "he's stable now"). A follow-up question within the
+    # same acute episode ("which vet should I go to?") is NOT resolution.
+    if (
+        context_floor == TriageLevel.RED
+        and result.classification != TriageLevel.RED
+        and not _shows_resolution(text)
+    ):
+        result.classification = TriageLevel.RED
+        result.matched_rules = result.matched_rules + ["context:red_floor_sticky"]
+        result.confidence = max(result.confidence, 0.75)
+
+    return result
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -681,6 +773,32 @@ _SEVERITY: dict[TriageLevel, int] = {
     TriageLevel.ORANGE: 1,
     TriageLevel.RED: 2,
 }
+
+
+_RED_FLOOR_TURNS = 2  # how many recent assistant turns to inspect for 🔴
+
+
+def get_red_floor(recent_turns: list[dict]) -> Optional[TriageLevel]:
+    """Return RED if a recent assistant turn contained a 🔴 triage banner.
+
+    apply_response_format() prepends 🔴 to every RED response, so its presence
+    in the stored message content is a reliable signal that the conversation's
+    last meaningful assessment was RED. We look back at most ``_RED_FLOOR_TURNS``
+    assistant turns so a long conversation that has genuinely moved on doesn't
+    stay locked at RED indefinitely.
+
+    Called from both the classic orchestrator and the LangGraph resolve node.
+    """
+    checked = 0
+    for turn in reversed(recent_turns):
+        if turn.get("role") != "assistant":
+            continue
+        if "🔴" in turn.get("content", ""):
+            return TriageLevel.RED
+        checked += 1
+        if checked >= _RED_FLOOR_TURNS:
+            break
+    return None
 
 
 def compare_and_resolve(

@@ -30,8 +30,10 @@ from src.llm.retrievers import (
 )
 from src.memory.reader import load_pet_context, load_related_memories
 from src.triage.rules_engine import (
+    _shows_resolution,
     classify_by_rules,
     compare_and_resolve,
+    get_red_floor,
 )
 from src.utils.logger import get_logger
 
@@ -46,6 +48,11 @@ from src.llm.orchestrator import (  # noqa: E402
     _store_triage_record,
     map_triage_to_risk,
 )
+
+def _shows_resolution_in_state(state: PawlyState) -> bool:
+    """Check if the current user message indicates the acute emergency is resolved."""
+    return _shows_resolution(state.get("user_message", ""))
+
 
 _HEALTH_WORDS = (
     "sick", "vomit", "diarrhea", "blood", "limp", "pain", "hurt",
@@ -210,12 +217,37 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
 # ── Node 4: resolve_triage ──────────────────────────────────────────────────
 
 async def resolve_triage_node(state: PawlyState) -> dict[str, Any]:
-    """Combine rule-based and LLM-inferred triage, taking the stricter result."""
+    """Combine rule-based and LLM-inferred triage, taking the stricter result.
+
+    Also applies the sticky RED floor: if the last assistant turn was 🔴 and
+    the current user message gives no resolution signal, both the rule triage
+    and the resolved result are floored to RED. This runs after load_context
+    has populated pet_context (and therefore recent_turns), which is why the
+    floor can't be applied in rule_triage_node (runs in parallel with load_context).
+    """
+    # Recover recent_turns from the loaded context so we can check for a
+    # previous RED turn without needing to pass it through the initial state.
+    recent_turns: list[dict] = state.get("pet_context", {}).get("recent_turns", [])
+    floor = get_red_floor(recent_turns)
+
+    rule_triage = state.get("rule_triage", TriageLevel.GREEN)
+
+    # Apply floor at the rule level before resolving: classify_by_rules
+    # already has the floor path, but in the graph path rule_triage_node
+    # ran before recent_turns were available, so we re-apply the floor here.
+    if (
+        floor == TriageLevel.RED
+        and rule_triage != TriageLevel.RED
+        and not _shows_resolution_in_state(state)
+    ):
+        rule_triage = TriageLevel.RED
+
     resolved = compare_and_resolve(
         llm_triage=state.get("llm_triage"),
-        rule_classification=state.get("rule_triage", TriageLevel.GREEN),
+        rule_classification=rule_triage,
     )
     return {
+        "rule_triage": rule_triage,  # update with floored value
         "final_triage": resolved.final_classification,
         "triage_overridden": resolved.overridden,
         "override_direction": resolved.override_direction,

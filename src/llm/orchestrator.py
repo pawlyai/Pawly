@@ -44,6 +44,7 @@ from src.triage.rules_engine import (
     classify_by_rules,
     compare_and_resolve,
     detect_triage_from_response,
+    get_red_floor,
 )
 from src.utils.logger import get_logger
 
@@ -442,7 +443,15 @@ async def _generate_response_classic(
             out_tok = 0
 
     # ── 5. POST-PROCESS TRIAGE ────────────────────────────────────────────────
-    rule_result = classify_by_rules(pet, user_message)
+    # Derive a conversation-level RED floor from recent history so follow-up
+    # questions within an ongoing acute episode don't silently downgrade triage.
+    # We inspect the last two assistant turns: if either contains the 🔴 banner
+    # that apply_response_format() prepends to RED responses, the floor is RED.
+    # The floor is cleared only when the owner's own message contains an
+    # explicit resolution signal ("at the vet now", "she's stable") — see
+    # _shows_resolution() in rules_engine.py.
+    context_floor = get_red_floor(recent_turns)
+    rule_result = classify_by_rules(pet, user_message, context_floor=context_floor)
     # llm_triage is now sourced from the LLM's own structured output
     # (triage_level field in the JSON response). detect_triage_from_response
     # is still called below for telemetry — its substring scan can disagree
