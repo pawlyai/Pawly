@@ -492,11 +492,12 @@ async def _generate_response_classic(
         logger_=logger,
     )
 
-    # Apply Figma visual format based on the rule-engine decision. Using
-    # resolved.final_classification here would leak response-keyword
-    # substring matches ("not urgent" → RED) into the user-visible banner,
-    # wrapping perfectly-fine replies in 🚨 RED FLAG ALERT chrome.
-    effective_triage = rule_result.classification
+    # Visual format uses the resolved classification (stricter of rule + LLM
+    # structured). The old comment about response-keyword leakage no longer
+    # applies: compare_and_resolve only takes llm_triage (structured JSON field)
+    # and rule_result; detect_triage_from_response is audit-only and never
+    # reaches resolved.final_classification.
+    effective_triage = resolved.final_classification
     response_text = apply_response_format(response_text, effective_triage)
 
     triage_result = {
