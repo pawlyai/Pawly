@@ -63,8 +63,12 @@ STRUCTURED_SCHEMA_INSTRUCTION = (
     "\n\nYou MUST respond with a single JSON object (no prose around it) "
     "containing exactly these fields:\n"
     '  - "response_text" (string): the user-facing reply.\n'
-    '  - "triage_level" (string, one of "RED" | "ORANGE" | "GREEN"): RED for emergencies, '
-    'ORANGE for concerning, GREEN for routine.\n'
+    '  - "triage_level" (string, one of "RED" | "ORANGE" | "GREEN"): '
+    'urgency of the CURRENT SITUATION, not the tone of this message. '
+    'If conversation history establishes an active emergency (toxin ingestion, collapse, blocked cat, etc.), '
+    'report RED even when this specific message is a follow-up question ("which vet?", "thank you"). '
+    'Only downgrade from RED if the user\'s message contains explicit resolution — '
+    'pet has been seen by vet, symptoms have stopped, new context shows no ingestion occurred.\n'
     '  - "intent" (string, one of "symptom_report" | "nutrition" | "exercise" | '
     '"grooming" | "behavior" | "question" | "general"): primary intent of the user message.\n'
     '  - "sentiment" (string, one of "CALM" | "ANXIOUS" | "PANIC"): owner emotional state.\n'
