@@ -5,8 +5,8 @@ Usage:
     python scripts/push_prompts_to_langfuse.py
 
 Reads LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST from .env.
-Creates (or updates) the 9 DeepSeek V4 v0 prompts in Langfuse with label
-"production". Prompt names match YAML keys 1:1 with a ``pawly_`` prefix
+Creates (or updates) the 10 prompts in Langfuse with label "production".
+Prompt names match YAML keys 1:1 with a ``pawly_`` prefix
 (e.g. ``role`` -> ``pawly_role``).
 """
 
@@ -39,6 +39,7 @@ SECTION_KEYS = (
     "followup_reminder_support",
     "knowledge_safety",
     "final_reminders",
+    "special_population_modifiers",
 )
 PROMPT_NAMES = {key: f"pawly_{key}" for key in SECTION_KEYS}
 
