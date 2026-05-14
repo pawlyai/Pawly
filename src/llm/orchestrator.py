@@ -40,6 +40,8 @@ from src.llm.retrievers import (
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace, get_current_trace_url
 from src.triage.rules_engine import (
+    ORANGE_PATTERNS,
+    RED_PATTERNS,
     audit_log_triage_divergence,
     classify_by_rules,
     compare_and_resolve,
@@ -47,9 +49,17 @@ from src.triage.rules_engine import (
     get_red_floor,
     infer_triage_from_plain_response,
 )
+
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Weight lookup for matched rule names — built once at import so the per-turn
+# loop just does a dict get rather than scanning pattern lists.
+_RULE_WEIGHT_LOOKUP: dict[str, float] = {
+    **{f"red:{name}": weight for name, _, weight in RED_PATTERNS},
+    **{f"orange:{name}": weight for name, _, weight in ORANGE_PATTERNS},
+}
 
 
 def _active_chat_model() -> str:
@@ -606,6 +616,11 @@ async def _generate_response_classic(
             "triage_rule": triage_result["rule"],
             "triage_rule_matched": triage_result["matched_patterns"],
             "triage_rule_score": triage_result.get("score", 0.0),
+            # Per-rule breakdown: name + weight contribution to final score.
+            "triage_rule_detail": [
+                {"rule": r, "weight": _RULE_WEIGHT_LOOKUP.get(r, 0.0)}
+                for r in rule_result.matched_rules
+            ],
             "triage_llm": triage_result["llm"],
             "triage_llm_source": triage_result["llm_source"],
             "triage_llm_inferred": triage_result.get("llm_inferred"),
@@ -615,11 +630,22 @@ async def _generate_response_classic(
             "triage_override_direction": triage_result.get("override_direction", ""),
             # ── context load ──────────────────────────────────────────────────
             "memory_long_term_count": len(long_term),
+            "memory_long_term_entries": [
+                {"field": m.field, "value": m.value, "memory_type": m.memory_type.value, "confidence": m.confidence_score}
+                for m in long_term
+            ],
             "memory_mid_term_count": len(mid_term),
+            "memory_mid_term_entries": [
+                {"field": m.field, "value": m.value, "memory_type": m.memory_type.value, "confidence": m.confidence_score}
+                for m in mid_term
+            ],
             "memory_short_term_count": len(short_term),
             "memory_recent_turns_count": len(recent_turns),
             # ── KB retrieve (populated only when is_health + memories found) ──
             **_kb_metadata,
+            # ── KB router: followup questions + red-flag rules injected into prompt ──
+            "kb_followups": [f.id for f in followups],
+            "kb_red_flags": [rf.id for rf in red_flags],
             # ── LLM call ──────────────────────────────────────────────────────
             "intent": intent,
             "symptom_tags": symptom_tags,
