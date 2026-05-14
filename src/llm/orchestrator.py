@@ -352,6 +352,16 @@ async def _generate_response_classic(
                     update_span(metadata={
                         "kb_fields_retrieved": [m.field for m in related],
                         "kb_memory_count": len(related),
+                        "kb_entries": [
+                            {
+                                "field": m.field,
+                                "value": m.value,
+                                "memory_term": m.memory_term.value,
+                                "memory_type": m.memory_type.value,
+                                "confidence": m.confidence_score,
+                            }
+                            for m in related
+                        ],
                     })
                     update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
             except Exception as exc:
@@ -586,14 +596,34 @@ async def _generate_response_classic(
     update_span(
         output={"response_text": response_text},
         metadata={
+            # ── triage chain ──────────────────────────────────────────────────
+            "triage_rule": triage_result["rule"],
+            "triage_rule_matched": triage_result["matched_patterns"],
+            "triage_rule_score": triage_result.get("score", 0.0),
+            "triage_llm": triage_result["llm"],
+            "triage_llm_source": triage_result["llm_source"],
+            "triage_llm_inferred": triage_result.get("llm_inferred"),
+            "triage_llm_inferred_method": triage_result.get("llm_inferred_method"),
             "triage_final": triage_result["final"],
             "triage_overridden": triage_result["overridden"],
+            "triage_override_direction": triage_result.get("override_direction", ""),
+            # ── context load ──────────────────────────────────────────────────
+            "memory_long_term_count": len(long_term),
+            "memory_mid_term_count": len(mid_term),
+            "memory_short_term_count": len(short_term),
+            "memory_recent_turns_count": len(recent_turns),
+            # ── LLM call ──────────────────────────────────────────────────────
             "intent": intent,
             "symptom_tags": symptom_tags,
             "input_tokens": in_tok,
             "output_tokens": out_tok,
         },
     )
+    # Propagate triage_llm_source to trace tags so Langfuse filter works:
+    #   filter tag = "partial_structured" → DeepSeek JSON-metadata-only turns
+    #   filter tag = "plain_fallback"     → full structured failure turns
+    if triage_result["llm_source"] != "structured":
+        update_trace(tags=[tier.value, "classic-path", triage_result["llm_source"]])
 
     return OrchestratorResult(
         response_text=response_text,
