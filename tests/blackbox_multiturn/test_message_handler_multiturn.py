@@ -84,7 +84,7 @@ def test_handle_message_multiturn_with_conversational_geval(
 
             rule_result = classify_by_rules(pet, user_text)
             llm_triage = detect_triage_from_response(assistant_text)
-            resolved = compare_and_resolve(llm_triage, rule_result)
+            resolved = compare_and_resolve(llm_triage, rule_result.classification)
             triage_trace: dict[str, Any] = {
                 "rule": {
                     "level": rule_result.classification.value,
