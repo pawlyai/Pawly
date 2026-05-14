@@ -29,8 +29,17 @@ try:
     from langfuse.decorators import langfuse_context
     from langfuse.decorators import observe as _lf_observe
 
-    _LANGFUSE_ENABLED = True
-    logger.info("langfuse tracing enabled", host=os.environ.get("LANGFUSE_HOST", ""))
+    _has_keys = bool(
+        os.environ.get("LANGFUSE_PUBLIC_KEY", "").strip()
+        and os.environ.get("LANGFUSE_SECRET_KEY", "").strip()
+        and os.environ.get("LANGFUSE_HOST", "").strip()
+    )
+    if _has_keys:
+        _LANGFUSE_ENABLED = True
+        logger.info("langfuse tracing enabled", host=os.environ.get("LANGFUSE_HOST", ""))
+    else:
+        _LANGFUSE_ENABLED = False
+        logger.info("langfuse tracing disabled — LANGFUSE_HOST/PUBLIC_KEY/SECRET_KEY not set")
 except Exception as exc:
     langfuse_context = None  # type: ignore[assignment]
     _LANGFUSE_ENABLED = False
