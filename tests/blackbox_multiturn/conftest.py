@@ -819,7 +819,10 @@ def mock_multiturn_runtime(
             }
 
         async def _fake_load_related_memories(*args: Any, **kwargs: Any) -> list[PetMemory]:
-            return [m for m in runtime.memories if m.memory_term == MemoryTerm.SHORT]
+            # Real load_related_memories does semantic search across all memory terms.
+            # Return all memories so KB logging fires and Langfuse traces contain
+            # kb_entries even for cases whose fixtures only have long/mid memories.
+            return list(runtime.memories)
 
         async def _fake_store_triage_record(*args: Any, **kwargs: Any) -> None:
             return None
