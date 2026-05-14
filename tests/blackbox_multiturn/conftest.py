@@ -28,6 +28,13 @@ os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-bot-token")
 os.environ.setdefault("GOOGLE_API_KEY", "")
 os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "1")
 
+# deepeval's _debug_print_prompt calls print() which crashes on Windows cp1252
+# consoles when LLM responses contain emoji (e.g. 🟠). Force UTF-8 output.
+import sys
+if sys.stdout.encoding and sys.stdout.encoding.lower().replace("-", "") not in ("utf8", "utf-8"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+
 from src.config import settings
 from src.bot.handlers import message as message_handler
 from src.bot.middleware.rate_limiter import RateLimiterMiddleware
