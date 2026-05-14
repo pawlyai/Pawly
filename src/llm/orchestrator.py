@@ -39,6 +39,7 @@ from src.llm.retrievers import (
 )
 from src.memory.reader import load_pet_context, load_related_memories
 from src.observability.tracing import observe_span, update_span, update_trace
+from src.triage.human_crisis import HUMAN_CRISIS_RESPONSE, detect_human_crisis
 from src.triage.rules_engine import (
     audit_log_triage_divergence,
     classify_by_rules,
@@ -231,6 +232,12 @@ async def generate_response(
     When USE_LANGGRAPH=true, delegates to the LangGraph pipeline.
     Otherwise, uses the classic sequential orchestration path.
     """
+    # Human-crisis gate: intercept before any LLM call so a suicidal or
+    # self-harm message mixed with a pet question is never routed to vet advice.
+    if detect_human_crisis(user_message):
+        logger.info("human crisis detected — returning crisis response without LLM call")
+        return OrchestratorResult(response_text=HUMAN_CRISIS_RESPONSE)
+
     if settings.use_langgraph:
         return await _generate_response_graph(
             user, pet, dialogue_id, user_message, message_type, session,
