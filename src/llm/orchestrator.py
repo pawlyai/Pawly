@@ -330,6 +330,9 @@ async def _generate_response_classic(
     )
 
     # ── 1. LOAD CONTEXT ───────────────────────────────────────────────────────
+    # Accumulated KB metadata — merged into the single update_span at the end
+    # because Langfuse SDK replaces (not merges) metadata on each call.
+    _kb_metadata: dict = {}
     ctx: dict = {}
     if pet:
         try:
@@ -349,7 +352,7 @@ async def _generate_response_classic(
                     m for m in related if m.id not in existing_ids
                 )
                 if related:
-                    update_span(metadata={
+                    _kb_metadata = {
                         "kb_fields_retrieved": [m.field for m in related],
                         "kb_memory_count": len(related),
                         "kb_entries": [
@@ -362,7 +365,7 @@ async def _generate_response_classic(
                             }
                             for m in related
                         ],
-                    })
+                    }
                     update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
             except Exception as exc:
                 logger.warning("load_related_memories failed", error=str(exc))
@@ -615,6 +618,8 @@ async def _generate_response_classic(
             "memory_mid_term_count": len(mid_term),
             "memory_short_term_count": len(short_term),
             "memory_recent_turns_count": len(recent_turns),
+            # ── KB retrieve (populated only when is_health + memories found) ──
+            **_kb_metadata,
             # ── LLM call ──────────────────────────────────────────────────────
             "intent": intent,
             "symptom_tags": symptom_tags,
