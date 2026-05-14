@@ -47,8 +47,28 @@ def load_report(filename: str) -> dict[str, Any]:
         return json.load(fh)
 
 
+_LEVEL_EMOJI: dict[str, str] = {"RED": "🔴", "ORANGE": "🟠", "GREEN": "🟢"}
+
+
 def get_status_emoji(status: str) -> str:
     return "✅" if status == "passed_threshold" else "❌"
+
+
+def _get_triage_timeline(case: dict[str, Any]) -> list[tuple[str, bool]]:
+    """Return [(resolved_level, has_mismatch), ...] per assistant turn.
+    Mismatch = rule engine disagrees with the LLM's structured triage level."""
+    result = []
+    for turn in case.get("turns", []):
+        if turn.get("role") != "assistant":
+            continue
+        trace = turn.get("triage_trace")
+        if not trace:
+            continue
+        rule_level = trace.get("rule", {}).get("level", "")
+        llm_level = trace.get("llm", {}).get("level") or ""
+        resolved_level = trace.get("resolved", {}).get("level", "")
+        result.append((resolved_level, bool(llm_level and rule_level != llm_level)))
+    return result
 
 
 def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -> None:
@@ -111,7 +131,15 @@ def render_case_details(case: dict[str, Any]) -> None:
     turn_count = case.get("turn_count", 0)
     turns = case.get("turns", [])
 
-    st.header(f"{get_status_emoji(status)} {name}")
+    header_cols = st.columns([6, 1])
+    header_cols[0].header(f"{get_status_emoji(status)} {name}")
+    langfuse_url = case.get("langfuse_session_url")
+    langfuse_id = case.get("langfuse_session_id")
+    if langfuse_url:
+        header_cols[1].link_button("🔗 Langfuse", langfuse_url, use_container_width=True)
+    elif langfuse_id:
+        header_cols[1].caption(f"session: `{langfuse_id[:8]}…`")
+
     c1, c2, c3 = st.columns(3)
     c1.metric(t("score"), f"{score:.2f}")
     c2.metric(t("threshold"), f"{threshold:.2f}")
@@ -120,6 +148,36 @@ def render_case_details(case: dict[str, Any]) -> None:
     color = "green" if status == "passed_threshold" else "red"
     status_label = t("status_passed_label") if status == "passed_threshold" else t("status_failed_label")
     st.markdown(f"**{t('status')}:** :{color}[{status_label}]")
+
+    pet_profile = case.get("pet_profile") or {}
+    memories = case.get("memories") or []
+    recent_turns_ctx = case.get("recent_turns_context") or []
+    if pet_profile or memories or recent_turns_ctx:
+        with st.expander("🐾 Memory Context (fixture-provided)", expanded=False):
+            if pet_profile:
+                parts = [
+                    pet_profile.get("name", ""),
+                    pet_profile.get("species", ""),
+                    pet_profile.get("breed", ""),
+                    f"{pet_profile['age_in_months']}mo" if pet_profile.get("age_in_months") else "",
+                    f"{pet_profile['weight_latest']}kg" if pet_profile.get("weight_latest") else "",
+                    pet_profile.get("gender", ""),
+                    pet_profile.get("neutered_status", ""),
+                ]
+                st.caption("**Pet:** " + " · ".join(p for p in parts if p))
+            for mem in memories:
+                field = mem.get("field", "?")
+                val = mem.get("value", {})
+                detail = val.get("detail", str(val)) if isinstance(val, dict) else str(val)
+                term = mem.get("memory_term", "")
+                st.caption(f"• **{field}** ({term}): {detail}")
+            if recent_turns_ctx:
+                st.caption("**Prior turns:**")
+                for rt in recent_turns_ctx:
+                    role_label = "User" if rt.get("role") == "user" else "Bot"
+                    content_preview = str(rt.get("content", ""))[:120]
+                    st.caption(f"  [{role_label}] {content_preview}{'…' if len(str(rt.get('content', ''))) > 120 else ''}")
+
     st.divider()
 
     if get_lang() == "zh":
@@ -160,6 +218,75 @@ def render_case_details(case: dict[str, Any]) -> None:
             clean = clean.replace("<b>", "**").replace("</b>", "**")
             clean = clean.replace("<blockquote>", "").replace("</blockquote>", "")
             st.success(clean)
+
+            trace = turn.get("triage_trace")
+            if trace:
+                rule = trace.get("rule", {})
+                llm_struct = trace.get("llm", {})
+                kw = trace.get("response_keywords", {})
+                resolved_t = trace.get("resolved", {})
+                rule_level = (rule.get("level") or "").upper()
+                llm_level = (llm_struct.get("level") or "").upper()
+                llm_source = llm_struct.get("source", "none")
+                llm_inferred = (llm_struct.get("inferred_level") or "").upper()
+                llm_inferred_method = llm_struct.get("inferred_method") or ""
+                kw_level = (kw.get("level") or "").upper()
+                resolved_level = (resolved_t.get("level") or "").upper()
+                override = resolved_t.get("override", False)
+                direction = resolved_t.get("direction", "")
+                # Display level: structured if available, else inferred fallback.
+                llm_display = llm_level or llm_inferred
+                llm_is_inferred = not llm_level and bool(llm_inferred)
+                # Primary mismatch: rule engine vs best-available LLM level.
+                mismatch = bool(llm_display and rule_level != llm_display)
+                expander_label = (
+                    f"🔬 Triage — Rule {_LEVEL_EMOJI.get(rule_level, '?')} {rule_level}"
+                    + (
+                        f" · LLM {_LEVEL_EMOJI.get(llm_display, '?')} {llm_display}"
+                        + ("†" if llm_is_inferred else "")
+                        if llm_display else " · LLM —"
+                    )
+                    + f" · Prose {_LEVEL_EMOJI.get(kw_level, '?')} {kw_level}"
+                    + f" · Resolved {_LEVEL_EMOJI.get(resolved_level, '?')} {resolved_level}"
+                    + (" — ⚠️ rule/LLM mismatch" if mismatch else "")
+                )
+                with st.expander(expander_label, expanded=mismatch):
+                    tc1, tc2, tc3, tc4 = st.columns(4)
+                    tc1.metric(
+                        "Rule Engine",
+                        f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}" if rule_level else "—",
+                        f"score {rule.get('score', 0):.2f}",
+                    )
+                    if llm_level and llm_source == "partial_structured":
+                        tc2.metric("LLM Structured ‡", f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}", "triage_level field")
+                    elif llm_level:
+                        tc2.metric("LLM Structured", f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}", "triage_level field")
+                    elif llm_inferred:
+                        tc2.metric(
+                            "LLM Structured †",
+                            f"{_LEVEL_EMOJI.get(llm_inferred, '')} {llm_inferred}",
+                            f"inferred · {llm_inferred_method}",
+                        )
+                    else:
+                        tc2.metric("LLM Structured", "—", "plain fallback · no signal" if llm_source == "plain_fallback" else "not emitted")
+                    tc3.metric(
+                        "Prose Keywords",
+                        f"{_LEVEL_EMOJI.get(kw_level, '')} {kw_level}" if kw_level else "—",
+                        "audit only",
+                    )
+                    tc4.metric(
+                        "Resolved",
+                        f"{_LEVEL_EMOJI.get(resolved_level, '')} {resolved_level}" if resolved_level else "—",
+                        direction if override else "",
+                    )
+                    matched = rule.get("matched_rules", [])
+                    if matched:
+                        st.caption("Matched rules: " + "  ·  ".join(f"`{r}`" for r in matched))
+                    if llm_source == "partial_structured":
+                        st.caption("‡ chat_structured() returned triage_level but empty response_text; reply text from plain chat().")
+                    elif llm_is_inferred:
+                        st.caption("† Structured output unavailable (plain_fallback). LLM level inferred from response prose.")
+
         if i < len(turns) - 1:
             st.markdown("---")
 
@@ -502,9 +629,13 @@ def main() -> None:
         st.markdown(f"#### {t('test_cases')}")
         for i, case in enumerate(filtered):
             is_selected = i == st.session_state.selected_case_index
+            timeline = _get_triage_timeline(case)
+            timeline_str = "".join(_LEVEL_EMOJI.get(lv, "⚪") for lv, _ in timeline)
+            has_mismatch = any(m for _, m in timeline)
             label = (
                 f"{get_status_emoji(case.get('status', ''))} {case.get('name', '?')}\n"
                 f"📊 {case.get('score', 0):.2f} / {case.get('threshold', 0.7):.2f}"
+                + (f"  {timeline_str}" + (" ⚠️" if has_mismatch else "") if timeline_str else "")
             )
             if st.button(
                 label,

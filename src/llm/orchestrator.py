@@ -38,18 +38,29 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.memory.reader import load_pet_context, load_related_memories
-from src.observability.tracing import observe_span, update_span, update_trace
 from src.triage.human_crisis import HUMAN_CRISIS_RESPONSE, detect_human_crisis
+from src.observability.tracing import observe_span, update_span, update_trace, get_current_trace_url
 from src.triage.rules_engine import (
+    ORANGE_PATTERNS,
+    RED_PATTERNS,
     audit_log_triage_divergence,
     classify_by_rules,
     compare_and_resolve,
     detect_triage_from_response,
     get_red_floor,
+    infer_triage_from_plain_response,
 )
+
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Weight lookup for matched rule names — built once at import so the per-turn
+# loop just does a dict get rather than scanning pattern lists.
+_RULE_WEIGHT_LOOKUP: dict[str, float] = {
+    **{f"red:{name}": weight for name, _, weight in RED_PATTERNS},
+    **{f"orange:{name}": weight for name, _, weight in ORANGE_PATTERNS},
+}
 
 
 def _active_chat_model() -> str:
@@ -336,6 +347,9 @@ async def _generate_response_classic(
     )
 
     # ── 1. LOAD CONTEXT ───────────────────────────────────────────────────────
+    # Accumulated KB metadata — merged into the single update_span at the end
+    # because Langfuse SDK replaces (not merges) metadata on each call.
+    _kb_metadata: dict = {}
     ctx: dict = {}
     if pet:
         try:
@@ -354,6 +368,22 @@ async def _generate_response_classic(
                 ctx.setdefault("short_term_memories", []).extend(
                     m for m in related if m.id not in existing_ids
                 )
+                if related:
+                    _kb_metadata = {
+                        "kb_fields_retrieved": [m.field for m in related],
+                        "kb_memory_count": len(related),
+                        "kb_entries": [
+                            {
+                                "field": m.field,
+                                "value": m.value,
+                                "memory_term": m.memory_term.value,
+                                "memory_type": m.memory_type.value,
+                                "confidence": m.confidence_score,
+                            }
+                            for m in related
+                        ],
+                    }
+                    update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
             except Exception as exc:
                 logger.warning("load_related_memories failed", error=str(exc))
 
@@ -404,6 +434,15 @@ async def _generate_response_classic(
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
     structured_triage: Optional[TriageLevel] = None
+    # When chat_structured() produces a valid triage_level but a degenerate
+    # response_text (e.g. DeepSeek emits correct JSON metadata but omits the
+    # prose reply), we save the triage here before raising so the plain chat()
+    # fallback can reuse it rather than losing the LLM's classification entirely.
+    _partial_structured_triage: Optional[TriageLevel] = None
+    # Populated on plain_fallback when no partial structured triage is available —
+    # best-effort inference from response prose for tracing only, never decisions.
+    _inferred_triage: Optional[TriageLevel] = None
+    _inferred_method: str = "none"
     response_text = ""
     in_tok = 0
     out_tok = 0
@@ -416,6 +455,9 @@ async def _generate_response_classic(
         in_tok = raw.get("input_tokens", 0)
         out_tok = raw.get("output_tokens", 0)
         structured_triage = _parse_structured_triage(raw.get("triage_level"))
+        # Save triage_level before potentially raising — if response_text is
+        # degenerate we still want the LLM's classification on the fallback path.
+        _partial_structured_triage = structured_triage
         if not response_text or response_text in _STUB_RESPONSES or len(response_text) < _STUB_MIN_LEN:
             # JSON parsed but response_text was empty or a punctuation stub
             # ("...") — model put everything in metadata or hit a compliance
@@ -437,10 +479,13 @@ async def _generate_response_classic(
             response_text = response_text.strip()
             in_tok = raw.get("input_tokens", 0)
             out_tok = raw.get("output_tokens", 0)
-            # No structured signal available on the fallback path; the
-            # resolver will rely on rule_classification alone (which is the
-            # safety floor anyway).
-            structured_triage = None
+            # Reuse triage_level from the partial structured call if available
+            # (DeepSeek produced valid JSON metadata but degenerate response_text).
+            # Only fall back to text inference when the structured call raised
+            # before we could parse triage_level at all.
+            structured_triage = _partial_structured_triage
+            if structured_triage is None:
+                _inferred_triage, _inferred_method = infer_triage_from_plain_response(response_text)
         except Exception as exc2:
             logger.error("plain chat fallback also failed", error=str(exc2))
             response_text = (
@@ -519,6 +564,22 @@ async def _generate_response_classic(
         "rule": rule_result.classification.value,
         # LLM's own triage from structured output — authoritative LLM signal.
         "llm": llm_triage.value if llm_triage else None,
+        # How the LLM triage was obtained:
+        #   "structured"         — chat_structured() returned triage_level + response_text
+        #   "partial_structured" — chat_structured() returned triage_level but degenerate
+        #                          response_text; plain chat() was used for the reply text
+        #   "plain_fallback"     — chat_structured() raised before triage_level was parsed;
+        #                          plain chat() used for everything
+        "llm_source": (
+            "structured" if structured_triage is not None and _partial_structured_triage is None
+            else "partial_structured" if structured_triage is not None
+            else "plain_fallback"
+        ),
+        # When llm_source == "plain_fallback", best-effort triage inferred from
+        # the response prose (emoji banners first, then keyword scan).
+        # For tracing only — never participates in any decision.
+        "llm_inferred": _inferred_triage.value if _inferred_triage else None,
+        "llm_inferred_method": _inferred_method if structured_triage is None else None,
         # Audit-only: substring-scan of the LLM's reply. Useful for spotting
         # cases where the LLM's wording disagreed with its structured triage
         # (or the rule engine), but not part of the decision graph.
@@ -531,6 +592,9 @@ async def _generate_response_classic(
         "matched_patterns": rule_result.matched_rules,
         "confidence": rule_result.confidence,
         "score": getattr(rule_result, "score", 0.0),
+        # Langfuse trace URL for this turn — used by the test runner to derive
+        # the session URL (swap /traces/... → /sessions/{dialogue_id}).
+        "langfuse_trace_url": get_current_trace_url(),
     }
 
     risk_level = map_triage_to_risk(effective_triage)
@@ -555,14 +619,52 @@ async def _generate_response_classic(
     update_span(
         output={"response_text": response_text},
         metadata={
+            # ── triage chain ──────────────────────────────────────────────────
+            "triage_rule": triage_result["rule"],
+            "triage_rule_matched": triage_result["matched_patterns"],
+            "triage_rule_score": triage_result.get("score", 0.0),
+            # Per-rule breakdown: name + weight contribution to final score.
+            "triage_rule_detail": [
+                {"rule": r, "weight": _RULE_WEIGHT_LOOKUP.get(r, 0.0)}
+                for r in rule_result.matched_rules
+            ],
+            "triage_llm": triage_result["llm"],
+            "triage_llm_source": triage_result["llm_source"],
+            "triage_llm_inferred": triage_result.get("llm_inferred"),
+            "triage_llm_inferred_method": triage_result.get("llm_inferred_method"),
             "triage_final": triage_result["final"],
             "triage_overridden": triage_result["overridden"],
+            "triage_override_direction": triage_result.get("override_direction", ""),
+            # ── context load ──────────────────────────────────────────────────
+            "memory_long_term_count": len(long_term),
+            "memory_long_term_entries": [
+                {"field": m.field, "value": m.value, "memory_type": m.memory_type.value, "confidence": m.confidence_score}
+                for m in long_term
+            ],
+            "memory_mid_term_count": len(mid_term),
+            "memory_mid_term_entries": [
+                {"field": m.field, "value": m.value, "memory_type": m.memory_type.value, "confidence": m.confidence_score}
+                for m in mid_term
+            ],
+            "memory_short_term_count": len(short_term),
+            "memory_recent_turns_count": len(recent_turns),
+            # ── KB retrieve (populated only when is_health + memories found) ──
+            **_kb_metadata,
+            # ── KB router: followup questions + red-flag rules injected into prompt ──
+            "kb_followups": [f.id for f in followups],
+            "kb_red_flags": [rf.id for rf in red_flags],
+            # ── LLM call ──────────────────────────────────────────────────────
             "intent": intent,
             "symptom_tags": symptom_tags,
             "input_tokens": in_tok,
             "output_tokens": out_tok,
         },
     )
+    # Propagate triage_llm_source to trace tags so Langfuse filter works:
+    #   filter tag = "partial_structured" → DeepSeek JSON-metadata-only turns
+    #   filter tag = "plain_fallback"     → full structured failure turns
+    if triage_result["llm_source"] != "structured":
+        update_trace(tags=[tier.value, "classic-path", triage_result["llm_source"]])
 
     return OrchestratorResult(
         response_text=response_text,

@@ -28,6 +28,13 @@ os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-bot-token")
 os.environ.setdefault("GOOGLE_API_KEY", "")
 os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "1")
 
+# deepeval's _debug_print_prompt calls print() which crashes on Windows cp1252
+# consoles when LLM responses contain emoji (e.g. 🟠). Force UTF-8 output.
+import sys
+if sys.stdout.encoding and sys.stdout.encoding.lower().replace("-", "") not in ("utf8", "utf-8"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+
 from src.config import settings
 from src.bot.handlers import message as message_handler
 from src.bot.middleware.rate_limiter import RateLimiterMiddleware
@@ -538,10 +545,16 @@ class TestUserContextMiddleware(BaseMiddleware):
 
 
 class ConversationRuntime:
-    def __init__(self, pet: Pet, memories: list[PetMemory], recent_turns: list[dict[str, str]]) -> None:
+    def __init__(self, pet: Pet, memories: list[PetMemory], recent_turns: list[dict[str, str]], dialogue_id: str) -> None:
         self.pet = pet
         self.memories = memories
         self.recent_turns = list(recent_turns)
+        self.dialogue_id = dialogue_id
+        # Populated by mock_multiturn_runtime per turn — one entry per user message.
+        self.triage_results: list[dict[str, Any]] = []
+        # Derived from the first turn's Langfuse trace URL. Allows linking the
+        # report directly to the Langfuse session for this case.
+        self.langfuse_session_url: str | None = None
 
     def record_exchange(self, user_text: str, assistant_text: str) -> None:
         self.recent_turns.append({"role": "user", "content": user_text})
@@ -784,13 +797,14 @@ def mock_multiturn_runtime(
         # background context the case author wanted established before the
         # fresh conversation begins.
         recent_turns = misplaced_turns + list(case.get("recent_turns", []))
+        fake_session_id = uuid.uuid4()
+        fake_dialogue_id = uuid.uuid4()
         runtime = ConversationRuntime(
             pet=pet,
             memories=memories,
             recent_turns=recent_turns,
+            dialogue_id=str(fake_dialogue_id),
         )
-        fake_session_id = uuid.uuid4()
-        fake_dialogue_id = uuid.uuid4()
 
         async def _fake_load_pet_context(*args: Any, **kwargs: Any) -> dict[str, Any]:
             return {
@@ -805,7 +819,10 @@ def mock_multiturn_runtime(
             }
 
         async def _fake_load_related_memories(*args: Any, **kwargs: Any) -> list[PetMemory]:
-            return [m for m in runtime.memories if m.memory_term == MemoryTerm.SHORT]
+            # Real load_related_memories does semantic search across all memory terms.
+            # Return all memories so KB logging fires and Langfuse traces contain
+            # kb_entries even for cases whose fixtures only have long/mid memories.
+            return list(runtime.memories)
 
         async def _fake_store_triage_record(*args: Any, **kwargs: Any) -> None:
             return None
@@ -828,9 +845,26 @@ def mock_multiturn_runtime(
         async def _fake_enqueue_extraction(*args: Any, **kwargs: Any) -> None:
             return None
 
+        _orig_generate_response = message_handler.generate_response
+
+        async def _capturing_generate_response(*args: Any, **kwargs: Any) -> Any:
+            result = await _orig_generate_response(*args, **kwargs)
+            triage = result.triage_result or {}
+            runtime.triage_results.append(triage)
+            # Derive the Langfuse session URL from the first turn's trace URL.
+            # Trace URL: "{host}/project/{projectId}/traces/{traceId}"
+            # Session URL: "{host}/project/{projectId}/sessions/{sessionId}"
+            if runtime.langfuse_session_url is None:
+                trace_url = triage.get("langfuse_trace_url")
+                if trace_url and "/traces/" in trace_url:
+                    project_base = trace_url.rsplit("/traces/", 1)[0]
+                    runtime.langfuse_session_url = f"{project_base}/sessions/{runtime.dialogue_id}"
+            return result
+
         monkeypatch.setattr(orchestrator, "load_pet_context", _fake_load_pet_context)
         monkeypatch.setattr(orchestrator, "load_related_memories", _fake_load_related_memories)
         monkeypatch.setattr(orchestrator, "_store_triage_record", _fake_store_triage_record)
+        monkeypatch.setattr(message_handler, "generate_response", _capturing_generate_response)
         monkeypatch.setattr(message_handler, "load_user_pets", _fake_load_user_pets)
         monkeypatch.setattr(message_handler, "store_raw_message", _fake_store_raw_message)
         monkeypatch.setattr(message_handler, "get_or_create_session", _fake_get_or_create_session)
