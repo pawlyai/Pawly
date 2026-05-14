@@ -404,8 +404,13 @@ async def _generate_response_classic(
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
     structured_triage: Optional[TriageLevel] = None
-    # Populated when chat_structured falls back to plain chat() — best-effort
-    # inference from the response prose for tracing only, never for decisions.
+    # When chat_structured() produces a valid triage_level but a degenerate
+    # response_text (e.g. DeepSeek emits correct JSON metadata but omits the
+    # prose reply), we save the triage here before raising so the plain chat()
+    # fallback can reuse it rather than losing the LLM's classification entirely.
+    _partial_structured_triage: Optional[TriageLevel] = None
+    # Populated on plain_fallback when no partial structured triage is available —
+    # best-effort inference from response prose for tracing only, never decisions.
     _inferred_triage: Optional[TriageLevel] = None
     _inferred_method: str = "none"
     response_text = ""
@@ -420,6 +425,9 @@ async def _generate_response_classic(
         in_tok = raw.get("input_tokens", 0)
         out_tok = raw.get("output_tokens", 0)
         structured_triage = _parse_structured_triage(raw.get("triage_level"))
+        # Save triage_level before potentially raising — if response_text is
+        # degenerate we still want the LLM's classification on the fallback path.
+        _partial_structured_triage = structured_triage
         if not response_text or response_text in _STUB_RESPONSES or len(response_text) < _STUB_MIN_LEN:
             # JSON parsed but response_text was empty or a punctuation stub
             # ("...") — model put everything in metadata or hit a compliance
@@ -441,15 +449,13 @@ async def _generate_response_classic(
             response_text = response_text.strip()
             in_tok = raw.get("input_tokens", 0)
             out_tok = raw.get("output_tokens", 0)
-            # No structured signal available on the fallback path; the
-            # resolver will rely on rule_classification alone (which is the
-            # safety floor anyway).
-            structured_triage = None
-            # Best-effort: scan the plain response text for the LLM's own
-            # triage indicators (emoji banners it wrote per its instructions,
-            # then urgency keywords). Stored for tracing only — never used in
-            # the decision path.
-            _inferred_triage, _inferred_method = infer_triage_from_plain_response(response_text)
+            # Reuse triage_level from the partial structured call if available
+            # (DeepSeek produced valid JSON metadata but degenerate response_text).
+            # Only fall back to text inference when the structured call raised
+            # before we could parse triage_level at all.
+            structured_triage = _partial_structured_triage
+            if structured_triage is None:
+                _inferred_triage, _inferred_method = infer_triage_from_plain_response(response_text)
         except Exception as exc2:
             logger.error("plain chat fallback also failed", error=str(exc2))
             response_text = (
@@ -529,9 +535,16 @@ async def _generate_response_classic(
         # LLM's own triage from structured output — authoritative LLM signal.
         "llm": llm_triage.value if llm_triage else None,
         # How the LLM triage was obtained:
-        #   "structured"      — chat_structured() returned a triage_level field
-        #   "plain_fallback"  — chat_structured() failed; plain chat() was used
-        "llm_source": "structured" if structured_triage is not None else "plain_fallback",
+        #   "structured"         — chat_structured() returned triage_level + response_text
+        #   "partial_structured" — chat_structured() returned triage_level but degenerate
+        #                          response_text; plain chat() was used for the reply text
+        #   "plain_fallback"     — chat_structured() raised before triage_level was parsed;
+        #                          plain chat() used for everything
+        "llm_source": (
+            "structured" if structured_triage is not None and _partial_structured_triage is None
+            else "partial_structured" if structured_triage is not None
+            else "plain_fallback"
+        ),
         # When llm_source == "plain_fallback", best-effort triage inferred from
         # the response prose (emoji banners first, then keyword scan).
         # For tracing only — never participates in any decision.

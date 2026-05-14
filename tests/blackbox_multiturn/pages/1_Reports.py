@@ -249,7 +249,9 @@ def render_case_details(case: dict[str, Any]) -> None:
                         f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}" if rule_level else "—",
                         f"score {rule.get('score', 0):.2f}",
                     )
-                    if llm_level:
+                    if llm_level and llm_source == "partial_structured":
+                        tc2.metric("LLM Structured ‡", f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}", "triage_level field")
+                    elif llm_level:
                         tc2.metric("LLM Structured", f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}", "triage_level field")
                     elif llm_inferred:
                         tc2.metric(
@@ -258,7 +260,7 @@ def render_case_details(case: dict[str, Any]) -> None:
                             f"inferred · {llm_inferred_method}",
                         )
                     else:
-                        tc2.metric("LLM Structured", "—", f"plain fallback · no signal" if llm_source == "plain_fallback" else "not emitted")
+                        tc2.metric("LLM Structured", "—", "plain fallback · no signal" if llm_source == "plain_fallback" else "not emitted")
                     tc3.metric(
                         "Prose Keywords",
                         f"{_LEVEL_EMOJI.get(kw_level, '')} {kw_level}" if kw_level else "—",
@@ -272,7 +274,9 @@ def render_case_details(case: dict[str, Any]) -> None:
                     matched = rule.get("matched_rules", [])
                     if matched:
                         st.caption("Matched rules: " + "  ·  ".join(f"`{r}`" for r in matched))
-                    if llm_is_inferred:
+                    if llm_source == "partial_structured":
+                        st.caption("‡ chat_structured() returned triage_level but empty response_text; reply text from plain chat().")
+                    elif llm_is_inferred:
                         st.caption("† Structured output unavailable (plain_fallback). LLM level inferred from response prose.")
 
         if i < len(turns) - 1:
