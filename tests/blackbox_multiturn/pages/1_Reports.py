@@ -47,8 +47,27 @@ def load_report(filename: str) -> dict[str, Any]:
         return json.load(fh)
 
 
+_LEVEL_EMOJI: dict[str, str] = {"RED": "🔴", "ORANGE": "🟠", "GREEN": "🟢"}
+
+
 def get_status_emoji(status: str) -> str:
     return "✅" if status == "passed_threshold" else "❌"
+
+
+def _get_triage_timeline(case: dict[str, Any]) -> list[tuple[str, bool]]:
+    """Return [(resolved_level, has_mismatch), ...] per assistant turn."""
+    result = []
+    for turn in case.get("turns", []):
+        if turn.get("role") != "assistant":
+            continue
+        trace = turn.get("triage_trace")
+        if not trace:
+            continue
+        rule_level = trace.get("rule", {}).get("level", "")
+        llm_level = trace.get("llm_response", {}).get("level", "")
+        resolved_level = trace.get("resolved", {}).get("level", "")
+        result.append((resolved_level, rule_level != llm_level))
+    return result
 
 
 def render_summary(summary: dict[str, Any], selected: str, reports: list[str]) -> None:
@@ -120,6 +139,36 @@ def render_case_details(case: dict[str, Any]) -> None:
     color = "green" if status == "passed_threshold" else "red"
     status_label = t("status_passed_label") if status == "passed_threshold" else t("status_failed_label")
     st.markdown(f"**{t('status')}:** :{color}[{status_label}]")
+
+    pet_profile = case.get("pet_profile") or {}
+    memories = case.get("memories") or []
+    recent_turns_ctx = case.get("recent_turns_context") or []
+    if pet_profile or memories or recent_turns_ctx:
+        with st.expander("🐾 Memory Context (fixture-provided)", expanded=False):
+            if pet_profile:
+                parts = [
+                    pet_profile.get("name", ""),
+                    pet_profile.get("species", ""),
+                    pet_profile.get("breed", ""),
+                    f"{pet_profile['age_in_months']}mo" if pet_profile.get("age_in_months") else "",
+                    f"{pet_profile['weight_latest']}kg" if pet_profile.get("weight_latest") else "",
+                    pet_profile.get("gender", ""),
+                    pet_profile.get("neutered_status", ""),
+                ]
+                st.caption("**Pet:** " + " · ".join(p for p in parts if p))
+            for mem in memories:
+                field = mem.get("field", "?")
+                val = mem.get("value", {})
+                detail = val.get("detail", str(val)) if isinstance(val, dict) else str(val)
+                term = mem.get("memory_term", "")
+                st.caption(f"• **{field}** ({term}): {detail}")
+            if recent_turns_ctx:
+                st.caption("**Prior turns:**")
+                for rt in recent_turns_ctx:
+                    role_label = "User" if rt.get("role") == "user" else "Bot"
+                    content_preview = str(rt.get("content", ""))[:120]
+                    st.caption(f"  [{role_label}] {content_preview}{'…' if len(str(rt.get('content', ''))) > 120 else ''}")
+
     st.divider()
 
     if get_lang() == "zh":
@@ -160,6 +209,44 @@ def render_case_details(case: dict[str, Any]) -> None:
             clean = clean.replace("<b>", "**").replace("</b>", "**")
             clean = clean.replace("<blockquote>", "").replace("</blockquote>", "")
             st.success(clean)
+
+            trace = turn.get("triage_trace")
+            if trace:
+                rule = trace.get("rule", {})
+                llm_resp = trace.get("llm_response", {})
+                resolved_t = trace.get("resolved", {})
+                rule_level = rule.get("level", "")
+                llm_level = llm_resp.get("level", "")
+                resolved_level = resolved_t.get("level", "")
+                override = resolved_t.get("override", False)
+                direction = resolved_t.get("direction", "")
+                mismatch = rule_level != llm_level
+                expander_label = (
+                    f"🔬 Triage — Rule {_LEVEL_EMOJI.get(rule_level, '?')} {rule_level}"
+                    f" · Response {_LEVEL_EMOJI.get(llm_level, '?')} {llm_level}"
+                    f" · Resolved {_LEVEL_EMOJI.get(resolved_level, '?')} {resolved_level}"
+                    + (" — ⚠️ mismatch" if mismatch else "")
+                )
+                with st.expander(expander_label, expanded=mismatch):
+                    tc1, tc2, tc3 = st.columns(3)
+                    tc1.metric(
+                        "Rule Engine",
+                        f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}",
+                        f"score {rule.get('score', 0):.2f}",
+                    )
+                    tc2.metric(
+                        "Response Keywords",
+                        f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}",
+                    )
+                    tc3.metric(
+                        "Resolved",
+                        f"{_LEVEL_EMOJI.get(resolved_level, '')} {resolved_level}",
+                        direction if override else "",
+                    )
+                    matched = rule.get("matched_rules", [])
+                    if matched:
+                        st.caption("Matched rules: " + "  ·  ".join(f"`{r}`" for r in matched))
+
         if i < len(turns) - 1:
             st.markdown("---")
 
@@ -502,9 +589,13 @@ def main() -> None:
         st.markdown(f"#### {t('test_cases')}")
         for i, case in enumerate(filtered):
             is_selected = i == st.session_state.selected_case_index
+            timeline = _get_triage_timeline(case)
+            timeline_str = "".join(_LEVEL_EMOJI.get(lv, "⚪") for lv, _ in timeline)
+            has_mismatch = any(m for _, m in timeline)
             label = (
                 f"{get_status_emoji(case.get('status', ''))} {case.get('name', '?')}\n"
                 f"📊 {case.get('score', 0):.2f} / {case.get('threshold', 0.7):.2f}"
+                + (f"  {timeline_str}" + (" ⚠️" if has_mismatch else "") if timeline_str else "")
             )
             if st.button(
                 label,

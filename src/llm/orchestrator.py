@@ -347,6 +347,12 @@ async def _generate_response_classic(
                 ctx.setdefault("short_term_memories", []).extend(
                     m for m in related if m.id not in existing_ids
                 )
+                if related:
+                    update_span(metadata={
+                        "kb_fields_retrieved": [m.field for m in related],
+                        "kb_memory_count": len(related),
+                    })
+                    update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
             except Exception as exc:
                 logger.warning("load_related_memories failed", error=str(exc))
 

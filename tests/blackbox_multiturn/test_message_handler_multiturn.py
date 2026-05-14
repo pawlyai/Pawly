@@ -6,6 +6,12 @@ from typing import Any
 
 import pytest
 
+from src.triage.rules_engine import (
+    classify_by_rules,
+    compare_and_resolve,
+    detect_triage_from_response,
+)
+
 
 def _append_log(log_path: Path, event: dict[str, Any]) -> None:
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -63,6 +69,7 @@ def test_handle_message_multiturn_with_conversational_geval(
         runtime = mock_multiturn_runtime(case, user, pet)
         bot, dp, fake_api, _redis = build_router_runtime(user, pet)
         full_turns: list[Turn] = []
+        turn_traces: list[dict[str, Any]] = []
 
         user_turns = case.get("user_turns") or []
         for index, user_text in enumerate(user_turns, start=1):
@@ -75,6 +82,26 @@ def test_handle_message_multiturn_with_conversational_geval(
             full_turns.append(Turn(role="assistant", content=assistant_text))
             runtime.record_exchange(user_text, assistant_text)
 
+            rule_result = classify_by_rules(pet, user_text)
+            llm_triage = detect_triage_from_response(assistant_text)
+            resolved = compare_and_resolve(llm_triage, rule_result)
+            triage_trace: dict[str, Any] = {
+                "rule": {
+                    "level": rule_result.classification.value,
+                    "matched_rules": rule_result.matched_rules,
+                    "score": rule_result.score,
+                },
+                "llm_response": {
+                    "level": llm_triage.value if llm_triage else "GREEN",
+                },
+                "resolved": {
+                    "level": resolved.final_classification.value,
+                    "override": resolved.overridden,
+                    "direction": resolved.override_direction,
+                },
+            }
+            turn_traces.append(triage_trace)
+
             _append_log(
                 log_path,
                 {
@@ -84,6 +111,7 @@ def test_handle_message_multiturn_with_conversational_geval(
                     "user_text": user_text,
                     "assistant_text": assistant_text,
                     "new_message_count": len(new_messages),
+                    "triage_trace": triage_trace,
                 },
             )
 
@@ -115,6 +143,13 @@ def test_handle_message_multiturn_with_conversational_geval(
             _log_metric_to_confident=False,
         )
 
+        serialized_turns: list[dict[str, Any]] = []
+        for i, turn in enumerate(full_turns):
+            t: dict[str, Any] = {"role": turn.role, "content": turn.content}
+            if turn.role == "assistant":
+                t["triage_trace"] = turn_traces[i // 2]
+            serialized_turns.append(t)
+
         case_result: dict[str, Any] = {
             "name": case_name,
             "status": "passed_threshold" if score >= metric.threshold else "below_threshold",
@@ -122,7 +157,10 @@ def test_handle_message_multiturn_with_conversational_geval(
             "threshold": metric.threshold,
             "reason": metric.reason,
             "turn_count": len(full_turns),
-            "turns": [{"role": turn.role, "content": turn.content} for turn in full_turns],
+            "turns": serialized_turns,
+            "pet_profile": case.get("pet_profile", {}),
+            "memories": case.get("memories", []),
+            "recent_turns_context": case.get("recent_turns", []),
             "metadata": case.get("metadata"),
         }
         report_state["cases"].append(case_result)
