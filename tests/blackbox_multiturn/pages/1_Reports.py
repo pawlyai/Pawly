@@ -55,7 +55,8 @@ def get_status_emoji(status: str) -> str:
 
 
 def _get_triage_timeline(case: dict[str, Any]) -> list[tuple[str, bool]]:
-    """Return [(resolved_level, has_mismatch), ...] per assistant turn."""
+    """Return [(resolved_level, has_mismatch), ...] per assistant turn.
+    Mismatch = rule engine disagrees with the LLM's structured triage level."""
     result = []
     for turn in case.get("turns", []):
         if turn.get("role") != "assistant":
@@ -64,9 +65,9 @@ def _get_triage_timeline(case: dict[str, Any]) -> list[tuple[str, bool]]:
         if not trace:
             continue
         rule_level = trace.get("rule", {}).get("level", "")
-        llm_level = trace.get("llm_response", {}).get("level", "")
+        llm_level = trace.get("llm", {}).get("level") or ""
         resolved_level = trace.get("resolved", {}).get("level", "")
-        result.append((resolved_level, rule_level != llm_level))
+        result.append((resolved_level, bool(llm_level and rule_level != llm_level)))
     return result
 
 
@@ -213,34 +214,44 @@ def render_case_details(case: dict[str, Any]) -> None:
             trace = turn.get("triage_trace")
             if trace:
                 rule = trace.get("rule", {})
-                llm_resp = trace.get("llm_response", {})
+                llm_struct = trace.get("llm", {})
+                kw = trace.get("response_keywords", {})
                 resolved_t = trace.get("resolved", {})
-                rule_level = rule.get("level", "")
-                llm_level = llm_resp.get("level", "")
-                resolved_level = resolved_t.get("level", "")
+                rule_level = (rule.get("level") or "").upper()
+                llm_level = (llm_struct.get("level") or "").upper()
+                kw_level = (kw.get("level") or "").upper()
+                resolved_level = (resolved_t.get("level") or "").upper()
                 override = resolved_t.get("override", False)
                 direction = resolved_t.get("direction", "")
-                mismatch = rule_level != llm_level
+                # Primary mismatch: rule engine vs LLM structured output.
+                mismatch = bool(llm_level and rule_level != llm_level)
                 expander_label = (
                     f"🔬 Triage — Rule {_LEVEL_EMOJI.get(rule_level, '?')} {rule_level}"
-                    f" · Response {_LEVEL_EMOJI.get(llm_level, '?')} {llm_level}"
-                    f" · Resolved {_LEVEL_EMOJI.get(resolved_level, '?')} {resolved_level}"
-                    + (" — ⚠️ mismatch" if mismatch else "")
+                    + (f" · LLM {_LEVEL_EMOJI.get(llm_level, '?')} {llm_level}" if llm_level else " · LLM —")
+                    + f" · Prose {_LEVEL_EMOJI.get(kw_level, '?')} {kw_level}"
+                    + f" · Resolved {_LEVEL_EMOJI.get(resolved_level, '?')} {resolved_level}"
+                    + (" — ⚠️ rule/LLM mismatch" if mismatch else "")
                 )
                 with st.expander(expander_label, expanded=mismatch):
-                    tc1, tc2, tc3 = st.columns(3)
+                    tc1, tc2, tc3, tc4 = st.columns(4)
                     tc1.metric(
                         "Rule Engine",
-                        f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}",
+                        f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}" if rule_level else "—",
                         f"score {rule.get('score', 0):.2f}",
                     )
                     tc2.metric(
-                        "Response Keywords",
-                        f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}",
+                        "LLM Structured",
+                        f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}" if llm_level else "—",
+                        "triage_level field" if llm_level else "not emitted",
                     )
                     tc3.metric(
+                        "Prose Keywords",
+                        f"{_LEVEL_EMOJI.get(kw_level, '')} {kw_level}" if kw_level else "—",
+                        "audit only",
+                    )
+                    tc4.metric(
                         "Resolved",
-                        f"{_LEVEL_EMOJI.get(resolved_level, '')} {resolved_level}",
+                        f"{_LEVEL_EMOJI.get(resolved_level, '')} {resolved_level}" if resolved_level else "—",
                         direction if override else "",
                     )
                     matched = rule.get("matched_rules", [])

@@ -6,11 +6,7 @@ from typing import Any
 
 import pytest
 
-from src.triage.rules_engine import (
-    classify_by_rules,
-    compare_and_resolve,
-    detect_triage_from_response,
-)
+from src.triage.rules_engine import classify_by_rules, detect_triage_from_response
 
 
 def _append_log(log_path: Path, event: dict[str, Any]) -> None:
@@ -82,22 +78,29 @@ def test_handle_message_multiturn_with_conversational_geval(
             full_turns.append(Turn(role="assistant", content=assistant_text))
             runtime.record_exchange(user_text, assistant_text)
 
+            # Live triage data captured by the generate_response wrapper in conftest.
+            live = runtime.triage_results[index - 1] if index - 1 < len(runtime.triage_results) else {}
+            # Post-hoc fallback (used only when live data is absent).
             rule_result = classify_by_rules(pet, user_text)
-            llm_triage = detect_triage_from_response(assistant_text)
-            resolved = compare_and_resolve(llm_triage, rule_result.classification)
+            kw_triage = detect_triage_from_response(assistant_text)
             triage_trace: dict[str, Any] = {
                 "rule": {
-                    "level": rule_result.classification.value,
-                    "matched_rules": rule_result.matched_rules,
-                    "score": rule_result.score,
+                    "level": live.get("rule") or rule_result.classification.value,
+                    "matched_rules": live.get("matched_patterns") or rule_result.matched_rules,
+                    "score": live.get("score") or rule_result.score,
                 },
-                "llm_response": {
-                    "level": llm_triage.value if llm_triage else "GREEN",
+                "llm": {
+                    # Real structured triage_level from the LLM's JSON output.
+                    "level": live.get("llm"),
+                },
+                "response_keywords": {
+                    # Audit-only keyword scan of the assistant's reply text.
+                    "level": live.get("llm_response_keywords") or kw_triage.value,
                 },
                 "resolved": {
-                    "level": resolved.final_classification.value,
-                    "override": resolved.overridden,
-                    "direction": resolved.override_direction,
+                    "level": live.get("final") or rule_result.classification.value,
+                    "override": live.get("overridden", False),
+                    "direction": live.get("override_direction", ""),
                 },
             }
             turn_traces.append(triage_trace)
