@@ -170,6 +170,8 @@ def test_handle_message_multiturn_with_conversational_geval(
             "memories": case.get("memories", []),
             "recent_turns_context": case.get("recent_turns", []),
             "metadata": case.get("metadata"),
+            "langfuse_session_id": runtime.dialogue_id,
+            "langfuse_session_url": runtime.langfuse_session_url,
         }
         report_state["cases"].append(case_result)
         _append_log(

@@ -105,5 +105,19 @@ def update_trace(**kwargs: Any) -> None:
         logger.debug("langfuse update_trace failed", error=str(exc))
 
 
+def get_current_trace_url() -> str | None:
+    """
+    Return the Langfuse URL for the active trace, e.g.
+    'https://cloud.langfuse.com/project/clxxx/traces/trace-id'.
+    Returns None when Langfuse is disabled or the call fails.
+    """
+    if not _LANGFUSE_ENABLED or langfuse_context is None:
+        return None
+    try:
+        return langfuse_context.get_current_trace_url()
+    except Exception:
+        return None
+
+
 def is_enabled() -> bool:
     return _LANGFUSE_ENABLED

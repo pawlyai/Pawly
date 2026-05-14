@@ -131,7 +131,15 @@ def render_case_details(case: dict[str, Any]) -> None:
     turn_count = case.get("turn_count", 0)
     turns = case.get("turns", [])
 
-    st.header(f"{get_status_emoji(status)} {name}")
+    header_cols = st.columns([6, 1])
+    header_cols[0].header(f"{get_status_emoji(status)} {name}")
+    langfuse_url = case.get("langfuse_session_url")
+    langfuse_id = case.get("langfuse_session_id")
+    if langfuse_url:
+        header_cols[1].link_button("🔗 Langfuse", langfuse_url, use_container_width=True)
+    elif langfuse_id:
+        header_cols[1].caption(f"session: `{langfuse_id[:8]}…`")
+
     c1, c2, c3 = st.columns(3)
     c1.metric(t("score"), f"{score:.2f}")
     c2.metric(t("threshold"), f"{threshold:.2f}")

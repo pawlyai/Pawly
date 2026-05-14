@@ -38,7 +38,7 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.memory.reader import load_pet_context, load_related_memories
-from src.observability.tracing import observe_span, update_span, update_trace
+from src.observability.tracing import observe_span, update_span, update_trace, get_current_trace_url
 from src.triage.rules_engine import (
     audit_log_triage_divergence,
     classify_by_rules,
@@ -572,6 +572,9 @@ async def _generate_response_classic(
         "matched_patterns": rule_result.matched_rules,
         "confidence": rule_result.confidence,
         "score": getattr(rule_result, "score", 0.0),
+        # Langfuse trace URL for this turn — used by the test runner to derive
+        # the session URL (swap /traces/... → /sessions/{dialogue_id}).
+        "langfuse_trace_url": get_current_trace_url(),
     }
 
     risk_level = map_triage_to_risk(effective_triage)
