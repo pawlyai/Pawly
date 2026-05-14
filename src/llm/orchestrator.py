@@ -45,6 +45,7 @@ from src.triage.rules_engine import (
     compare_and_resolve,
     detect_triage_from_response,
     get_red_floor,
+    infer_triage_from_plain_response,
 )
 from src.utils.logger import get_logger
 
@@ -403,6 +404,10 @@ async def _generate_response_classic(
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
     structured_triage: Optional[TriageLevel] = None
+    # Populated when chat_structured falls back to plain chat() — best-effort
+    # inference from the response prose for tracing only, never for decisions.
+    _inferred_triage: Optional[TriageLevel] = None
+    _inferred_method: str = "none"
     response_text = ""
     in_tok = 0
     out_tok = 0
@@ -440,6 +445,11 @@ async def _generate_response_classic(
             # resolver will rely on rule_classification alone (which is the
             # safety floor anyway).
             structured_triage = None
+            # Best-effort: scan the plain response text for the LLM's own
+            # triage indicators (emoji banners it wrote per its instructions,
+            # then urgency keywords). Stored for tracing only — never used in
+            # the decision path.
+            _inferred_triage, _inferred_method = infer_triage_from_plain_response(response_text)
         except Exception as exc2:
             logger.error("plain chat fallback also failed", error=str(exc2))
             response_text = (
@@ -518,6 +528,15 @@ async def _generate_response_classic(
         "rule": rule_result.classification.value,
         # LLM's own triage from structured output — authoritative LLM signal.
         "llm": llm_triage.value if llm_triage else None,
+        # How the LLM triage was obtained:
+        #   "structured"      — chat_structured() returned a triage_level field
+        #   "plain_fallback"  — chat_structured() failed; plain chat() was used
+        "llm_source": "structured" if structured_triage is not None else "plain_fallback",
+        # When llm_source == "plain_fallback", best-effort triage inferred from
+        # the response prose (emoji banners first, then keyword scan).
+        # For tracing only — never participates in any decision.
+        "llm_inferred": _inferred_triage.value if _inferred_triage else None,
+        "llm_inferred_method": _inferred_method if structured_triage is None else None,
         # Audit-only: substring-scan of the LLM's reply. Useful for spotting
         # cases where the LLM's wording disagreed with its structured triage
         # (or the rule engine), but not part of the decision graph.

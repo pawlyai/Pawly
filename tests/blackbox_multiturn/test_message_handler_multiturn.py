@@ -90,8 +90,13 @@ def test_handle_message_multiturn_with_conversational_geval(
                     "score": live.get("score") or rule_result.score,
                 },
                 "llm": {
-                    # Real structured triage_level from the LLM's JSON output.
+                    # Structured triage_level from the LLM's JSON output.
                     "level": live.get("llm"),
+                    # "structured" | "plain_fallback"
+                    "source": live.get("llm_source", "none"),
+                    # Best-effort inference when structured path failed.
+                    "inferred_level": live.get("llm_inferred"),
+                    "inferred_method": live.get("llm_inferred_method"),
                 },
                 "response_keywords": {
                     # Audit-only keyword scan of the assistant's reply text.

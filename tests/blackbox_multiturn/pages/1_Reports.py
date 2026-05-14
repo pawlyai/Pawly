@@ -219,15 +219,25 @@ def render_case_details(case: dict[str, Any]) -> None:
                 resolved_t = trace.get("resolved", {})
                 rule_level = (rule.get("level") or "").upper()
                 llm_level = (llm_struct.get("level") or "").upper()
+                llm_source = llm_struct.get("source", "none")
+                llm_inferred = (llm_struct.get("inferred_level") or "").upper()
+                llm_inferred_method = llm_struct.get("inferred_method") or ""
                 kw_level = (kw.get("level") or "").upper()
                 resolved_level = (resolved_t.get("level") or "").upper()
                 override = resolved_t.get("override", False)
                 direction = resolved_t.get("direction", "")
-                # Primary mismatch: rule engine vs LLM structured output.
-                mismatch = bool(llm_level and rule_level != llm_level)
+                # Display level: structured if available, else inferred fallback.
+                llm_display = llm_level or llm_inferred
+                llm_is_inferred = not llm_level and bool(llm_inferred)
+                # Primary mismatch: rule engine vs best-available LLM level.
+                mismatch = bool(llm_display and rule_level != llm_display)
                 expander_label = (
                     f"🔬 Triage — Rule {_LEVEL_EMOJI.get(rule_level, '?')} {rule_level}"
-                    + (f" · LLM {_LEVEL_EMOJI.get(llm_level, '?')} {llm_level}" if llm_level else " · LLM —")
+                    + (
+                        f" · LLM {_LEVEL_EMOJI.get(llm_display, '?')} {llm_display}"
+                        + ("†" if llm_is_inferred else "")
+                        if llm_display else " · LLM —"
+                    )
                     + f" · Prose {_LEVEL_EMOJI.get(kw_level, '?')} {kw_level}"
                     + f" · Resolved {_LEVEL_EMOJI.get(resolved_level, '?')} {resolved_level}"
                     + (" — ⚠️ rule/LLM mismatch" if mismatch else "")
@@ -239,11 +249,16 @@ def render_case_details(case: dict[str, Any]) -> None:
                         f"{_LEVEL_EMOJI.get(rule_level, '')} {rule_level}" if rule_level else "—",
                         f"score {rule.get('score', 0):.2f}",
                     )
-                    tc2.metric(
-                        "LLM Structured",
-                        f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}" if llm_level else "—",
-                        "triage_level field" if llm_level else "not emitted",
-                    )
+                    if llm_level:
+                        tc2.metric("LLM Structured", f"{_LEVEL_EMOJI.get(llm_level, '')} {llm_level}", "triage_level field")
+                    elif llm_inferred:
+                        tc2.metric(
+                            "LLM Structured †",
+                            f"{_LEVEL_EMOJI.get(llm_inferred, '')} {llm_inferred}",
+                            f"inferred · {llm_inferred_method}",
+                        )
+                    else:
+                        tc2.metric("LLM Structured", "—", f"plain fallback · no signal" if llm_source == "plain_fallback" else "not emitted")
                     tc3.metric(
                         "Prose Keywords",
                         f"{_LEVEL_EMOJI.get(kw_level, '')} {kw_level}" if kw_level else "—",
@@ -257,6 +272,8 @@ def render_case_details(case: dict[str, Any]) -> None:
                     matched = rule.get("matched_rules", [])
                     if matched:
                         st.caption("Matched rules: " + "  ·  ".join(f"`{r}`" for r in matched))
+                    if llm_is_inferred:
+                        st.caption("† Structured output unavailable (plain_fallback). LLM level inferred from response prose.")
 
         if i < len(turns) - 1:
             st.markdown("---")

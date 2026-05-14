@@ -830,7 +830,7 @@ def mock_multiturn_runtime(
         async def _fake_enqueue_extraction(*args: Any, **kwargs: Any) -> None:
             return None
 
-        _orig_generate_response = orchestrator.generate_response
+        _orig_generate_response = message_handler.generate_response
 
         async def _capturing_generate_response(*args: Any, **kwargs: Any) -> Any:
             result = await _orig_generate_response(*args, **kwargs)
@@ -840,7 +840,7 @@ def mock_multiturn_runtime(
         monkeypatch.setattr(orchestrator, "load_pet_context", _fake_load_pet_context)
         monkeypatch.setattr(orchestrator, "load_related_memories", _fake_load_related_memories)
         monkeypatch.setattr(orchestrator, "_store_triage_record", _fake_store_triage_record)
-        monkeypatch.setattr(orchestrator, "generate_response", _capturing_generate_response)
+        monkeypatch.setattr(message_handler, "generate_response", _capturing_generate_response)
         monkeypatch.setattr(message_handler, "load_user_pets", _fake_load_user_pets)
         monkeypatch.setattr(message_handler, "store_raw_message", _fake_store_raw_message)
         monkeypatch.setattr(message_handler, "get_or_create_session", _fake_get_or_create_session)
