@@ -63,7 +63,7 @@ jobs:
             --multiturn-topic=multiturn_pawly_regression_light_30 \
             --model="$PAWLY_MODEL" \
             --compliance-model=gemini-2.5-flash \
-            -n 8 --dist loadgroup \
+            -n 4 --dist loadgroup \
             -s -v
 
       - name: Annotate failure root causes

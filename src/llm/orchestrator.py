@@ -112,7 +112,11 @@ _ACUTE_OVERRIDE_RE = re.compile(
     r"\bunconsciou|\bunresponsive\b|\blimp\s+body\b|"
     r"\bswallowed\s+(?:toxin|poison|chocolate|xylitol|lily)|"
     r"\bgrape\b|\braisin\b|\bxylitol\b|\blily\s+(?:plant|flower)|"
-    r"\bhit\s+by\b|\bcar\s+accident|\btrauma\b|\binternal\s+bleed"
+    r"\bhit\s+by\b|\bcar\s+accident|\btrauma\b|\binternal\s+bleed|"
+    # NSAID / pain-medication combinations — dual-NSAID is an acute safety risk;
+    # any mention of these drugs pins the turn to the primary (safety-tuned) model.
+    r"\bmeloxicam\b|\bcarprofen\b|\brimadyl\b|\bnimadyl\b|\bnsaid\b|"
+    r"\baspirin\b|\bibuprofen\b|\bketoprofen\b"
     r")",
     re.IGNORECASE,
 )
