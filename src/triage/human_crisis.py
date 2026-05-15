@@ -79,6 +79,15 @@ _CRISIS_EN: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bcan'?t\s+imagine\s+(?:a\s+)?(?:life|living)\s+(?:without|after)\b", re.IGNORECASE),
     # "I don't see the point anymore" — implicit
     re.compile(r"\bdon'?t\s+see\s+(?:the\s+)?point\s+(?:anymore|in\s+(?:anything|living|going\s+on))\b", re.IGNORECASE),
+    # Passive ideation — wishing not to wake up / wishing to be dead
+    re.compile(r"\bwouldn'?t\s+(?:mind\s+)?(?:just\s+)?not\s+waking\s+up\b", re.IGNORECASE),
+    re.compile(r"\bwish\s+(?:i\s+)?(?:just\s+)?wouldn'?t\s+wake\s+up\b", re.IGNORECASE),
+    re.compile(r"\bdon'?t\s+want\s+to\s+wake\s+up\b", re.IGNORECASE),
+    re.compile(r"\bwish\s+(?:i\s+)?(?:was|were)\s+dead\b", re.IGNORECASE),
+    re.compile(r"\bwish\s+(?:i\s+)?(?:could\s+)?just\s+disappear\b", re.IGNORECASE),
+    re.compile(r"\bno\s+reason\s+to\s+(?:go\s+on|keep\s+going|be\s+here|stay)\b", re.IGNORECASE),
+    re.compile(r"\bso\s+tired\s+of\s+(?:living|being\s+alive|this\s+life|everything)\b", re.IGNORECASE),
+    re.compile(r"\bwish\s+i\s+(?:wasn'?t|weren'?t)\s+(?:here|alive|around)\b", re.IGNORECASE),
 )
 
 
