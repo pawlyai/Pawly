@@ -33,6 +33,7 @@ jobs:
     env:
       PAWLY_MODEL: ${{ inputs.model || 'deepseek-v4-pro' }}
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       DEEPEVAL_TELEMETRY_OPT_OUT: '1'
       LANGFUSE_HOST: ${{ secrets.LANGFUSE_HOST }}
       LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
@@ -61,6 +62,7 @@ jobs:
           python -m pytest tests/blackbox_multiturn/test_message_handler_multiturn.py \
             --multiturn-topic=multiturn_pawly_regression_light_30 \
             --model="$PAWLY_MODEL" \
+            --compliance-model=gemini-2.5-flash \
             -n 8 --dist loadgroup \
             -s -v
 
