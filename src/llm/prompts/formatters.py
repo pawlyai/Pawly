@@ -17,7 +17,6 @@ import re
 
 from src.db.models import TriageLevel
 
-
 # Human-readable labels for rule-engine matches. The banner concatenates
 # the labels of the rules that fired so the user understands which signal
 # escalated the conversation to RED. Anything not in this map is rendered
@@ -58,6 +57,8 @@ _RULE_LABELS: dict[str, str] = {
     "pet:young_animal_anorexia": "young animal not eating",
     "pet:young_animal_acute_gi": "young animal with acute GI signs",
     "pet:brachycephalic_respiratory": "brachycephalic breed with breathing concern",
+    "human:crisis": "human crisis / suicidal ideation",
+    "human:medical_emergency": "human medical emergency",
 }
 
 
@@ -135,13 +136,22 @@ def _md_bold_to_html(text: str) -> str:
     return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text, flags=re.DOTALL)
 
 
-def apply_response_format(response_text: str, triage: TriageLevel) -> str:
-    """Wrap *response_text* with the visual format matching *triage* level."""
-    if triage == TriageLevel.RED:
+def apply_response_format(
+    response_text: str,
+    triage: TriageLevel,
+    skip_red_format: bool = False,
+) -> str:
+    """Wrap *response_text* with the visual format matching *triage* level.
+
+    Pass skip_red_format=True when the current user message contains owner
+    distress signals — the pet-emergency RED FLAG chrome is inappropriate
+    for human-crisis or domestic-fear responses even when triage is RED.
+    """
+    if triage == TriageLevel.RED and not skip_red_format:
         return _format_red_flag(response_text)
     if triage == TriageLevel.ORANGE:
         return _format_care_mode(response_text)
-    return response_text  # GREEN: pass through as-is
+    return response_text  # GREEN (or skipped RED): pass through as-is
 
 
 def _format_red_flag(text: str) -> str:

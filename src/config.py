@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # Production chat model for the orchestrator. When unset, the orchestrator
     # falls back to main_model (preserves the previous Gemini-only path).
     chat_model: str = ""
+    # Secondary model for compliance/behavioral/non-urgent turns.
+    # When set, the orchestrator routes medication-dosing, online-marketplace,
+    # and behavioral queries here instead of chat_model.
+    # E.g. set to "gemini-2.5-flash" while chat_model = "deepseek-v4-pro".
+    compliance_model: str = ""
     max_turns_in_context: int = 5
     max_messages_per_minute: int = 30
     webhook_host: str = ""  # e.g. "api.pawly.app" - required in production

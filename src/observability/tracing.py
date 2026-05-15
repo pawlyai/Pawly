@@ -29,8 +29,17 @@ try:
     from langfuse.decorators import langfuse_context
     from langfuse.decorators import observe as _lf_observe
 
-    _LANGFUSE_ENABLED = True
-    logger.info("langfuse tracing enabled", host=os.environ.get("LANGFUSE_HOST", ""))
+    _has_keys = bool(
+        os.environ.get("LANGFUSE_PUBLIC_KEY", "").strip()
+        and os.environ.get("LANGFUSE_SECRET_KEY", "").strip()
+        and os.environ.get("LANGFUSE_HOST", "").strip()
+    )
+    if _has_keys:
+        _LANGFUSE_ENABLED = True
+        logger.info("langfuse tracing enabled", host=os.environ.get("LANGFUSE_HOST", ""))
+    else:
+        _LANGFUSE_ENABLED = False
+        logger.info("langfuse tracing disabled — LANGFUSE_HOST/PUBLIC_KEY/SECRET_KEY not set")
 except Exception as exc:
     langfuse_context = None  # type: ignore[assignment]
     _LANGFUSE_ENABLED = False
@@ -103,6 +112,20 @@ def update_trace(**kwargs: Any) -> None:
         langfuse_context.update_current_trace(**kwargs)
     except Exception as exc:
         logger.debug("langfuse update_trace failed", error=str(exc))
+
+
+def get_current_trace_url() -> str | None:
+    """
+    Return the Langfuse URL for the active trace, e.g.
+    'https://cloud.langfuse.com/project/clxxx/traces/trace-id'.
+    Returns None when Langfuse is disabled or the call fails.
+    """
+    if not _LANGFUSE_ENABLED or langfuse_context is None:
+        return None
+    try:
+        return langfuse_context.get_current_trace_url()
+    except Exception:
+        return None
 
 
 def is_enabled() -> bool:

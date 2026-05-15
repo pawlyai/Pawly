@@ -21,6 +21,7 @@ Public API (unchanged so callers keep working):
     compare_and_resolve(llm, rule)             -> CompareResult
     classify_triage(text)                      -> "RED" | "ORANGE" | "GREEN"
     get_matched_symptoms(text)                 -> list[str]
+    infer_triage_from_plain_response(text)     -> (TriageLevel | None, str)  (tracing fallback)
     TOXIN_TRIGGER_KEYWORDS                     -> list[str]  (consumed by retrievers.py)
 
 Backward-compat aliases:
@@ -546,6 +547,22 @@ def classify_by_rules(
     """
     text = description.strip()
 
+    # ── Human crisis / medical emergency gates ────────────────────────────────
+    # Checked BEFORE pet-specific suppression so that an owner describing their
+    # own chest pain or suicidal ideation is never silenced by the pet-triage
+    # suppression path. These map to RED so both rule_engine and LLM agree and
+    # the orchestrator can intercept with a hardcoded human-appropriate response.
+    from src.triage.human_crisis import detect_human_crisis, detect_human_medical_emergency  # noqa: PLC0415
+
+    if detect_human_crisis(text):
+        return TriageRuleResult(
+            TriageLevel.RED, ["human:crisis"], confidence=0.99, score=1.0
+        )
+    if detect_human_medical_emergency(text):
+        return TriageRuleResult(
+            TriageLevel.RED, ["human:medical_emergency"], confidence=0.99, score=1.0
+        )
+
     # Global suppression: descriptions that aren't really about the pet's
     # current state shouldn't produce any signal.
     if _is_about_owner_not_pet(text):
@@ -729,6 +746,34 @@ def detect_triage_from_response(text: str) -> Optional[TriageLevel]:
     if any(sig in lower for sig in _ORANGE_RESPONSE_SIGNALS):
         return TriageLevel.ORANGE
     return TriageLevel.GREEN
+
+
+# Pattern for the LLM-written 🟠 Monitor banner (mirrors _LLM_RED_BANNER_RE above).
+# The LLM writes "🟠 **Monitor**" or "🟠 Monitor" per the response_format YAML when
+# it classifies a turn as ORANGE.
+_LLM_ORANGE_BANNER_RE = re.compile(r"🟠\s*\*{0,2}\s*Monitor\b", re.IGNORECASE)
+
+
+def infer_triage_from_plain_response(text: str) -> tuple[Optional[TriageLevel], str]:
+    """Best-effort triage inference from a plain (pre-format) LLM response.
+
+    Used only when chat_structured() falls back to plain chat() and the
+    structured triage_level field is unavailable.  Never used for decisions.
+
+    Priority order:
+      1. LLM-written emoji banners (🔴 Urgent, 🟠 Monitor) — the LLM's own
+         signal per its response_format instructions; most specific.
+      2. Urgency keyword scan (detect_triage_from_response) — broad but fast.
+
+    Returns (TriageLevel | None, method) where method is one of:
+      "llm_banner"  — matched the LLM's own 🔴/🟠 banner pattern
+      "keywords"    — matched urgency keyword scan
+    """
+    if _LLM_RED_BANNER_RE.search(text):
+        return TriageLevel.RED, "llm_banner"
+    if _LLM_ORANGE_BANNER_RE.search(text):
+        return TriageLevel.ORANGE, "llm_banner"
+    return detect_triage_from_response(text), "keywords"
 
 
 def audit_log_triage_divergence(
