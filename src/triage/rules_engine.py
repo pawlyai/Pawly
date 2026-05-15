@@ -546,6 +546,22 @@ def classify_by_rules(
     """
     text = description.strip()
 
+    # ── Human crisis / medical emergency gates ────────────────────────────────
+    # Checked BEFORE pet-specific suppression so that an owner describing their
+    # own chest pain or suicidal ideation is never silenced by the pet-triage
+    # suppression path. These map to RED so both rule_engine and LLM agree and
+    # the orchestrator can intercept with a hardcoded human-appropriate response.
+    from src.triage.human_crisis import detect_human_crisis, detect_human_medical_emergency  # noqa: PLC0415
+
+    if detect_human_crisis(text):
+        return TriageRuleResult(
+            TriageLevel.RED, ["human:crisis"], confidence=0.99, score=1.0
+        )
+    if detect_human_medical_emergency(text):
+        return TriageRuleResult(
+            TriageLevel.RED, ["human:medical_emergency"], confidence=0.99, score=1.0
+        )
+
     # Global suppression: descriptions that aren't really about the pet's
     # current state shouldn't produce any signal.
     if _is_about_owner_not_pet(text):

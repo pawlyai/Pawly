@@ -29,6 +29,12 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.memory.reader import load_pet_context, load_related_memories
+from src.triage.human_crisis import (
+    HUMAN_CRISIS_RESPONSE,
+    HUMAN_MEDICAL_EMERGENCY_RESPONSE,
+    detect_human_crisis,
+    detect_human_medical_emergency,
+)
 from src.triage.rules_engine import (
     _shows_resolution,
     classify_by_rules,
@@ -176,7 +182,33 @@ async def generate_response_node(state: PawlyState) -> dict[str, Any]:
 
     Returns response_text + LLM-classified triage, intent, sentiment,
     symptom_tags — all from a single LLM call.
+
+    Human crisis / medical emergency messages are intercepted before the LLM
+    call and return a hardcoded response so no pet-care advice is mixed in.
     """
+    user_message: str = state.get("user_message", "")
+
+    if detect_human_crisis(user_message):
+        return {
+            "response_text": HUMAN_CRISIS_RESPONSE,
+            "llm_triage": None,
+            "intent": "human_crisis",
+            "sentiment": None,
+            "symptom_tags": [],
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
+    if detect_human_medical_emergency(user_message):
+        return {
+            "response_text": HUMAN_MEDICAL_EMERGENCY_RESPONSE,
+            "llm_triage": None,
+            "intent": "human_medical_emergency",
+            "sentiment": None,
+            "symptom_tags": [],
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
+
     chat_model = _active_chat_model()
     client = get_chat_client(chat_model)
     try:
@@ -331,10 +363,15 @@ async def finalize_node(state: PawlyState) -> dict[str, Any]:
         except Exception as exc:
             logger.warning("store_triage_record failed", error=str(exc))
 
-    # Apply Figma visual format based on resolved triage level
-    formatted_response = apply_response_format(
-        state.get("response_text", ""), final_triage
-    )
+    # Human crisis / medical emergency responses are pre-formatted — do not
+    # wrap them in the pet-emergency RED template ("Recommend Immediate Vet Visit").
+    is_human_emergency = any(p.startswith("human:") for p in matched)
+    if is_human_emergency:
+        formatted_response = state.get("response_text", "")
+    else:
+        formatted_response = apply_response_format(
+            state.get("response_text", ""), final_triage
+        )
 
     return {
         "response_text": formatted_response,
