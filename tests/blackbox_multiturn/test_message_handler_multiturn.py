@@ -107,6 +107,7 @@ def test_handle_message_multiturn_with_conversational_geval(
                     "override": live.get("overridden", False),
                     "direction": live.get("override_direction", ""),
                 },
+                "langfuse_trace_url": live.get("langfuse_trace_url"),
             }
             turn_traces.append(triage_trace)
 

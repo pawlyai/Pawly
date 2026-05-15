@@ -394,6 +394,7 @@ async def _generate_response_classic(
         "override_direction": "",
         "confidence": 0.99,
         "score": 1.0,
+        "langfuse_trace_url": get_current_trace_url(),
     }
     if detect_human_crisis(user_message):
         return OrchestratorResult(
