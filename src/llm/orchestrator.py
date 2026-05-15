@@ -483,10 +483,14 @@ async def _generate_response_classic(
         # Save triage_level before potentially raising — if response_text is
         # degenerate we still want the LLM's classification on the fallback path.
         _partial_structured_triage = structured_triage
-        if not response_text or response_text in _STUB_RESPONSES or len(response_text) < _STUB_MIN_LEN:
-            # JSON parsed but response_text was empty or a punctuation stub
-            # ("...") — model put everything in metadata or hit a compliance
-            # conflict. Fall through to the plain chat() retry below.
+        if (
+            not response_text
+            or response_text in _STUB_RESPONSES
+            or len(response_text) < _STUB_MIN_LEN
+            or response_text.lstrip().startswith(("[", "{"))  # JSON artifact leak (e.g. symptom_tags)
+        ):
+            # JSON parsed but response_text was empty, a punctuation stub,
+            # or a raw JSON artifact (model returned a list/dict instead of prose).
             raise ValueError(f"chat_structured returned degenerate response_text: {response_text!r}")
     except Exception as exc:
         logger.warning(
