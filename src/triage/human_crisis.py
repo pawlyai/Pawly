@@ -144,6 +144,46 @@ def detect_human_medical_emergency(text: str) -> bool:
     )
 
 
+# ── Broader owner distress detector (format-bypass only) ─────────────────────
+# Catches signals that are NOT explicit crisis but indicate the owner is
+# personally distressed, scared at home, or self-neglecting. Used ONLY to
+# suppress the pet-emergency RED FLAG visual format — does NOT trigger a
+# hardcoded response.
+
+_OWNER_DISTRESS_EN: tuple[re.Pattern[str], ...] = (
+    # Self-neglect
+    re.compile(r"\bskipping\s+meals?\b", re.IGNORECASE),
+    re.compile(r"\bnot\s+(?:sleeping|eating)\s+(?:properly|well|right|much)\b", re.IGNORECASE),
+    re.compile(r"\bstopp(?:ed|ing)\s+(?:sleeping|eating)\b", re.IGNORECASE),
+    # Hopelessness / indirect ideation (broader than detect_human_crisis)
+    re.compile(r"\bwhat'?s\s+(?:the\s+)?point\s+of\s+(?:taking\s+care|living|going\s+on|anything)\b", re.IGNORECASE),
+    re.compile(r"\bwhat\s+does\s+(?:any\s+of\s+it|it\s+all)\s+matter\b", re.IGNORECASE),
+    # Domestic violence / fear at home
+    re.compile(
+        r"\bmy\s+(?:dad|mom|father|mother|partner|husband|wife|boyfriend|girlfriend)\s+"
+        r"(?:gets?\s+(?:really\s+|very\s+)?angry|hits?\s+me|hurts?\s+me|scares?\s+me)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bthings?\s+get\s+broken\s+(?:in\s+the\s+house)?\b", re.IGNORECASE),
+    re.compile(r"\bonly\s+(?:thing|one)\s+that\s+makes?\s+(?:me\s+)?(?:feel\s+)?safe\b", re.IGNORECASE),
+    re.compile(r"\bdon'?t\s+feel\s+safe\s+(?:at\s+home|here|anymore)\b", re.IGNORECASE),
+)
+
+
+def detect_owner_distress(text: str) -> bool:
+    """Return True when the message contains owner distress signals.
+
+    Broader than detect_human_crisis() — catches self-neglect, domestic fear,
+    and hopelessness that don't warrant a hardcoded crisis response but should
+    suppress the pet-emergency RED FLAG visual format.
+    """
+    if detect_human_crisis(text):
+        return True
+    if _is_about_pet(text):
+        return False
+    return any(p.search(text) for p in _OWNER_DISTRESS_EN)
+
+
 # ── Hardcoded responses ───────────────────────────────────────────────────────
 # These are returned by the orchestrator gate without calling the LLM.
 # Plain text (no HTML) — Telegram renders them fine; the orchestrator must NOT

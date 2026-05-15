@@ -39,12 +39,13 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.memory.reader import load_pet_context, load_related_memories
-from src.observability.tracing import observe_span, update_span, update_trace, get_current_trace_url
+from src.observability.tracing import get_current_trace_url, observe_span, update_span, update_trace
 from src.triage.human_crisis import (
     HUMAN_CRISIS_RESPONSE,
     HUMAN_MEDICAL_EMERGENCY_RESPONSE,
     detect_human_crisis,
     detect_human_medical_emergency,
+    detect_owner_distress,
 )
 from src.triage.rules_engine import (
     ORANGE_PATTERNS,
@@ -56,7 +57,6 @@ from src.triage.rules_engine import (
     get_red_floor,
     infer_triage_from_plain_response,
 )
-
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -662,7 +662,11 @@ async def _generate_response_classic(
     # and rule_result; detect_triage_from_response is audit-only and never
     # reaches resolved.final_classification.
     effective_triage = resolved.final_classification
-    response_text = apply_response_format(response_text, effective_triage)
+    response_text = apply_response_format(
+        response_text,
+        effective_triage,
+        skip_red_format=detect_owner_distress(user_message),
+    )
 
     triage_result = {
         "rule": rule_result.classification.value,
