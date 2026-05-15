@@ -17,57 +17,61 @@ import re
 # Each entry is a regex that matches self-harm / suicidal language.
 # Word boundaries (\b) guard against substring matches inside unrelated words.
 
-_CRISIS_PATTERNS: list[re.Pattern[str]] = [p for p in map(re.compile, [
-    # Chinese — self-harm / suicidal ideation
-    r"结束.{0,6}(自己的)?生命",
-    r"不想.{0,4}活",
-    r"想.{0,4}死",
-    r"自\s*杀",
-    r"去\s*死",
-    r"活\s*不\s*下\s*去",
-    r"没\s*有\s*意\s*义",
-    r"没\s*有\s*意\s*思\s*活",
-    r"活\s*着\s*没\s*意\s*思",
-    r"活\s*着\s*太\s*累",
-    r"不\s*想\s*撑\s*下\s*去",
-    r"放\s*弃\s*生\s*命",
-    r"伤\s*害\s*自\s*己",
-    r"割\s*腕",
-    r"跳\s*楼",
-    r"结\s*束\s*一\s*切",
-    # English — self-harm / suicidal ideation
-    r"\bsuicid",
-    r"\bend\s+my\s+(own\s+)?life\b",
-    r"\bkill\s+myself\b",
-    r"\bwant\s+to\s+die\b",
-    r"\bno\s+reason\s+to\s+(live|go\s+on)\b",
-    r"\bnothing\s+to\s+live\s+for\b",
-    r"\bself[- ]?harm\b",
-    r"\bcut\s+(myself|my\s+wrists?)\b",
-    r"\btake\s+my\s+(own\s+)?life\b",
-    r"\bcan'?t\s+go\s+on\b",
-    r"\bgive\s+up\s+on\s+life\b",
-    r"\bdon'?t\s+want\s+to\s+be\s+(here|alive)\b",
-], flags=re.IGNORECASE)]
+_CRISIS_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(p, re.IGNORECASE) for p in [
+        # Chinese — self-harm / suicidal ideation
+        r"结束.{0,6}(自己的)?生命",
+        r"不想.{0,4}活",
+        r"想.{0,4}死",
+        r"自\s*杀",
+        r"去\s*死",
+        r"活\s*不\s*下\s*去",
+        r"没\s*有\s*意\s*义",
+        r"没\s*有\s*意\s*思\s*活",
+        r"活\s*着\s*没\s*意\s*思",
+        r"活\s*着\s*太\s*累",
+        r"不\s*想\s*撑\s*下\s*去",
+        r"放\s*弃\s*生\s*命",
+        r"伤\s*害\s*自\s*己",
+        r"割\s*腕",
+        r"跳\s*楼",
+        r"结\s*束\s*一\s*切",
+        # English — self-harm / suicidal ideation
+        r"\bsuicid",
+        r"\bend\s+my\s+(own\s+)?life\b",
+        r"\bkill\s+myself\b",
+        r"\bwant\s+to\s+die\b",
+        r"\bno\s+reason\s+to\s+(live|go\s+on)\b",
+        r"\bnothing\s+to\s+live\s+for\b",
+        r"\bself[- ]?harm\b",
+        r"\bcut\s+(myself|my\s+wrists?)\b",
+        r"\btake\s+my\s+(own\s+)?life\b",
+        r"\bcan'?t\s+go\s+on\b",
+        r"\bgive\s+up\s+on\s+life\b",
+        r"\bdon'?t\s+want\s+to\s+be\s+(here|alive)\b",
+    ]
+]
 
 # ── Suppression patterns ───────────────────────────────────────────────────────
 # If any of these match within a 40-char window around a crisis keyword, the
 # signal is treated as past-tense, hypothetical, or animal-directed — not a
 # human crisis signal.
 
-_SUPPRESSION_PATTERNS: list[re.Pattern[str]] = [p for p in map(re.compile, [
-    r"\b(my\s+)?(dog|cat|pet|rabbit|hamster|bird|fish|turtle|reptile|animal)\b",
-    r"\b(he|she|it)\s+(wants?|tried|is|was)\b",
-    r"\bmy\s+pet\b",
-    r"\bveterinar",
-    r"\bvet\b",
-    r"\beuthanasi",
-    r"\byears?\s+ago\b",
-    r"\blast\s+(year|month|week)\b",
-    r"\bwhat\s+if\b",
-    r"\bhypothetical",
-    r"\bin\s+(a\s+)?(book|movie|film|story|game|show)\b",
-], flags=re.IGNORECASE)]
+_SUPPRESSION_PATTERNS: list[re.Pattern[str]] = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r"\b(my\s+)?(dog|cat|pet|rabbit|hamster|bird|fish|turtle|reptile|animal)\b",
+        r"\b(he|she|it)\s+(wants?|tried|is|was)\b",
+        r"\bmy\s+pet\b",
+        r"\bveterinar",
+        r"\bvet\b",
+        r"\beuthanasi",
+        r"\byears?\s+ago\b",
+        r"\blast\s+(year|month|week)\b",
+        r"\bwhat\s+if\b",
+        r"\bhypothetical",
+        r"\bin\s+(a\s+)?(book|movie|film|story|game|show)\b",
+    ]
+]
 
 
 def detect_human_crisis(text: str) -> bool:
