@@ -606,28 +606,56 @@ def resilient_gemini_client(underlying_chat_client: Any) -> ResilientGeminiClien
     return ResilientGeminiClient(underlying_chat_client)
 
 
+@pytest.fixture(scope="session")
+def compliance_model_name(request: pytest.FixtureRequest) -> str | None:
+    """Secondary model for compliance/behavioral routing (--compliance-model CLI arg)."""
+    return request.config.getoption("--compliance-model", default=None)
+
+
+@pytest.fixture(scope="session")
+def compliance_resilient_client(
+    compliance_model_name: str | None,
+) -> "ResilientGeminiClient | None":
+    """Wraps the compliance model provider in retry logic. None when not configured."""
+    if not compliance_model_name:
+        return None
+    from src.llm.providers import provider_for, get_chat_client
+    provider = provider_for(compliance_model_name)
+    if provider == "Gemini":
+        if not settings.google_api_key.strip():
+            pytest.skip("GOOGLE_API_KEY is required for the compliance model.")
+    elif provider == "DeepSeek":
+        if not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+            pytest.skip("DEEPSEEK_API_KEY is required for the compliance model.")
+    # Stamp compliance_model into settings so the orchestrator router can read it.
+    settings.compliance_model = compliance_model_name
+    return ResilientGeminiClient(get_chat_client(compliance_model_name))
+
+
 @pytest.fixture(autouse=True)
 def patch_blackbox_gemini_client(
     monkeypatch: pytest.MonkeyPatch,
     resilient_gemini_client: ResilientGeminiClient,
+    compliance_resilient_client: "ResilientGeminiClient | None",
+    compliance_model_name: str | None,
 ) -> None:
     monkeypatch.setattr("src.llm.client.get_gemini_client", lambda: resilient_gemini_client)
     monkeypatch.setattr("src.memory.summarizer.get_gemini_client", lambda: resilient_gemini_client)
+
+    # Dual-model dispatcher: routes compliance model ID to its own client,
+    # everything else (including memory extraction) to the main provider.
+    def _dispatch(model: str | None = None) -> ResilientGeminiClient:
+        if compliance_resilient_client and compliance_model_name and model == compliance_model_name:
+            return compliance_resilient_client
+        return resilient_gemini_client
+
     # Orchestrator, LangGraph, and the memory extractor now dispatch through
     # get_chat_client; route every provider lookup at the resilient wrapper so
     # the multiturn runner can keep swapping models via the PAWLY_MODEL env var.
-    monkeypatch.setattr(
-        "src.llm.providers.get_chat_client",
-        lambda model=None: resilient_gemini_client,
-    )
-    monkeypatch.setattr(
-        "src.llm.orchestrator.get_chat_client",
-        lambda model=None: resilient_gemini_client,
-    )
-    monkeypatch.setattr(
-        "src.llm.graph.nodes.get_chat_client",
-        lambda model=None: resilient_gemini_client,
-    )
+    monkeypatch.setattr("src.llm.providers.get_chat_client", _dispatch)
+    monkeypatch.setattr("src.llm.orchestrator.get_chat_client", _dispatch)
+    monkeypatch.setattr("src.llm.graph.nodes.get_chat_client", _dispatch)
+    # Memory extractor always runs on the primary model.
     monkeypatch.setattr(
         "src.memory.extractor.get_chat_client",
         lambda model=None: resilient_gemini_client,
@@ -657,6 +685,17 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         action="store",
         default=None,
         help="LLM model to evaluate (e.g. gemini-2.0-flash, claude-sonnet-4-6, gpt-4o-mini).",
+    )
+    parser.addoption(
+        "--compliance-model",
+        action="store",
+        default=None,
+        help=(
+            "Secondary model for compliance/behavioral routing "
+            "(e.g. gemini-2.5-flash when --model=deepseek-v4-pro). "
+            "When set, medication-dosing, online-marketplace, and behavioral "
+            "turns are routed to this model instead of --model."
+        ),
     )
     parser.addoption(
         "--strict-validation",

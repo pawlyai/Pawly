@@ -11,6 +11,7 @@ pipeline (src/llm/graph/). Otherwise, it uses the classic sequential path.
 generate_opening() always uses the classic path (no triage needed).
 """
 
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Optional
@@ -76,6 +77,61 @@ def _active_chat_model() -> str:
     behaviour is identical to the previous Gemini-only path.
     """
     return settings.chat_model or settings.main_model
+
+
+# ── Dual-model routing ────────────────────────────────────────────────────────
+# Compliance/behavioral turns are routed to settings.compliance_model when set.
+# Acute emergency patterns always stay on the primary chat model.
+
+_COMPLIANCE_ROUTING_RE = re.compile(
+    r"\b(?:"
+    r"dose|dosage|mg\b|milligram|how\s+much\s+(?:to\s+)?(?:give|take|feed)|"
+    r"shopee|lazada|taobao|carousell|online\s+(?:pharmacy|store|shop)|"
+    r"buy\s+(?:online|from\s+(?:shopee|lazada|taobao))|"
+    r"apoquel|prednisolone|prednisone|dexamethasone|amoxicillin|"
+    r"antibiotic|steroid|prescription|medication|medicine|tablet|pill|syrup|"
+    r"behav(?:ior|iour)|aggress|biting|barking|training\s+(?:tips|advice|help)|"
+    r"scratch(?:ing)?\s+(?:furniture|sofa|couch|wall)|"
+    r"toilet\s+training|litter\s+box\s+(?:train|issue|problem)|"
+    r"anxiety|anxious|depress|groom(?:ing)?\s+tip|dental\s+care|"
+    r"heartgard|interceptor|flea\s+(?:treatment|prevention)|tick\s+prevention"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_ACUTE_OVERRIDE_RE = re.compile(
+    r"(?:"
+    # Abbreviated stems — NO trailing \b so "collapsed", "seizing", etc. match
+    r"\bcollaps|\bconvuls|\btrembl|"
+    # Complete words / phrases
+    r"\bnot\s+breath|\bcan'?t\s+breath|"
+    r"\bblue\s+gum|\bpale\s+gum|"
+    r"\bseizure\b|\bseizing\b|"
+    r"\bblocked\b|\bno\s+urine\b|"
+    r"\bblood(?:y)?\s+(?:stool|urine|vomit)|"
+    r"\bunconsciou|\bunresponsive\b|\blimp\s+body\b|"
+    r"\bswallowed\s+(?:toxin|poison|chocolate|xylitol|lily)|"
+    r"\bgrape\b|\braisin\b|\bxylitol\b|\blily\s+(?:plant|flower)|"
+    r"\bhit\s+by\b|\bcar\s+accident|\btrauma\b|\binternal\s+bleed"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _select_chat_model(user_message: str) -> str:
+    """Route compliance/behavioral turns to settings.compliance_model when configured.
+
+    Acute emergency signals always pin to the primary chat model regardless of
+    keyword overlap (e.g. "what dose of antibiotic is toxic — my dog collapsed").
+    """
+    compliance = settings.compliance_model
+    if not compliance:
+        return _active_chat_model()
+    if _ACUTE_OVERRIDE_RE.search(user_message):
+        return _active_chat_model()
+    if _COMPLIANCE_ROUTING_RE.search(user_message):
+        return compliance
+    return _active_chat_model()
 
 
 # Mirror of src/llm/graph/nodes.py::_parse_triage_level so both paths
@@ -456,7 +512,11 @@ async def _generate_response_classic(
     # raw json.loads with no exception handling) we degrade gracefully to
     # plain chat() and rely on the rule engine alone for triage. Same
     # fallback message of last resort if both paths fail.
-    chat_model = _active_chat_model()
+    #
+    # Dual-model routing: compliance/behavioral turns are routed to
+    # settings.compliance_model (e.g. Gemini) when configured, while acute
+    # emergency messages stay on the primary chat_model (e.g. DeepSeek).
+    chat_model = _select_chat_model(user_message)
     client = get_chat_client(chat_model)
     structured_triage: Optional[TriageLevel] = None
     # When chat_structured() produces a valid triage_level but a degenerate
@@ -685,6 +745,7 @@ async def _generate_response_classic(
             # ── LLM call ──────────────────────────────────────────────────────
             "intent": intent,
             "symptom_tags": symptom_tags,
+            "chat_model_used": chat_model,
             "input_tokens": in_tok,
             "output_tokens": out_tok,
         },
