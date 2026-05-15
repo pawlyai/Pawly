@@ -38,8 +38,13 @@ from src.llm.retrievers import (
     match_red_flags,
 )
 from src.memory.reader import load_pet_context, load_related_memories
-from src.triage.human_crisis import HUMAN_CRISIS_RESPONSE, detect_human_crisis
 from src.observability.tracing import observe_span, update_span, update_trace, get_current_trace_url
+from src.triage.human_crisis import (
+    HUMAN_CRISIS_RESPONSE,
+    HUMAN_MEDICAL_EMERGENCY_RESPONSE,
+    detect_human_crisis,
+    detect_human_medical_emergency,
+)
 from src.triage.rules_engine import (
     ORANGE_PATTERNS,
     RED_PATTERNS,
@@ -243,12 +248,6 @@ async def generate_response(
     When USE_LANGGRAPH=true, delegates to the LangGraph pipeline.
     Otherwise, uses the classic sequential orchestration path.
     """
-    # Human-crisis gate: intercept before any LLM call so a suicidal or
-    # self-harm message mixed with a pet question is never routed to vet advice.
-    if detect_human_crisis(user_message):
-        logger.info("human crisis detected — returning crisis response without LLM call")
-        return OrchestratorResult(response_text=HUMAN_CRISIS_RESPONSE)
-
     if settings.use_langgraph:
         return await _generate_response_graph(
             user, pet, dialogue_id, user_message, message_type, session,
@@ -323,6 +322,32 @@ async def _generate_response_classic(
     raw_message_id: Optional[str] = None,
 ) -> OrchestratorResult:
     """Original sequential orchestration — proven stable path."""
+
+    # ── Step 0: Human crisis / medical emergency gate ─────────────────────────
+    # Intercept before the LLM is called so the response is deterministic and
+    # never mixes pet-care advice with a human crisis or emergency reply.
+    _human_triage: dict[str, Any] = {
+        "rule": TriageLevel.RED.value,
+        "llm": None,
+        "final": TriageLevel.RED.value,
+        "overridden": False,
+        "override_direction": "",
+        "confidence": 0.99,
+        "score": 1.0,
+    }
+    if detect_human_crisis(user_message):
+        return OrchestratorResult(
+            response_text=HUMAN_CRISIS_RESPONSE,
+            triage_result={**_human_triage, "matched_patterns": ["human:crisis"]},
+            intent="human_crisis",
+        )
+    if detect_human_medical_emergency(user_message):
+        return OrchestratorResult(
+            response_text=HUMAN_MEDICAL_EMERGENCY_RESPONSE,
+            triage_result={**_human_triage, "matched_patterns": ["human:medical_emergency"]},
+            intent="human_medical_emergency",
+        )
+
     tier = _tier(user)
     pet_id_str = str(pet.id) if pet else None
     is_health = looks_like_health_query(user_message)

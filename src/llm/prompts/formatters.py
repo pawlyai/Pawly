@@ -58,6 +58,8 @@ _RULE_LABELS: dict[str, str] = {
     "pet:young_animal_anorexia": "young animal not eating",
     "pet:young_animal_acute_gi": "young animal with acute GI signs",
     "pet:brachycephalic_respiratory": "brachycephalic breed with breathing concern",
+    "human:crisis": "human crisis / suicidal ideation",
+    "human:medical_emergency": "human medical emergency",
 }
 
 

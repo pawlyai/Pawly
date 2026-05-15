@@ -1,125 +1,178 @@
 """
-Deterministic human-crisis gate.
+Human crisis and medical emergency detection.
 
-Intercepts messages that contain self-harm / suicidal signals *before* the
-LLM is called, so a user expressing crisis alongside a pet question is never
-routed to vet advice. The gate uses keyword regex (not the LLM) so it is
-100% deterministic and carries no latency cost.
+Two separate detectors, called by classify_by_rules() and the orchestrator:
 
-Public API:
-    detect_human_crisis(text: str) -> bool
-    HUMAN_CRISIS_RESPONSE: str  — caring bilingual reply with SG hotlines
+  detect_human_crisis(text) -> bool
+      Suicidal / self-harm signals, explicit and implicit.
+      Covers English and Chinese; suppressed when the signal is clearly about a pet.
+
+  detect_human_medical_emergency(text) -> bool
+      Owner describes their own acute medical emergency: chest pain, heart attack,
+      stroke, inability to breathe. Suppressed when the symptom is attributed to a pet.
+
+Both functions are false-positive-conservative: they only fire on first-person signals
+that clearly belong to the owner, not the pet.
+
+Hardcoded responses (returned by the orchestrator gate, never go through the LLM):
+  HUMAN_CRISIS_RESPONSE             — warm, bilingual, SOS 1767 (SG default)
+  HUMAN_MEDICAL_EMERGENCY_RESPONSE  — concise, bilingual, 995 / A&E
 """
 
 import re
 
-# ── Signal patterns ────────────────────────────────────────────────────────────
-# Each entry is a regex that matches self-harm / suicidal language.
-# Word boundaries (\b) guard against substring matches inside unrelated words.
+# ── Pet-subject suppressor ────────────────────────────────────────────────────
+# The detectors only fire when the speaker is describing THEIR OWN symptoms.
+# Suppress when the message makes it clear the symptom belongs to a pet.
+_PET_SUBJECT_RE = re.compile(
+    r"\b(?:my|the)\s+(?:dog|cat|puppy|kitten|rabbit|bird|hamster|turtle|snake|"
+    r"bunny|chinchilla|ferret|guinea\s*pig|parrot|reptile|pet|"
+    r"doggy|kitty|pup|fur\s*baby)\b",
+    re.IGNORECASE,
+)
+# "He/she/it is/has/was" — pet pronouns in third person
+_PET_PRONOUN_RE = re.compile(
+    r"\b(?:he|she|it)\s+(?:is|has|was|have|had)\s+",
+    re.IGNORECASE,
+)
 
-_CRISIS_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(p, re.IGNORECASE) for p in [
-        # Chinese — self-harm / suicidal ideation
-        r"结束.{0,6}(自己的)?生命",
-        r"不想.{0,4}活",
-        r"想.{0,4}死",
-        r"自\s*杀",
-        r"去\s*死",
-        r"活\s*不\s*下\s*去",
-        r"没\s*有\s*意\s*义",
-        r"没\s*有\s*意\s*思\s*活",
-        r"活\s*着\s*没\s*意\s*思",
-        r"活\s*着\s*太\s*累",
-        r"不\s*想\s*撑\s*下\s*去",
-        r"放\s*弃\s*生\s*命",
-        r"伤\s*害\s*自\s*己",
-        r"割\s*腕",
-        r"跳\s*楼",
-        r"结\s*束\s*一\s*切",
-        # English — self-harm / suicidal ideation
-        r"\bsuicid",
-        r"\bend\s+my\s+(own\s+)?life\b",
-        r"\bkill\s+myself\b",
-        r"\bwant\s+to\s+die\b",
-        r"\bno\s+reason\s+to\s+(live|go\s+on)\b",
-        r"\bnothing\s+to\s+live\s+for\b",
-        r"\bself[- ]?harm\b",
-        r"\bcut\s+(myself|my\s+wrists?)\b",
-        r"\btake\s+my\s+(own\s+)?life\b",
-        r"\bcan'?t\s+go\s+on\b",
-        r"\bgive\s+up\s+on\s+life\b",
-        r"\bdon'?t\s+want\s+to\s+be\s+(here|alive)\b",
-    ]
-]
 
-# ── Suppression patterns ───────────────────────────────────────────────────────
-# If any of these match within a 40-char window around a crisis keyword, the
-# signal is treated as past-tense, hypothetical, or animal-directed — not a
-# human crisis signal.
+def _is_about_pet(text: str) -> bool:
+    """Return True when the message clearly attributes symptoms to a pet, not the owner."""
+    return bool(_PET_SUBJECT_RE.search(text) or _PET_PRONOUN_RE.search(text))
 
-_SUPPRESSION_PATTERNS: list[re.Pattern[str]] = [
-    re.compile(p, re.IGNORECASE) for p in [
-        r"\b(my\s+)?(dog|cat|pet|rabbit|hamster|bird|fish|turtle|reptile|animal)\b",
-        r"\b(he|she|it)\s+(wants?|tried|is|was)\b",
-        r"\bmy\s+pet\b",
-        r"\bveterinar",
-        r"\bvet\b",
-        r"\beuthanasi",
-        r"\byears?\s+ago\b",
-        r"\blast\s+(year|month|week)\b",
-        r"\bwhat\s+if\b",
-        r"\bhypothetical",
-        r"\bin\s+(a\s+)?(book|movie|film|story|game|show)\b",
-    ]
-]
+
+# ── Human crisis (suicidal / self-harm) ───────────────────────────────────────
+
+# Explicit Chinese patterns
+_CRISIS_ZH: tuple[re.Pattern[str], ...] = (
+    re.compile(r"结束自己的生命"),
+    re.compile(r"自杀"),
+    re.compile(r"不想(活|活着)了"),
+    re.compile(r"想死"),
+    re.compile(r"活不下去"),
+    re.compile(r"没有意义了"),
+    re.compile(r"(想|要)(跳楼|割腕)"),
+    re.compile(r"以死谢罪"),
+    re.compile(r"不想见到明天"),
+    re.compile(r"如果我(就)?不在了"),
+    re.compile(r"如果我消失了"),
+)
+
+# Explicit and implicit English patterns
+_CRISIS_EN: tuple[re.Pattern[str], ...] = (
+    # Explicit self-harm / suicidal
+    re.compile(r"\bsuicid(?:al|e)\b", re.IGNORECASE),
+    re.compile(r"\bwant(?:s)?\s+to\s+(?:die|kill\s+myself?|end\s+(?:my|their)\s+life)\b", re.IGNORECASE),
+    re.compile(r"\bend(?:ing)?\s+my\s+life\b", re.IGNORECASE),
+    re.compile(r"\bkill(?:ing)?\s+myself?\b", re.IGNORECASE),
+    re.compile(r"\bnothing\s+to\s+live\s+for\b", re.IGNORECASE),
+    re.compile(r"\bdon'?t\s+want\s+to\s+(?:be\s+here|live|exist)\s*(?:anymore)?\b", re.IGNORECASE),
+    re.compile(r"\bbetter\s+off\s+dead\b", re.IGNORECASE),
+    re.compile(r"\bself[- ]?harm\b", re.IGNORECASE),
+    re.compile(r"\bcut(?:ting)?\s+myself?\b", re.IGNORECASE),
+    # Implicit — "if I weren't here / wasn't around"
+    re.compile(r"\bif\s+i\s+(?:just\s+)?weren'?t\s+here\b", re.IGNORECASE),
+    re.compile(r"\bif\s+i\s+(?:just\s+)?wasn'?t\s+(?:here|around|alive)\b", re.IGNORECASE),
+    re.compile(r"\bif\s+i\s+(?:just\s+)?(?:disappeared|was\s+gone|wasn'?t\s+around)\b", re.IGNORECASE),
+    re.compile(r"\b(?:wonder|think\s+about)\s+what\s+it\s+(?:would|'?d)\s+be\s+like\s+(?:if\s+i\s+(?:just\s+)?(?:weren'?t|wasn'?t)\s+here)\b", re.IGNORECASE),
+    re.compile(r"\bcan'?t\s+imagine\s+(?:a\s+)?(?:life|living)\s+(?:without|after)\b", re.IGNORECASE),
+    # "I don't see the point anymore" — implicit
+    re.compile(r"\bdon'?t\s+see\s+(?:the\s+)?point\s+(?:anymore|in\s+(?:anything|living|going\s+on))\b", re.IGNORECASE),
+)
 
 
 def detect_human_crisis(text: str) -> bool:
-    """
-    Return True if ``text`` contains a human self-harm or suicidal signal.
-
-    Scans for crisis keywords and suppresses matches that are clearly about a
-    pet, a fictional context, or a past/hypothetical event.
-    """
-    for pattern in _CRISIS_PATTERNS:
-        m = pattern.search(text)
-        if not m:
-            continue
-        start = max(0, m.start() - 40)
-        end = min(len(text), m.end() + 40)
-        window = text[start:end]
-        if any(s.search(window) for s in _SUPPRESSION_PATTERNS):
-            continue
-        return True
-    return False
+    """Return True when the message contains suicidal or self-harm signals from the owner."""
+    if _is_about_pet(text):
+        return False
+    return (
+        any(p.search(text) for p in _CRISIS_ZH)
+        or any(p.search(text) for p in _CRISIS_EN)
+    )
 
 
-# ── Hardcoded crisis response ──────────────────────────────────────────────────
-# Caring tone — validated in PAW-61 comment thread (2026-05-14).
-# Singapore-first numbers per prompts_config.yaml final_reminders.
+# ── Human medical emergency (chest pain, heart attack, stroke) ────────────────
 
-HUMAN_CRISIS_RESPONSE: str = """\
-谢谢你愿意告诉我这些。我想让你知道，你说的话我都听到了，**你现在的感受很重要**。
+# Chinese: require explicit "I / myself" subject for broad terms;
+#          heart-attack / stroke terms are human-specific regardless of subject.
+_MEDICAL_ZH: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?:我|自己).{0,20}胸痛"),
+    re.compile(r"胸口.{0,10}(?:痛|疼|不舒服|压迫)"),
+    re.compile(r"(?:我|自己).{0,20}心脏.{0,10}(?:痛|疼|不舒服)"),
+    re.compile(r"心脏病发|心肌梗塞|心梗"),
+    re.compile(r"中风|脑梗"),
+    re.compile(r"(?:我|自己).{0,20}(?:呼吸困难|喘不过气|无法呼吸)"),
+    # Broad "chest pain" (胸痛) without explicit subject: fire unless pet-context
+    re.compile(r"胸痛"),
+)
 
-生命中有些时刻真的很难，但你不必一个人扛着这一切。有人愿意陪伴你、倾听你：
+# English: patterns are written to require first-person subject
+_MEDICAL_EN: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\bi'?(?:ve|m)\s+(?:had|been\s+having|having)\s+.{0,30}chest\s+pain\b", re.IGNORECASE),
+    re.compile(r"\bi\s+have\s+.{0,30}chest\s+pain\b", re.IGNORECASE),
+    re.compile(r"\bmy\s+chest\s+(?:hurts|is\s+hurting|is\s+(?:in\s+)?pain|feels?\s+tight)\b", re.IGNORECASE),
+    re.compile(r"\bi\s+(?:think\s+)?i'?m\s+having\s+.{0,30}heart\s+attack\b", re.IGNORECASE),
+    re.compile(r"\bi'?m\s+having\s+.{0,30}heart\s+attack\b", re.IGNORECASE),
+    re.compile(r"\bi\s+(?:had|have)\s+.{0,30}heart\s+attack\b", re.IGNORECASE),
+    re.compile(r"\bmy\s+heart\s+(?:hurts|is\s+(?:racing|pounding|stopping))\b", re.IGNORECASE),
+    re.compile(r"\bi\s+(?:think\s+)?i'?m\s+having\s+.{0,30}stroke\b", re.IGNORECASE),
+    re.compile(r"\bi\s+can'?t\s+breathe\b", re.IGNORECASE),
+    re.compile(r"\bi'?m\s+(?:having\s+trouble|unable\s+to)\s+breath(?:e|ing)\b", re.IGNORECASE),
+    # "chest pain" anywhere when "I / me / my chest / my pain" is also in the message
+    re.compile(r"chest\s+pain.{0,100}\b(?:i|me|myself)\b", re.IGNORECASE),
+    re.compile(r"\b(?:i|me|myself)\b.{0,100}chest\s+pain", re.IGNORECASE),
+)
 
-- **新加坡 SOS 热线：1767**（24小时；也可 WhatsApp 9151 1767）
-- **新加坡 SOS 热线：1800-221-4444**
-- 如果你在中国大陆：北京心理危机研究与干预中心 010-82951332 / 全国心理援助热线 400-161-9995
-- 如果你在以上地区以外：国际自杀预防协会 https://www.iasp.info/resources/Crisis_Centres/
 
-你值得被好好照顾。请给自己一个机会，和他们聊聊。💙
+def detect_human_medical_emergency(text: str) -> bool:
+    """Return True when the owner describes their own acute medical emergency."""
+    if _is_about_pet(text):
+        return False
+    return (
+        any(p.search(text) for p in _MEDICAL_ZH)
+        or any(p.search(text) for p in _MEDICAL_EN)
+    )
 
----
 
-Thank you for sharing this with me. I want you to know that I hear you, and **what you're feeling matters**.
+# ── Hardcoded responses ───────────────────────────────────────────────────────
+# These are returned by the orchestrator gate without calling the LLM.
+# Plain text (no HTML) — Telegram renders them fine; the orchestrator must NOT
+# wrap them in apply_response_format() with the pet-emergency RED template.
 
-There are people who care and want to listen — please reach out:
+HUMAN_CRISIS_RESPONSE = (
+    "Thank you for sharing this with me. I want you to know that I hear you, "
+    "and what you're feeling matters.\n\n"
+    "There are people who care and want to listen — please reach out:\n\n"
+    "• Singapore SOS (24 hrs): 1767 (call or WhatsApp 9151 1767)\n"
+    "• Singapore IMH Helpline: 6389-2222\n"
+    "• Samaritans of Singapore: 1-767\n\n"
+    "If you're outside Singapore, please contact your local crisis line or go "
+    "to your nearest emergency room.\n\n"
+    "You deserve support. You don't have to face this alone. 💙\n\n"
+    "---\n\n"
+    "谢谢你愿意告诉我这些。你说的话我都听到了，你现在的感受很重要。\n\n"
+    "有人愿意陪伴你、倾听你：\n\n"
+    "• 新加坡 SOS 热线（24小时）：1767（也可 WhatsApp 9151 1767）\n"
+    "• 新加坡 IMH 心理援助：6389-2222\n"
+    "• 如在中国大陆：北京 010-82951332 / 全国 400-161-9995\n\n"
+    "你值得被好好照顾。请给自己一个机会，和他们聊聊。💙"
+)
 
-- **Singapore SOS: 1767** (24-hour; WhatsApp 9151 1767)
-- **Singapore SOS: 1800-221-4444**
-- If you're in mainland China: 010-82951332 / 400-161-9995 / 400-821-1215
-- If you're elsewhere: https://www.iasp.info/resources/Crisis_Centres/
-
-You deserve support. You don't have to face this alone. 💙\
-"""
+HUMAN_MEDICAL_EMERGENCY_RESPONSE = (
+    "I noticed you may be describing your own medical emergency. "
+    "Please call emergency services immediately — do not wait:\n\n"
+    "🚨 Singapore: 995 (ambulance / A&E)\n"
+    "🚨 Or go to the nearest Accident & Emergency department now.\n\n"
+    "Chest pain can be a sign of a heart attack. This needs urgent attention "
+    "from a doctor, not a pet care assistant.\n\n"
+    "Pawly is here for pet care questions. Once you're safe, I'm happy to help "
+    "with anything your pet needs. 🐾\n\n"
+    "---\n\n"
+    "我注意到你可能在描述自己的身体不适。请立即拨打急救电话，不要等待：\n\n"
+    "🚨 新加坡急救：995（救护车）\n"
+    "🚨 或立刻前往最近的急诊室（A&E）\n"
+    "🚨 如在中国大陆：拨打 120\n\n"
+    "胸痛可能是心脏病发作的信号，需要立即就医。\n\n"
+    "Pawly 是宠物助手，无法提供人类医疗建议。待您安全后，我随时可以帮您解答宠物问题。🐾"
+)
