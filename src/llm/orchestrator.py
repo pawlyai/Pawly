@@ -397,12 +397,22 @@ async def _generate_response_classic(
         "langfuse_trace_url": get_current_trace_url(),
     }
     if detect_human_crisis(user_message):
+        update_trace(
+            user_id=str(user.id),
+            session_id=dialogue_id,
+            tags=[_tier(user).value, "classic-path", "hardcoded-gate", "human-crisis"],
+        )
         return OrchestratorResult(
             response_text=HUMAN_CRISIS_RESPONSE,
             triage_result={**_human_triage, "matched_patterns": ["human:crisis"]},
             intent="human_crisis",
         )
     if detect_human_medical_emergency(user_message):
+        update_trace(
+            user_id=str(user.id),
+            session_id=dialogue_id,
+            tags=[_tier(user).value, "classic-path", "hardcoded-gate", "human-medical"],
+        )
         return OrchestratorResult(
             response_text=HUMAN_MEDICAL_EMERGENCY_RESPONSE,
             triage_result={**_human_triage, "matched_patterns": ["human:medical_emergency"]},
@@ -755,11 +765,13 @@ async def _generate_response_classic(
             "output_tokens": out_tok,
         },
     )
-    # Propagate triage_llm_source to trace tags so Langfuse filter works:
-    #   filter tag = "partial_structured" → DeepSeek JSON-metadata-only turns
-    #   filter tag = "plain_fallback"     → full structured failure turns
+    # Tag the trace with the model used so it's visible in Langfuse's list view
+    # and filterable without opening the metadata panel.
+    # chat_model is e.g. "deepseek-v4-pro" or "gemini-2.5-flash".
+    base_tags = [tier.value, "classic-path", chat_model]
     if triage_result["llm_source"] != "structured":
-        update_trace(tags=[tier.value, "classic-path", triage_result["llm_source"]])
+        base_tags.append(triage_result["llm_source"])
+    update_trace(tags=base_tags)
 
     return OrchestratorResult(
         response_text=response_text,
