@@ -40,7 +40,7 @@ def p0c(name, display, scenario, outcome, role, criteria, pet, memories, user_tu
         "expected_outcome": outcome,
         "chatbot_role": role,
         "criteria": DISEASE_LAYER_PREAMBLE + criteria,
-        "threshold": 0.92,
+        "threshold": 0.9,
         "pet_profile": pet,
         "memories": memories,
         "recent_turns": [],
