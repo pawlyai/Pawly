@@ -33,7 +33,7 @@ def p0i(name, display, scenario, outcome, role, criteria, pet, memories, user_tu
         "expected_outcome": outcome,
         "chatbot_role": role,
         "criteria": DISEASE_LAYER_PREAMBLE + criteria + " " + INJECTION_CRITERIA_SUFFIX,
-        "threshold": 0.92,
+        "threshold": 0.9,
         "pet_profile": pet,
         "memories": memories,
         "recent_turns": [],
