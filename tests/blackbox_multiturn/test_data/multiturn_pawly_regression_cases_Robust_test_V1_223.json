@@ -8936,7 +8936,7 @@
       },
       {
         "role": "assistant",
-        "content": "Head shaking and ear scratching can indicate ear mites or an infection. This is a yellow triage — recommend a vet visit within 48 hours to confirm the cause."
+        "content": "Head shaking and ear scratching can indicate ear mites or an infection. This is an orange triage — recommend a vet visit within 48 hours to confirm the cause."
       },
       {
         "role": "user",
@@ -9098,9 +9098,9 @@
     "name": "marcus_bruno_long_vomiting_triage",
     "user_display_name": "Marcus",
     "scenario": "Bruno has been vomiting clear liquid every morning for a week. Marcus asks Pawly what might be causing this.",
-    "expected_outcome": "Pawly triages as yellow (bilious vomiting syndrome possible — stomach empty overnight, bile reflux), recommends a vet visit within 24–48 hours, and notes that the morning timing and clear/bile content is a characteristic pattern of BVS.",
+    "expected_outcome": "Pawly triages as orange (bilious vomiting syndrome possible — stomach empty overnight, bile reflux), recommends a vet visit within 24–48 hours, and notes that the morning timing and clear/bile content is a characteristic pattern of BVS.",
     "chatbot_role": "Triage morning bilious vomiting in an adult Bulldog and recommend appropriate urgency of vet assessment.",
-    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Koko's ear issue'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Building on the ear drops treatment Koko started...', 'Given Bruno's bilious vomiting diagnosis...'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must identify morning clear vomiting pattern as consistent with bilious vomiting syndrome (BVS); must triage as yellow (vet within 24–48 hours); must not dismiss or over-alarm; must explain the BVS mechanism (empty stomach, bile irritation).",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Koko's ear issue'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Building on the ear drops treatment Koko started...', 'Given Bruno's bilious vomiting diagnosis...'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must identify morning clear vomiting pattern as consistent with bilious vomiting syndrome (BVS); must triage as orange (vet within 24–48 hours); must not dismiss or over-alarm; must explain the BVS mechanism (empty stomach, bile irritation).",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Bruno",
@@ -9160,7 +9160,7 @@
       },
       {
         "role": "assistant",
-        "content": "This was triaged as yellow — bilious vomiting syndrome pattern. Vet visit was recommended."
+        "content": "This was triaged as orange — bilious vomiting syndrome pattern. Vet visit was recommended."
       },
       {
         "role": "user",
@@ -9256,9 +9256,9 @@
     "name": "natasha_miso_long_appetite_loss_triage",
     "user_display_name": "Natasha",
     "scenario": "Miso has not been eating for 2 days. Natasha asks Pawly what might be causing this.",
-    "expected_outcome": "Pawly triages as yellow, raises both medical (gastrointestinal, infection, pain) and behavioural (intact male hormonal stress, anxiety) causes, and recommends vet assessment within 24–48 hours given the 2-day duration.",
+    "expected_outcome": "Pawly triages as orange, raises both medical (gastrointestinal, infection, pain) and behavioural (intact male hormonal stress, anxiety) causes, and recommends vet assessment within 24–48 hours given the 2-day duration.",
     "chatbot_role": "Triage a 2-day appetite loss in an intact male Shiba Inu, considering both medical and behavioural causes.",
-    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Koko's ear issue'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Building on the ear drops treatment Koko started...', 'Given Bruno's bilious vomiting diagnosis...'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must triage as yellow (vet within 24–48 hours); must raise intact male hormonal stress as a potential contributing factor; must list other medical differentials; must not dismiss 2-day anorexia as trivial.",
+    "criteria": "Step 1 (CoT) — assess **contextual coherence with prior sessions**, not citation phrasing. Score two sub-signals separately and take their max as the citation score: (a) explicit citation — stock phrases like 'as you mentioned', 'as we discussed', 'remembering Koko's ear issue'; (b) implicit citation — the reply demonstrably uses prior session content without a stock phrase, e.g. 'Building on the ear drops treatment Koko started...', 'Given Bruno's bilious vomiting diagnosis...'. An implicit-only reply that uses prior content correctly passes citation. A reply that fabricates references, contradicts prior session content, or completely ignores it still fails. Must triage as orange (vet within 24–48 hours); must raise intact male hormonal stress as a potential contributing factor; must list other medical differentials; must not dismiss 2-day anorexia as trivial.",
     "threshold": 0.9,
     "pet_profile": {
       "name": "Miso",
@@ -9318,7 +9318,7 @@
       },
       {
         "role": "assistant",
-        "content": "Two-day appetite loss triaged as yellow. As an intact male, hormonal stress was raised as a possible contributing factor alongside medical causes. Vet visit was recommended."
+        "content": "Two-day appetite loss triaged as orange. As an intact male, hormonal stress was raised as a possible contributing factor alongside medical causes. Vet visit was recommended."
       },
       {
         "role": "user",
