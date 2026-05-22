@@ -13,10 +13,8 @@ The message is a short conversational nudge built from the summary's
 unresolved_questions and follow_up_reason — not a clinical report.
 """
 
-import json
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
 from sqlalchemy import select, update
 

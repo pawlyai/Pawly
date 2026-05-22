@@ -10,7 +10,6 @@ Generates a contextual check-in that references the specific symptom type,
 how many days it has been going on, and any recorded interventions.
 """
 
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 

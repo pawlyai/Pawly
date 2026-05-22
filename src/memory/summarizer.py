@@ -14,7 +14,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import distinct, select
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from src.db.engine import get_session_factory

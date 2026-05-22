@@ -14,7 +14,6 @@ stage = stage number) so concurrent workers cannot double-send.
 """
 
 import hashlib
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 

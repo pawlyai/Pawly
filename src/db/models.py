@@ -9,23 +9,24 @@ from typing import Optional
 
 from sqlalchemy import (
     ARRAY,
-    Index,
     JSON,
     Boolean,
     Date,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
 
 # ---------------------------------------------------------------------------
 # Python enums

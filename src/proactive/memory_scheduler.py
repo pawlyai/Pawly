@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import delete, select
-from sqlalchemy.dialects.postgresql import insert
 
 from src.db.engine import get_session_factory
 from src.db.models import Pet, Reminder, User

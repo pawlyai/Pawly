@@ -9,7 +9,7 @@ generate_daily_summary() for each.
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import distinct, select
+from sqlalchemy import select
 
 from src.db.engine import get_session_factory
 from src.db.models import RawMessage
