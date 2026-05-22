@@ -464,19 +464,21 @@ async def enqueue_extraction(
 async def enqueue_followup_check(
     telegram_id: str,
     user_id: str,
+    pet_id: str,
     pet_name: str,
     pet_species: str,
     triage_level: str,
+    triage_record_id: str,
     symptom_tags: list[str],
     delay_hours: int,
 ) -> None:
-    """Enqueue a proactive follow-up check, deduplicated per user via Redis."""
+    """Enqueue stage-1 of the multi-stage follow-up cascade."""
     from datetime import datetime, timedelta, timezone
 
     try:
         pool = await get_arq_pool()
 
-        # One pending follow-up per user at a time. TTL = delay + 1h buffer.
+        # Gate: one active cascade per user. TTL covers the full cascade window.
         dedup_key = f"followup_pending:{user_id}"
         ttl_seconds = delay_hours * 3600 + 3600
         already_pending = await pool.exists(dedup_key)
@@ -489,15 +491,18 @@ async def enqueue_followup_check(
             "run_followup_check",
             telegram_id=telegram_id,
             user_id=user_id,
+            pet_id=pet_id,
             pet_name=pet_name,
             pet_species=pet_species,
             triage_level=triage_level,
+            triage_record_id=triage_record_id,
             symptom_tags=symptom_tags,
             enqueued_at=datetime.now(timezone.utc).isoformat(),
+            stage=1,
             _defer_by=timedelta(hours=delay_hours),
         )
         logger.info(
-            "followup_check enqueued",
+            "followup_check enqueued (stage 1)",
             user_id=user_id,
             triage_level=triage_level,
             delay_hours=delay_hours,
@@ -768,15 +773,17 @@ async def handle_message(
             message_ids=[str(raw_msg.id), str(bot_raw.id)],
         )
 
-    # 7b. Schedule proactive follow-up for RED/ORANGE if user goes silent
+    # 7b. Schedule multi-stage follow-up for RED/ORANGE if user goes silent
     if active_pet and triage_final in ("red", "orange"):
         delay_hours = 2 if triage_final == "red" else 4
         await enqueue_followup_check(
             telegram_id=user.telegram_id,
             user_id=user_id_str,
+            pet_id=pet_id_str or "",
             pet_name=active_pet.name or "your pet",
             pet_species=active_pet.species.value,
             triage_level=triage_final.upper(),
+            triage_record_id=str(raw_msg.id),
             symptom_tags=result.symptom_tags,
             delay_hours=delay_hours,
         )
