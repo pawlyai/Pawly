@@ -104,12 +104,12 @@ async def generate_daily_summary(
     pet_id: str,
     user_id: str,
     target_date: date,
-) -> Optional[dict]:
+) -> Optional[tuple[dict, str]]:
     """
     Load the day's raw messages for *pet_id* + *user_id*, call Gemini Flash 2.0 to
     compress them, then upsert the result into DailySummary.
 
-    Returns the summary dict, or None if skipped (too few messages).
+    Returns (summary_dict, summary_id), or None if skipped (too few messages).
     """
     factory = get_session_factory()
 
@@ -173,12 +173,13 @@ async def generate_daily_summary(
         logger.error("daily summarization failed", error=str(exc), pet_id=pet_id, date=str(target_date))
         summary_data = _DEFAULT_DAILY.copy()
 
-    # Upsert DailySummary
+    # Upsert DailySummary — use a fixed id so we can return it for push dedup
+    summary_id = uuid.uuid4()
     async with factory() as db:
         stmt = (
             insert(DailySummary)
             .values(
-                id=uuid.uuid4(),
+                id=summary_id,
                 pet_id=pet_id,
                 user_id=user_id,
                 date=target_date,
@@ -189,12 +190,14 @@ async def generate_daily_summary(
                 constraint="uq_daily_summary_pet_date",
                 set_={"summary": summary_data, "message_count": len(user_messages)},
             )
+            .returning(DailySummary.id)
         )
-        await db.execute(stmt)
+        result = await db.execute(stmt)
+        persisted_id = result.scalar_one()
         await db.commit()
 
     logger.info("daily summary saved", pet_id=pet_id, date=str(target_date), msg_count=len(user_messages))
-    return summary_data
+    return summary_data, str(persisted_id)
 
 
 async def generate_weekly_summary(
