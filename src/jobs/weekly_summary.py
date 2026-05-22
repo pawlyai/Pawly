@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import select
 
 from src.db.engine import get_session_factory
-from src.db.models import DailySummary, Pet
+from src.db.models import DailySummary
 from src.memory.summarizer import generate_weekly_summary
 from src.utils.logger import get_logger
 
