@@ -74,7 +74,23 @@ def build_safety_banner(matched_rules: list[str]) -> str:
     """Construct the deterministic safety banner shown when the rule engine
     forces a RED escalation. Returns plain text (no HTML); the visual chrome
     is added later by `apply_response_format`.
+
+    Human crisis / medical emergency rules produce a banner without any vet
+    referral — those situations require human-directed resources, not pet care.
     """
+    # Human crisis rules must never produce vet-visit text.
+    if any(r.startswith("human:") for r in matched_rules):
+        if any(r == "human:medical_emergency" for r in matched_rules):
+            return (
+                "This sounds like a medical emergency. Please call 995 or go "
+                "to the nearest A&E immediately."
+            )
+        return (
+            "It sounds like you might be going through something really difficult. "
+            "Please reach out to a crisis line — SOS: 1767 (24 hr). "
+            "You don't have to face this alone."
+        )
+
     # Skip pure "context:" / "orange:" / "pet:age_escalation" entries — they
     # carry no clinical signal worth surfacing.
     skip_prefixes = ("context:", "orange:")
