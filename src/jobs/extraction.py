@@ -129,6 +129,22 @@ async def run_extraction(
         source_message_id=source_message_id,
     )
 
+    # ── 5b. Schedule reminders for any newly committed memory fields ──────────
+    committed_fields = [
+        p.field for p, v in proposals_with_results
+        if v.status.value in ("auto_approved", "committed")
+    ]
+    if committed_fields:
+        try:
+            from src.proactive.memory_scheduler import schedule_reminders_from_memories
+            await schedule_reminders_from_memories(
+                pet_id=pet_id,
+                user_id=user_id,
+                changed_fields=committed_fields,
+            )
+        except Exception as exc:
+            logger.warning("extraction: reminder scheduling failed", error=str(exc))
+
     # ── 6. Log ────────────────────────────────────────────────────────────────
     logger.info(
         "extraction_complete",

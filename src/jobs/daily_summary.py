@@ -9,7 +9,7 @@ generate_daily_summary() for each.
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import distinct, select
+from sqlalchemy import select
 
 from src.db.engine import get_session_factory
 from src.db.models import RawMessage
@@ -17,6 +17,24 @@ from src.memory.summarizer import generate_daily_summary
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+async def _push_summary(
+    summary_id: str,
+    pet_id: str,
+    user_id: str,
+    summary: dict,
+) -> None:
+    try:
+        from src.proactive.summary_pusher import push_daily_summary_if_needed
+        await push_daily_summary_if_needed(
+            summary_id=summary_id,
+            pet_id=pet_id,
+            user_id=user_id,
+            summary=summary,
+        )
+    except Exception as exc:
+        logger.error("run_daily_summary: push failed", pet_id=pet_id, error=str(exc))
 
 
 async def run_daily_summary(ctx: dict) -> dict[str, Any]:
@@ -51,15 +69,18 @@ async def run_daily_summary(ctx: dict) -> dict[str, Any]:
 
     for pet_id, user_id in pairs:
         try:
-            summary = await generate_daily_summary(
+            result = await generate_daily_summary(
                 pet_id=pet_id,
                 user_id=user_id,
                 target_date=yesterday,
             )
-            if summary is None:
+            if result is None:
                 skipped += 1
             else:
                 succeeded += 1
+                # Push a follow-up message if yesterday had unresolved concerns
+                summary_data, summary_id = result
+                await _push_summary(summary_id, pet_id, user_id, summary_data)
         except Exception as exc:
             failed += 1
             logger.error(

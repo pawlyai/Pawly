@@ -9,23 +9,24 @@ from typing import Optional
 
 from sqlalchemy import (
     ARRAY,
-    Index,
     JSON,
     Boolean,
     Date,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
 )
+from sqlalchemy import (
+    Enum as SAEnum,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
 
 # ---------------------------------------------------------------------------
 # Python enums
@@ -134,6 +135,14 @@ class TriageLevel(str, enum.Enum):
     RED = "red"
     ORANGE = "orange"
     GREEN = "green"
+
+
+class ProactiveEventType(str, enum.Enum):
+    TRIAGE_FOLLOWUP = "triage_followup"
+    DAILY_SUMMARY_PUSH = "daily_summary_push"
+    EPISODE_CHECKIN = "episode_checkin"
+    MEMORY_REMINDER = "memory_reminder"
+    PENDING_MEMORY_NUDGE = "pending_memory_nudge"
 
 
 class Severity(str, enum.Enum):
@@ -390,6 +399,7 @@ class DailySummary(Base):
     date: Mapped[date] = mapped_column(Date, nullable=False)
     summary: Mapped[dict] = mapped_column(JSON, nullable=False)
     message_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    pushed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
 
@@ -422,3 +432,31 @@ class Reminder(Base):
     is_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ProactiveEvent(Base):
+    """Audit + dedup table for all proactive outbound messages."""
+
+    __tablename__ = "proactive_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "event_type", "trigger_ref_id", "stage",
+            name="uq_proactive_event_type_ref_stage",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    pet_id: Mapped[str] = mapped_column(String, nullable=False)
+    telegram_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_type: Mapped[ProactiveEventType] = mapped_column(
+        enum_type(ProactiveEventType, "proactiveeventtype"), nullable=False
+    )
+    trigger_ref_id: Mapped[str] = mapped_column(String, nullable=False)
+    stage: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    skipped: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    skipped_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    content_preview: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

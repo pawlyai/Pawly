@@ -33,6 +33,7 @@ async def run_reminder_check(ctx: dict) -> dict:
         return {"sent": 0}
 
     from aiogram import Bot
+
     from src.config import settings
 
     bot = Bot(token=settings.telegram_bot_token)
