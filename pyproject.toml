@@ -79,7 +79,7 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "-p no:rerunfailures"
+addopts = "-p no:rerunfailures -p no:deepeval"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
