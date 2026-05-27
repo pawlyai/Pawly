@@ -13,6 +13,7 @@ from src.jobs.episode_checkin import run_episode_checkin
 from src.jobs.extraction import run_extraction
 from src.jobs.followup import run_followup_check
 from src.jobs.pending_nudge import run_pending_nudge
+from src.jobs.reengagement import run_reengagement_check
 from src.jobs.reminder import run_reminder_check
 from src.jobs.weekly_summary import run_weekly_summary
 
@@ -44,6 +45,7 @@ class WorkerSettings:
         run_episode_checkin,
         run_pending_nudge,
         run_analytics_report,
+        run_reengagement_check,
         expire_old_memories,    # kept for individual invocation
         expire_pending_changes,  # kept for individual invocation
     ]
@@ -60,4 +62,5 @@ class WorkerSettings:
         cron(run_episode_checkin, hour=9, minute=0),            # daily 09:00 UTC
         cron(run_pending_nudge, hour=10, minute=0),             # daily 10:00 UTC
         cron(run_analytics_report, hour=6, minute=0),           # daily 06:00 UTC
+        cron(run_reengagement_check, hour=11, minute=0),        # daily 11:00 UTC
     ]
