@@ -629,6 +629,7 @@ async def _generate_response_classic(
     #   3. The banner is deterministic — it always names the exact triggers
     #      that fired, so users see a specific reason ("suspected toxin
     #      ingestion") rather than a generic "this is urgent" rewrite.
+    is_human_crisis_rule = any(r.startswith("human:") for r in rule_result.matched_rules)
     rule_red_with_llm_under = (
         rule_result.classification == TriageLevel.RED
         and llm_triage != TriageLevel.RED
@@ -665,7 +666,12 @@ async def _generate_response_classic(
     response_text = apply_response_format(
         response_text,
         effective_triage,
-        skip_red_format=detect_owner_distress(user_message),
+        skip_red_format=(
+            is_human_crisis_rule
+            or detect_owner_distress(user_message)
+            or detect_human_crisis(user_message)
+            or detect_human_medical_emergency(user_message)
+        ),
     )
 
     triage_result = {

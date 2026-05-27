@@ -6,6 +6,7 @@ from arq import cron
 from arq.connections import RedisSettings
 
 from src.config import settings
+from src.jobs.analytics_report import run_analytics_report
 from src.jobs.cleanup import expire_old_memories, expire_pending_changes, run_cleanup
 from src.jobs.daily_summary import run_daily_summary
 from src.jobs.episode_checkin import run_episode_checkin
@@ -42,6 +43,7 @@ class WorkerSettings:
         run_cleanup,
         run_episode_checkin,
         run_pending_nudge,
+        run_analytics_report,
         expire_old_memories,    # kept for individual invocation
         expire_pending_changes,  # kept for individual invocation
     ]
@@ -57,4 +59,5 @@ class WorkerSettings:
         cron(run_cleanup, hour=4, minute=0),
         cron(run_episode_checkin, hour=9, minute=0),            # daily 09:00 UTC
         cron(run_pending_nudge, hour=10, minute=0),             # daily 10:00 UTC
+        cron(run_analytics_report, hour=6, minute=0),           # daily 06:00 UTC
     ]
