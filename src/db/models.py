@@ -143,6 +143,7 @@ class ProactiveEventType(str, enum.Enum):
     EPISODE_CHECKIN = "episode_checkin"
     MEMORY_REMINDER = "memory_reminder"
     PENDING_MEMORY_NUDGE = "pending_memory_nudge"
+    REENGAGEMENT = "reengagement"
 
 
 class Severity(str, enum.Enum):
