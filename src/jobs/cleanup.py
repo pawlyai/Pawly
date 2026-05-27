@@ -33,7 +33,7 @@ async def run_cleanup(ctx: dict) -> dict[str, Any]:
 
     Returns counts for each operation performed.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     thirty_days_ago = now - timedelta(days=_DAILY_RETENTION_DAYS)
     six_months_ago = now - timedelta(days=_WEEKLY_RETENTION_DAYS)
 
@@ -98,7 +98,7 @@ async def run_cleanup(ctx: dict) -> dict[str, Any]:
 
 async def expire_pending_changes(ctx: dict) -> dict[str, Any]:
     """Mark expired NEEDS_CONFIRMATION pending changes as EXPIRED."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     factory = get_session_factory()
 
     async with factory() as db:
@@ -123,7 +123,7 @@ async def expire_pending_changes(ctx: dict) -> dict[str, Any]:
 
 async def expire_old_memories(ctx: dict) -> dict[str, Any]:
     """Deactivate PetMemory entries whose expires_at has passed."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     factory = get_session_factory()
 
     async with factory() as db:
