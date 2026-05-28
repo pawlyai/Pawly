@@ -13,6 +13,7 @@ Dedup uses ProactiveEvent (trigger_ref_id = triage_record_id + user_id hash,
 stage = stage number) so concurrent workers cannot double-send.
 """
 
+import asyncio
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -69,7 +70,8 @@ async def run_followup_check(
     if stage > len(delays):
         return {"status": "skipped", "reason": "no_more_stages"}
 
-    enqueued_dt = datetime.fromisoformat(enqueued_at)
+    # Strip timezone so the value is compatible with TIMESTAMP WITHOUT TIME ZONE columns.
+    enqueued_dt = datetime.fromisoformat(enqueued_at).replace(tzinfo=None)
     ref_id = _trigger_ref(user_id, triage_record_id)
 
     # Dedup: skip if this stage was already sent
@@ -150,31 +152,52 @@ async def run_followup_check(
     next_stage = stage + 1
     if next_stage <= len(delays):
         next_delay_h = delays[next_stage - 1]
-        fire_at = datetime.now(timezone.utc).isoformat()
-        try:
-            from src.jobs.pool import get_arq_pool
-            pool = await get_arq_pool()
-            await pool.enqueue_job(
-                "run_followup_check",
-                telegram_id=telegram_id,
-                user_id=user_id,
-                pet_id=pet_id,
-                pet_name=pet_name,
-                pet_species=pet_species,
-                triage_level=level,
-                triage_record_id=triage_record_id,
-                symptom_tags=symptom_tags,
-                enqueued_at=fire_at,
-                stage=next_stage,
-                _defer_by=timedelta(hours=next_delay_h),
-            )
-            logger.info(
-                "followup: next stage enqueued",
-                next_stage=next_stage,
-                delay_hours=next_delay_h,
-            )
-        except Exception as exc:
-            logger.error("followup: failed to enqueue next stage", error=str(exc))
+        # Naive UTC — compatible with TIMESTAMP WITHOUT TIME ZONE columns on next run.
+        fire_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        # Stable job_id prevents duplicate enqueues if this stage is retried.
+        next_job_id = f"followup:{user_id}:{triage_record_id}:{next_stage}"
+        from src.jobs.pool import get_arq_pool
+        enqueue_ok = False
+        for attempt in range(3):
+            try:
+                pool = await get_arq_pool()
+                await pool.enqueue_job(
+                    "run_followup_check",
+                    telegram_id=telegram_id,
+                    user_id=user_id,
+                    pet_id=pet_id,
+                    pet_name=pet_name,
+                    pet_species=pet_species,
+                    triage_level=level,
+                    triage_record_id=triage_record_id,
+                    symptom_tags=symptom_tags,
+                    enqueued_at=fire_at,
+                    stage=next_stage,
+                    _defer_by=timedelta(hours=next_delay_h),
+                    _job_id=next_job_id,
+                )
+                logger.info(
+                    "followup: next stage enqueued",
+                    next_stage=next_stage,
+                    delay_hours=next_delay_h,
+                )
+                enqueue_ok = True
+                break
+            except Exception as exc:
+                if attempt < 2:
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    logger.error(
+                        "followup: CRITICAL — next stage lost after 3 attempts",
+                        error=str(exc),
+                        user_id=user_id,
+                        telegram_id=telegram_id,
+                        triage_record_id=triage_record_id,
+                        next_stage=next_stage,
+                        next_delay_hours=next_delay_h,
+                    )
+        if not enqueue_ok and sent:
+            return {"status": "next_stage_enqueue_failed", "stage": stage}
 
     if not sent:
         return {"status": "error", "stage": stage}
