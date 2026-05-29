@@ -238,7 +238,10 @@ async def _generate_message(
             max_tokens=120,
             temperature=0.7,
         )
-        return raw["text"].strip()
+        text = raw["text"].strip()
+        if not text:
+            raise ValueError("LLM returned empty follow-up text")
+        return text
     except Exception as exc:
         logger.error("followup: generation failed", stage=stage, error=str(exc))
         return f"Hey, just checking in — how is {pet_name} doing? 🐾"
