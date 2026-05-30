@@ -51,10 +51,10 @@ def build_context_block(
     if env_items:
         sections.append("Environment: " + _join_items(env_items))
 
-    # ── Current status: short-term snapshots (appetite, energy, mood…) ───────
+    # ── Current status: short-term snapshots and acute symptoms ──────────────
     status_items = _filter(
-        short_term + _filter(mid_term, {MemoryType.PATTERN}),
-        {MemoryType.SNAPSHOT, MemoryType.PATTERN},
+        short_term + _filter(mid_term, {MemoryType.PATTERN, MemoryType.SYMPTOM}),
+        {MemoryType.SNAPSHOT, MemoryType.PATTERN, MemoryType.SYMPTOM},
     )
     if status_items:
         sections.append("Current status: " + _join_items(status_items))

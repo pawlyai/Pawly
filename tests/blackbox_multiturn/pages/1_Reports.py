@@ -287,6 +287,33 @@ def render_case_details(case: dict[str, Any]) -> None:
                     elif llm_is_inferred:
                         st.caption("† Structured output unavailable (plain_fallback). LLM level inferred from response prose.")
 
+            full_loop = turn.get("full_loop")
+            if full_loop:
+                mem_ctx = full_loop.get("memory_context", "") or ""
+                sys_prompt = full_loop.get("system_prompt", "") or ""
+                msg_count = full_loop.get("messages_sent_count", 0)
+                day_label = full_loop.get("day_label", "")
+                loop_label = f"🔍 Full Loop — {msg_count} turns in context"
+                if day_label:
+                    loop_label += f" · {day_label}"
+                with st.expander(loop_label, expanded=False):
+                    if mem_ctx:
+                        st.caption("**Memory Context injected:**")
+                        st.text(mem_ctx[:3000] + ("…" if len(mem_ctx) > 3000 else ""))
+                    else:
+                        st.caption("_No memory context injected._")
+                    if sys_prompt:
+                        st.caption("**System Prompt (first 3000 chars):**")
+                        st.text(sys_prompt[:3000] + ("…" if len(sys_prompt) > 3000 else ""))
+                    extraction_proposals = full_loop.get("extraction_proposals", [])
+                    if extraction_proposals:
+                        st.caption(f"**Extraction proposals ({len(extraction_proposals)}):**")
+                        for ep in extraction_proposals:
+                            st.caption(
+                                f"• **{ep.get('field', '?')}** ({ep.get('memory_term', '')}, "
+                                f"conf={ep.get('confidence', 0):.2f}): {str(ep.get('value', ''))[:120]}"
+                            )
+
         if i < len(turns) - 1:
             st.markdown("---")
 
