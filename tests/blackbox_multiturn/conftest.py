@@ -555,10 +555,49 @@ class ConversationRuntime:
         # Derived from the first turn's Langfuse trace URL. Allows linking the
         # report directly to the Langfuse session for this case.
         self.langfuse_session_url: str | None = None
+        # Captured per-turn by mock_multiturn_runtime for full-loop visibility.
+        self.last_system_prompt: str = ""
+        self.last_memory_context: str = ""
 
     def record_exchange(self, user_text: str, assistant_text: str) -> None:
         self.recent_turns.append({"role": "user", "content": user_text})
         self.recent_turns.append({"role": "assistant", "content": assistant_text})
+
+
+class CrossDayConversationRuntime:
+    """Per-day runtime for cross-day multi-turn tests.
+
+    Resets current_day_recent_turns on each start_new_day() call so the
+    orchestrator only sees intra-day context (simulating a real new session).
+    Memories accumulated via extraction between days persist across days.
+    """
+
+    def __init__(self, pet: Pet, memories: list[PetMemory], dialogue_id: str) -> None:
+        self.pet = pet
+        self.memories = memories
+        self.dialogue_id = dialogue_id
+        self.triage_results: list[dict[str, Any]] = []
+        self.langfuse_session_url: str | None = None
+        self.last_system_prompt: str = ""
+        self.last_memory_context: str = ""
+        self.daily_summary: Any = None
+        self.previous_daily_summary: Any = None
+        self.current_day_recent_turns: list[dict[str, str]] = []
+        self.current_day_raw_messages: list[dict[str, str]] = []
+
+    def start_new_day(self) -> None:
+        # Preserve the completed day's summary so the next day can inject it as context.
+        if self.daily_summary is not None:
+            self.previous_daily_summary = self.daily_summary
+        self.current_day_recent_turns = []
+        self.current_day_raw_messages = []
+        self.daily_summary = None
+
+    def record_exchange(self, user_text: str, assistant_text: str) -> None:
+        self.current_day_recent_turns.append({"role": "user", "content": user_text})
+        self.current_day_recent_turns.append({"role": "assistant", "content": assistant_text})
+        self.current_day_raw_messages.append({"role": "user", "content": user_text})
+        self.current_day_raw_messages.append({"role": "assistant", "content": assistant_text})
 
 
 @pytest.fixture(scope="session")
@@ -715,6 +754,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
             "Keep per-worker partial report files after the master merges them. "
             "Off by default — partials are removed after a successful merge."
         ),
+    )
+    parser.addoption(
+        "--crossday-topic",
+        action="store",
+        default="multiturn_crossday",
+        help="Dataset name for cross-day multiturn tests (maps to <topic>_cases.json).",
     )
 
 
@@ -900,6 +945,19 @@ def mock_multiturn_runtime(
                     runtime.langfuse_session_url = f"{project_base}/sessions/{runtime.dialogue_id}"
             return result
 
+        from src.llm.prompts.context import build_context_block as _orig_build_context_block
+        from src.llm.prompts.system import build_system_prompt as _orig_build_system_prompt
+
+        def _capturing_build_context_block(*args: Any, **kwargs: Any) -> Any:
+            result = _orig_build_context_block(*args, **kwargs)
+            runtime.last_memory_context = result[0] if isinstance(result, tuple) else str(result)
+            return result
+
+        def _capturing_build_system_prompt(*args: Any, **kwargs: Any) -> Any:
+            result = _orig_build_system_prompt(*args, **kwargs)
+            runtime.last_system_prompt = result if isinstance(result, str) else str(result)
+            return result
+
         monkeypatch.setattr(orchestrator, "load_pet_context", _fake_load_pet_context)
         monkeypatch.setattr(orchestrator, "load_related_memories", _fake_load_related_memories)
         monkeypatch.setattr(orchestrator, "_store_triage_record", _fake_store_triage_record)
@@ -910,6 +968,107 @@ def mock_multiturn_runtime(
         monkeypatch.setattr(message_handler, "get_or_create_dialogue", _fake_get_or_create_dialogue)
         monkeypatch.setattr(message_handler, "store_enriched_messages", _fake_store_enriched_messages)
         monkeypatch.setattr(message_handler, "enqueue_extraction", _fake_enqueue_extraction)
+        monkeypatch.setattr(orchestrator, "build_context_block", _capturing_build_context_block)
+        monkeypatch.setattr(orchestrator, "build_system_prompt", _capturing_build_system_prompt)
+        return runtime
+
+    return _apply
+
+
+@pytest.fixture
+def mock_crossday_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> "Callable[[dict[str, Any], User, Pet], CrossDayConversationRuntime]":
+    from src.llm import orchestrator
+
+    def _apply(case: dict[str, Any], user: User, pet: Pet) -> CrossDayConversationRuntime:
+        memories = [_build_pet_memory(pet.id, m) for m in case.get("memories", []) if "memory_type" in m]
+        fake_session_id = uuid.uuid4()
+        fake_dialogue_id = uuid.uuid4()
+        runtime = CrossDayConversationRuntime(
+            pet=pet,
+            memories=memories,
+            dialogue_id=str(fake_dialogue_id),
+        )
+
+        async def _fake_load_pet_context(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            # Use previous_daily_summary so Day 2 sees the Day 1 summary as context.
+            # Within a day, daily_summary is None until the day's extraction job sets it;
+            # previous_daily_summary is set by start_new_day() from the prior day's result.
+            injected_summary = runtime.daily_summary if runtime.daily_summary is not None else runtime.previous_daily_summary
+            return {
+                "pet": pet,
+                "long_term_memories": [m for m in runtime.memories if m.memory_term == MemoryTerm.LONG],
+                "mid_term_memories": [m for m in runtime.memories if m.memory_term == MemoryTerm.MID],
+                "short_term_memories": [m for m in runtime.memories if m.memory_term == MemoryTerm.SHORT],
+                "recent_turns": runtime.current_day_recent_turns,
+                "daily_summary": injected_summary,
+                "weekly_summary": None,
+                "pending_confirmations": [],
+            }
+
+        async def _fake_load_related_memories(*args: Any, **kwargs: Any) -> list[PetMemory]:
+            return list(runtime.memories)
+
+        async def _fake_store_triage_record(*args: Any, **kwargs: Any) -> None:
+            return None
+
+        async def _fake_load_user_pets(user_id: str) -> list[Pet]:
+            return [pet]
+
+        async def _fake_store_raw_message(*args: Any, **kwargs: Any) -> Any:
+            return SimpleNamespace(id=uuid.uuid4())
+
+        async def _fake_get_or_create_session(user_id: str) -> Any:
+            return SimpleNamespace(id=fake_session_id)
+
+        async def _fake_get_or_create_dialogue(session_id: str, pet_id: str | None) -> Any:
+            return SimpleNamespace(id=fake_dialogue_id)
+
+        async def _fake_store_enriched_messages(*args: Any, **kwargs: Any) -> None:
+            return None
+
+        async def _fake_enqueue_extraction(*args: Any, **kwargs: Any) -> None:
+            return None
+
+        _orig_generate_response = message_handler.generate_response
+
+        async def _capturing_generate_response(*args: Any, **kwargs: Any) -> Any:
+            result = await _orig_generate_response(*args, **kwargs)
+            triage = result.triage_result or {}
+            runtime.triage_results.append(triage)
+            if runtime.langfuse_session_url is None:
+                trace_url = triage.get("langfuse_trace_url")
+                if trace_url and "/traces/" in trace_url:
+                    project_base = trace_url.rsplit("/traces/", 1)[0]
+                    runtime.langfuse_session_url = f"{project_base}/sessions/{runtime.dialogue_id}"
+            return result
+
+        from src.llm.prompts.context import build_context_block as _orig_build_context_block
+        from src.llm.prompts.system import build_system_prompt as _orig_build_system_prompt
+
+        def _capturing_build_context_block(*args: Any, **kwargs: Any) -> Any:
+            result = _orig_build_context_block(*args, **kwargs)
+            runtime.last_memory_context = result[0] if isinstance(result, tuple) else str(result)
+            return result
+
+        def _capturing_build_system_prompt(*args: Any, **kwargs: Any) -> Any:
+            result = _orig_build_system_prompt(*args, **kwargs)
+            runtime.last_system_prompt = result if isinstance(result, str) else str(result)
+            return result
+
+        monkeypatch.setattr(orchestrator, "load_pet_context", _fake_load_pet_context)
+        monkeypatch.setattr(orchestrator, "load_related_memories", _fake_load_related_memories)
+        monkeypatch.setattr(orchestrator, "_store_triage_record", _fake_store_triage_record)
+        monkeypatch.setattr(message_handler, "generate_response", _capturing_generate_response)
+        monkeypatch.setattr(message_handler, "load_user_pets", _fake_load_user_pets)
+        monkeypatch.setattr(message_handler, "store_raw_message", _fake_store_raw_message)
+        monkeypatch.setattr(message_handler, "get_or_create_session", _fake_get_or_create_session)
+        monkeypatch.setattr(message_handler, "get_or_create_dialogue", _fake_get_or_create_dialogue)
+        monkeypatch.setattr(message_handler, "store_enriched_messages", _fake_store_enriched_messages)
+        monkeypatch.setattr(message_handler, "enqueue_extraction", _fake_enqueue_extraction)
+        monkeypatch.setattr(orchestrator, "build_context_block", _capturing_build_context_block)
+        monkeypatch.setattr(orchestrator, "build_system_prompt", _capturing_build_system_prompt)
         return runtime
 
     return _apply
@@ -1038,6 +1197,26 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     call is made. Longitudinal cases are pinned to the same xdist worker via
     xdist_group so per-pet ordering is preserved when running with -n N.
     """
+    if "crossday_case" in metafunc.fixturenames:
+        topic = metafunc.config.getoption("--crossday-topic", default="multiturn_crossday")
+        filename = f"{topic}_cases.json"
+        path = TEST_DATA_DIR / filename
+        if not path.exists():
+            return
+        with path.open("r", encoding="utf-8") as handle:
+            cases = json.load(handle)
+        if not isinstance(cases, list):
+            return
+        params = [
+            pytest.param(
+                c,
+                id=c.get("name", f"case_{i}") if isinstance(c, dict) else f"case_{i}",
+            )
+            for i, c in enumerate(cases)
+        ]
+        metafunc.parametrize("crossday_case", params)
+        return
+
     if "case" not in metafunc.fixturenames:
         return
     topic = metafunc.config.getoption("--multiturn-topic")
