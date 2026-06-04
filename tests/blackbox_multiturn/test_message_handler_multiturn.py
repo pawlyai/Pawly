@@ -130,8 +130,19 @@ def test_handle_message_multiturn_with_conversational_geval(
                     "new_message_count": len(new_messages),
                     "triage_trace": triage_trace,
                     "full_loop": {
-                        "memory_context": runtime.last_memory_context[:500] if runtime.last_memory_context else "",
+                        "memory_context": runtime.last_memory_context or "",
+                        "system_prompt": runtime.last_system_prompt or "",
                         "messages_sent_count": full_loop["messages_sent_count"],
+                        "injected_memories": [
+                            {
+                                "field": m.field,
+                                "value": m.value if isinstance(m.value, str) else str(m.value),
+                                "memory_term": m.memory_term.value,
+                                "memory_type": m.memory_type.value,
+                                "confidence": m.confidence_score,
+                            }
+                            for m in runtime.memories
+                        ],
                     },
                 },
             )
