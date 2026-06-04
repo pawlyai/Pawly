@@ -25,7 +25,6 @@ from _validation import ValidationReport, validate_dataset  # noqa: E402
 
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-bot-token")
-os.environ.setdefault("GOOGLE_API_KEY", "")
 os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "1")
 
 # deepeval's _debug_print_prompt calls print() which crashes on Windows cp1252
@@ -625,7 +624,7 @@ def underlying_chat_client(active_model_name: str) -> Any:
         if not os.environ.get("OPENAI_API_KEY", "").strip():
             pytest.skip("OPENAI_API_KEY is required for GPT models.")
     elif provider == "DeepSeek":
-        if not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+        if not os.environ.get("DEEPSEEK_API_KEY", "").strip() and not settings.deepseek_api_key.strip():
             pytest.skip("DEEPSEEK_API_KEY is required for DeepSeek models.")
 
     # Force settings.main_model so orchestrator passes the right model name to the client.
@@ -664,7 +663,7 @@ def compliance_resilient_client(
         if not settings.google_api_key.strip():
             pytest.skip("GOOGLE_API_KEY is required for the compliance model.")
     elif provider == "DeepSeek":
-        if not os.environ.get("DEEPSEEK_API_KEY", "").strip():
+        if not os.environ.get("DEEPSEEK_API_KEY", "").strip() and not settings.deepseek_api_key.strip():
             pytest.skip("DEEPSEEK_API_KEY is required for the compliance model.")
     # Stamp compliance_model into settings so the orchestrator router can read it.
     settings.compliance_model = compliance_model_name
@@ -1160,8 +1159,25 @@ def _resolve_model_name_for_run(config: pytest.Config) -> str:
     return "gemini-2.5-flash"
 
 
+_MULTITURN_TOPIC_DEFAULT = "multiturn_text_robustness"
+_CROSSDAY_TOPIC_DEFAULT = "multiturn_crossday"
+
+
 def _run_paths(config: pytest.Config) -> dict[str, Any]:
-    topic = config.getoption("--multiturn-topic")
+    multiturn_topic = config.getoption("--multiturn-topic")
+    crossday_topic = config.getoption("--crossday-topic", default=_CROSSDAY_TOPIC_DEFAULT)
+
+    # When the user only runs crossday tests (multiturn-topic is still at its
+    # default) and has specified a non-default crossday-topic, use the crossday
+    # topic for report/log filenames so the output clearly reflects the dataset.
+    if (
+        multiturn_topic == _MULTITURN_TOPIC_DEFAULT
+        and crossday_topic != _CROSSDAY_TOPIC_DEFAULT
+    ):
+        topic = crossday_topic
+    else:
+        topic = multiturn_topic
+
     model_name = _resolve_model_name_for_run(config)
     timestamp = os.environ.get(RUN_TIMESTAMP_ENV, "00000000_000000")
     worker = _xdist_worker_id()

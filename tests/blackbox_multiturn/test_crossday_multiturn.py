@@ -220,6 +220,21 @@ def test_crossday_with_conversational_geval(
                         "assistant_text": assistant_text,
                         "new_message_count": len(new_messages),
                         "triage_trace": triage_trace,
+                        "full_loop": {
+                            "memory_context": runtime.last_memory_context or "",
+                            "system_prompt": runtime.last_system_prompt or "",
+                            "messages_sent_count": len(runtime.current_day_recent_turns),
+                            "injected_memories": [
+                                {
+                                    "field": m.field,
+                                    "value": m.value if isinstance(m.value, str) else str(m.value),
+                                    "memory_term": m.memory_term.value,
+                                    "memory_type": m.memory_type.value,
+                                    "confidence": m.confidence_score,
+                                }
+                                for m in runtime.memories
+                            ],
+                        },
                     },
                 )
 
