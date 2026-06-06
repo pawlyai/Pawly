@@ -457,37 +457,37 @@ async def _generate_response_classic(
         except Exception as exc:
             logger.warning("load_pet_context failed", error=str(exc))
 
-        if is_health:
-            try:
-                related = await load_related_memories(pet_id_str, user_message)  # type: ignore[arg-type]
-                existing_ids = {m.id for m in ctx.get("short_term_memories", [])}
-                ctx.setdefault("short_term_memories", []).extend(
-                    m for m in related if m.id not in existing_ids
-                )
-                if related:
-                    _kb_metadata = {
-                        "kb_fields_retrieved": [m.field for m in related],
-                        "kb_memory_count": len(related),
-                        "kb_entries": [
-                            {
-                                "field": m.field,
-                                "value": m.value,
-                                "memory_term": m.memory_term.value,
-                                "memory_type": m.memory_type.value,
-                                "confidence": m.confidence_score,
-                            }
-                            for m in related
-                        ],
-                    }
-                    update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
-            except Exception as exc:
-                logger.warning("load_related_memories failed", error=str(exc))
+        try:
+            related = await load_related_memories(pet_id_str, user_message)  # type: ignore[arg-type]
+            existing_ids = {m.id for m in ctx.get("short_term_memories", [])}
+            ctx.setdefault("short_term_memories", []).extend(
+                m for m in related if m.id not in existing_ids
+            )
+            if related:
+                _kb_metadata = {
+                    "kb_fields_retrieved": [m.field for m in related],
+                    "kb_memory_count": len(related),
+                    "kb_entries": [
+                        {
+                            "field": m.field,
+                            "value": m.value,
+                            "memory_term": m.memory_term.value,
+                            "memory_type": m.memory_type.value,
+                            "confidence": m.confidence_score,
+                        }
+                        for m in related
+                    ],
+                }
+                update_trace(tags=[tier.value, "classic-path", "kb_retrieved"])
+        except Exception as exc:
+            logger.warning("load_related_memories failed", error=str(exc))
 
     long_term = ctx.get("long_term_memories", [])
     mid_term = ctx.get("mid_term_memories", [])
     short_term = ctx.get("short_term_memories", [])
     recent_turns: list[dict] = ctx.get("recent_turns", [])
     daily_summary = ctx.get("daily_summary")
+    weekly_summary = ctx.get("weekly_summary")
     pending = ctx.get("pending_confirmations", [])
 
     # ── 2. BUILD SYSTEM PROMPT ────────────────────────────────────────────────
@@ -499,6 +499,7 @@ async def _generate_response_classic(
         recent_turns=recent_turns,
         daily_summary=daily_summary,
         pending=pending,
+        weekly_summary=weekly_summary,
     )
 
     retrieval_ctx = build_retrieval_context(recent_turns, user_message)

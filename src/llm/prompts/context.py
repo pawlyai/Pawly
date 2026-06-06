@@ -5,9 +5,14 @@ build_context_block() converts loaded memory rows into two strings:
     memory_context      — injected into the system prompt as "Known context"
     pending_confirmation — the top pending change, phrased for natural weaving
 
-Keeps total context under ~1500 tokens by skipping empty sections.
+Memories within each section are sorted by a priority score
+(confidence × recency_decay × type_weight) so the most reliable,
+recent, and critical facts always surface first and are dropped last
+when the token budget is tight.
 """
 
+import math
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from src.db.models import (
@@ -16,7 +21,48 @@ from src.db.models import (
     PendingMemoryChange,
     PetMemory,
     Pet,
+    WeeklySummary,
 )
+
+# ── Memory priority weights ───────────────────────────────────────────────────
+# Higher weight = injected earlier, dropped last when token budget is tight.
+
+_TYPE_WEIGHT: dict[MemoryType, float] = {
+    MemoryType.CHRONIC:     1.0,   # chronic disease, known allergies
+    MemoryType.SAFETY:      1.0,   # drug interactions, toxin flags
+    MemoryType.EPISODE:     0.9,   # active/recent health episode
+    MemoryType.SYMPTOM:     0.8,   # reported symptoms
+    MemoryType.BASELINE:    0.6,   # weight, diet, exercise baselines
+    MemoryType.SNAPSHOT:    0.5,   # point-in-time observation
+    MemoryType.PATTERN:     0.5,   # recurring behaviour patterns
+    MemoryType.ENVIRONMENT: 0.4,   # home setup, stressors
+    MemoryType.PROFILE:     0.3,   # breed, age (already in pet profile)
+}
+
+# Memories older than this contribute ~50% of their peak score.
+_RECENCY_HALF_LIFE_DAYS = 30.0
+
+
+def _memory_score(m: PetMemory) -> float:
+    """score = confidence × recency_decay × type_weight.
+
+    Used to order memories so critical/confident/recent facts come first
+    and are the last to be dropped if the token budget is exceeded.
+    """
+    type_w = _TYPE_WEIGHT.get(m.memory_type, 0.5)
+    confidence = m.confidence_score if m.confidence_score is not None else 0.5
+
+    if m.created_at:
+        now = datetime.now(timezone.utc)
+        created = m.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        days_ago = max(0.0, (now - created).total_seconds() / 86400)
+        recency = math.exp(-days_ago / _RECENCY_HALF_LIFE_DAYS)
+    else:
+        recency = 0.5
+
+    return confidence * recency * type_w
 
 
 def build_context_block(
@@ -27,6 +73,7 @@ def build_context_block(
     recent_turns: list[dict],
     daily_summary: Optional[DailySummary],
     pending: list[PendingMemoryChange],
+    weekly_summary: Optional[WeeklySummary] = None,
 ) -> tuple[str, str]:
     """
     Returns (memory_context, pending_confirmation).
@@ -64,9 +111,23 @@ def build_context_block(
     if episode_items:
         sections.append("Active episodes: " + _join_items(episode_items))
 
+    # ── Weekly pattern (injected before daily so daily is the freshest) ───────
+    if weekly_summary:
+        highlights = (
+            weekly_summary.summary.get("highlights")
+            or weekly_summary.summary.get("core_issues")
+        )
+        if highlights:
+            if isinstance(highlights, list):
+                highlights = "; ".join(str(x) for x in highlights)
+            sections.append(f"Weekly pattern: {highlights}")
+
     # ── Recent daily summary ──────────────────────────────────────────────────
     if daily_summary:
-        core = daily_summary.summary.get("highlights") or daily_summary.summary.get("core_issues")
+        core = (
+            daily_summary.summary.get("highlights")
+            or daily_summary.summary.get("core_issues")
+        )
         if core:
             if isinstance(core, list):
                 core = "; ".join(str(x) for x in core)
@@ -91,8 +152,10 @@ def _filter(
 
 
 def _join_items(memories: list[PetMemory]) -> str:
+    # Sort by priority score: critical/confident/recent memories come first.
+    sorted_mems = sorted(memories, key=_memory_score, reverse=True)
     parts = []
-    for m in memories:
+    for m in sorted_mems:
         value = _fmt(m.value)
         parts.append(f"{m.field}={value}")
     return ", ".join(parts)
@@ -110,12 +173,10 @@ def _format_pending(pending: list[PendingMemoryChange]) -> str:
     if not pending:
         return ""
 
-    # Take the most recent pending item
     item = pending[0]
     proposed = _fmt(item.proposed_value)
 
     if item.conflict_with_id:
-        # There's a conflict with an existing memory value
         return (
             f'User previously mentioned "{item.source_quote}". '
             f"This suggests {item.field} = {proposed}, "
