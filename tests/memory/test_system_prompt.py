@@ -23,7 +23,7 @@ from src.llm.prompts.system import (
     MEMORY_HISTORY_TRUNCATED,
     MEMORY_NO_PROFILE,
     MEMORY_NO_RECENT_EPISODES,
-    SECTION_KEYS,
+    SYSTEM_PROMPT_KEYS,
     _truncate_recent_episodes,
     build_system_prompt,
     estimate_tokens,
@@ -68,7 +68,7 @@ def test_build_system_prompt_emits_all_nine_xml_sections() -> None:
     """The 9 v0 XML tags must appear in the assembled prompt (snapshot guard)."""
     prompt = build_system_prompt(user=_user(), pet=_pet())
 
-    for key in SECTION_KEYS:
+    for key in SYSTEM_PROMPT_KEYS:
         assert f"<{key}>" in prompt, f"missing opening tag <{key}>"
         assert f"</{key}>" in prompt, f"missing closing tag </{key}>"
 

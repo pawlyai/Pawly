@@ -159,13 +159,15 @@ async def _generate_episode_checkin(
         if items:
             intervention_str = f"Interventions tried: {', '.join(str(i) for i in items[:3])}. "
 
-    prompt = (
-        f"You are following up on {pet_name} ({pet_species}), who has had ongoing "
-        f"{symptom_type} ({severity} severity) for {days_ongoing} days. "
-        f"{intervention_str}"
-        f"Write ONE warm check-in message (2-3 sentences) asking for an update. "
-        f"Reference the specific symptom naturally. Ask whether they've seen a vet or noticed any change. "
-        f"One emoji is fine. Do not give medical advice."
+    from src.llm.prompts.system import get_proactive_prompt
+    template = get_proactive_prompt("proactive_episode_checkin")
+    prompt = template.format(
+        pet_name=pet_name,
+        pet_species=pet_species,
+        symptom_type=symptom_type,
+        severity=severity,
+        days_ongoing=days_ongoing,
+        intervention_str=intervention_str,
     )
     try:
         from src.llm.client import get_gemini_client

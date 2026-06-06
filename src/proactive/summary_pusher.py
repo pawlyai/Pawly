@@ -26,22 +26,6 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_PUSH_PROMPT = """\
-You are Pawly, an AI pet care assistant.
-
-Yesterday's health summary for {pet_name} ({species}) showed these unresolved concerns:
-{unresolved}
-
-Follow-up reason: {follow_up_reason}
-
-Write ONE warm, conversational message (2–3 sentences max) to check in with the owner.
-- Reference the specific concern naturally, don't list bullet points
-- Don't repeat medical advice
-- End with an open question
-- One emoji is fine
-Output only the message text, no preamble.
-"""
-
 
 async def push_daily_summary_if_needed(
     summary_id: str,
@@ -134,8 +118,10 @@ async def _generate_push_message(
     unresolved: list[str],
     follow_up_reason: str,
 ) -> str:
+    from src.llm.prompts.system import get_proactive_prompt
     unresolved_str = "; ".join(unresolved) if unresolved else follow_up_reason
-    prompt = _PUSH_PROMPT.format(
+    template = get_proactive_prompt("proactive_summary_push")
+    prompt = template.format(
         pet_name=pet_name,
         species=species,
         unresolved=unresolved_str,
