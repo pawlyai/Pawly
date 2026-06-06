@@ -16,31 +16,9 @@ Skip conditions:
 Mark with @pytest.mark.skip or set PAWLY_PROACTIVE_BLACKBOX_SKIP=1 to skip all.
 """
 
-import json
 import os
-from pathlib import Path
 
 import pytest
-
-# JSONL file written after each case so the summarize script / Streamlit UI can read scores.
-# Absolute path so CI (runs from repo root) and local runs write to the same place.
-_RESULTS_FILE = Path(__file__).resolve().parents[2] / "proactive_quality_results.jsonl"
-
-
-def _append_result(case_id: str, score: float, reason: str, passed: bool, generated: str) -> None:
-    with _RESULTS_FILE.open("a", encoding="utf-8") as f:
-        f.write(
-            json.dumps(
-                {
-                    "case_id": case_id,
-                    "score": round(score, 3),
-                    "reason": reason,
-                    "passed": passed,
-                    "generated": generated[:300],
-                }
-            )
-            + "\n"
-        )
 
 
 def _skip_if_no_generation_key():
@@ -96,9 +74,14 @@ async def _generate(case: dict) -> str:
     raise ValueError(f"Unknown case type: {t}")
 
 
-async def test_proactive_message_quality(proactive_case: dict, deepeval_model) -> None:
+async def test_proactive_message_quality(
+    proactive_case: dict, deepeval_model, proactive_run_collector: list
+) -> None:
     """
     Generate a proactive message for the given case and evaluate it with GEval.
+    Results are collected in proactive_run_collector; a report JSON is written
+    to tests/blackbox_multiturn/results/ at session teardown so it appears in
+    the 1_Reports.py panel alongside multiturn reports.
     """
     pytest.importorskip("deepeval")
     from deepeval.metrics import GEval
@@ -122,21 +105,19 @@ async def test_proactive_message_quality(proactive_case: dict, deepeval_model) -
         verbose_mode=True,
     )
 
-    test_case = LLMTestCase(
+    metric.measure(LLMTestCase(
         input=f"Generate proactive message for: {proactive_case['name']}",
         actual_output=generated_text,
-    )
-
-    metric.measure(test_case)
+    ))
 
     print(f"Score: {metric.score:.2f} | Reason: {metric.reason}")
-    _append_result(
-        case_id=proactive_case["id"],
-        score=metric.score,
-        reason=metric.reason or "",
-        passed=metric.is_successful(),
-        generated=generated_text,
-    )
+    proactive_run_collector.append({
+        "case": proactive_case,
+        "score": metric.score,
+        "reason": metric.reason or "",
+        "passed": metric.is_successful(),
+        "generated": generated_text,
+    })
     assert metric.is_successful(), (
         f"[{proactive_case['id']}] Quality score {metric.score:.2f} < threshold "
         f"{proactive_case['threshold']} — Reason: {metric.reason}\n"

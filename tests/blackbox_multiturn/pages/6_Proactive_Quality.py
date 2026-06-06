@@ -1,8 +1,9 @@
 """
 Proactive message quality — interactive runner + history viewer.
 
-Run tab:   pick cases + judge model → generate live → score with GEval
-History tab: load proactive_quality_results.jsonl → table + score chart
+Run tab:     pick cases + judge model → generate live → score with GEval
+             → saves report JSON to results/ so it appears in 1_Reports.py
+History tab: list & browse proactive_quality_report_*.json files in results/
 """
 
 import asyncio
@@ -10,6 +11,7 @@ import concurrent.futures
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +28,7 @@ import streamlit as st
 st.set_page_config(page_title="Proactive Quality", page_icon="📨", layout="wide")
 
 CASES_FILE   = REPO_ROOT / "tests" / "blackbox_proactive" / "test_data" / "proactive_quality_cases.json"
-RESULTS_FILE = REPO_ROOT / "proactive_quality_results.jsonl"
+RESULTS_DIR  = REPO_ROOT / "tests" / "blackbox_multiturn" / "results"
 
 _DEEPSEEK_BASE_URL  = "https://api.deepseek.com/v1"
 _DEEPSEEK_MAX_TOKENS = 4000
@@ -42,18 +44,44 @@ def load_cases() -> list[dict[str, Any]]:
         return json.load(f)
 
 
-def load_results(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
-        return []
-    rows = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line:
-            try:
-                rows.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
-    return rows
+def _write_report_json(results: list[dict], judge_name: str) -> Path:
+    """Save run results as a report JSON in results/ and return the path."""
+    slug = judge_name.replace("/", "-").replace(":", "-")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    fname = f"proactive_quality_report_{slug}_v{ts}.json"
+    passed = sum(1 for r in results if r["passed"])
+    report = {
+        "summary": {
+            "total_cases": len(results),
+            "passed_threshold": passed,
+            "below_threshold": len(results) - passed,
+        },
+        "cases": [_to_report_case(r) for r in results],
+    }
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    out = RESULTS_DIR / fname
+    with out.open("w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    return out
+
+
+def _to_report_case(r: dict) -> dict:
+    case = r["case"]
+    inp = case.get("input", {})
+    input_lines = [f"**Type:** {case['type']}"] + [f"**{k}:** {v}" for k, v in inp.items()]
+    input_lines.append(f"\n**Criteria:** {case.get('criteria', '')}")
+    return {
+        "name": case["name"],
+        "status": "passed_threshold" if r["passed"] else "below_threshold",
+        "score": round(r["score"], 3),
+        "threshold": case.get("threshold", 0.7),
+        "reason": r["reason"],
+        "turn_count": 1,
+        "turns": [
+            {"role": "user", "content": "\n".join(input_lines)},
+            {"role": "assistant", "content": r["generated"]},
+        ],
+    }
 
 
 # ── Async generation ──────────────────────────────────────────────────────────
@@ -335,11 +363,11 @@ def _tab_run(cases: list[dict]) -> None:
 
             _render_run_result(case, generated, score, reason, passed)
             results.append({
-                "case_id": case["id"],
-                "score": round(score, 3),
+                "case": case,
+                "score": score,
                 "reason": reason,
                 "passed": passed,
-                "generated": generated[:300],
+                "generated": generated,
             })
 
     progress.progress(1.0, text="Done")
@@ -352,114 +380,87 @@ def _tab_run(cases: list[dict]) -> None:
         else:
             st.warning(f"{passed_count}/{total} passed — {total - passed_count} failed")
 
-        # Offer download of this run's results
-        jsonl_text = "\n".join(json.dumps(r, ensure_ascii=False) for r in results)
-        st.download_button(
-            "⬇ Download results (.jsonl)",
-            data=jsonl_text,
-            file_name="proactive_quality_results.jsonl",
-            mime="application/jsonl",
-        )
+        out_path = _write_report_json(results, judge_name)
+        st.info(f"Report saved → `{out_path.name}` — open **📋 Reports** to browse it.")
 
 
 # ── History tab ───────────────────────────────────────────────────────────────
 
+def _load_report(path: Path) -> dict:
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
 def _tab_history() -> None:
-    st.markdown("Load a `proactive_quality_results.jsonl` file to view scores.")
-
-    col_src, col_upload = st.columns([1, 1])
-    with col_src:
-        use_local = st.checkbox(
-            f"Load local file (`proactive_quality_results.jsonl`)",
-            value=RESULTS_FILE.exists(),
-            disabled=not RESULTS_FILE.exists(),
-        )
-    with col_upload:
-        uploaded = st.file_uploader(
-            "Or upload a CI artifact",
-            type=["jsonl", "json"],
-            key="pq_upload",
-        )
-
-    rows: list[dict] = []
-    if uploaded is not None:
-        content = uploaded.read().decode("utf-8")
-        for line in content.splitlines():
-            line = line.strip()
-            if line:
-                try:
-                    rows.append(json.loads(line))
-                except json.JSONDecodeError:
-                    pass
-        st.caption(f"Loaded {len(rows)} results from uploaded file.")
-    elif use_local and RESULTS_FILE.exists():
-        rows = load_results(RESULTS_FILE)
-        st.caption(f"Loaded {len(rows)} results from `{RESULTS_FILE.name}`.")
-
-    if not rows:
-        st.info("No results to display. Run cases in the **▶ Run** tab or upload a CI artifact.")
+    report_files = sorted(RESULTS_DIR.glob("proactive_quality_report_*.json"), reverse=True)
+    if not report_files:
+        st.info("No reports yet. Run cases in **▶ Run** tab or run `pytest tests/blackbox_proactive/`.")
         return
 
+    # Report selector
+    options = [f.name for f in report_files]
+    selected_name = st.selectbox("Select report", options, key="pq_hist_report")
+    report = _load_report(RESULTS_DIR / selected_name)
+    summary = report.get("summary", {})
+    cases = report.get("cases", [])
+
     # Summary metrics
-    passed = sum(1 for r in rows if r.get("passed"))
-    total  = len(rows)
-    avg    = sum(r.get("score", 0) for r in rows) / total if total else 0
+    total  = summary.get("total_cases", 0)
+    passed = summary.get("passed_threshold", 0)
+    avg    = sum(c.get("score", 0) for c in cases) / total if total else 0
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Total cases", total)
     m2.metric("Passed", f"{passed}/{total}")
     m3.metric("Avg score", f"{avg:.2f}")
 
-    st.markdown("---")
+    st.divider()
 
-    # Score table
-    st.markdown("### Scores")
-    for r in rows:
-        col_id, col_score, col_reason = st.columns([2, 1, 4])
-        with col_id:
-            st.markdown(f"`{r.get('case_id','?')}`")
-        with col_score:
-            score = r.get("score", 0.0)
-            passed_r = r.get("passed", False)
-            st.markdown(_score_badge(score, passed_r), unsafe_allow_html=True)
-        with col_reason:
-            st.caption((r.get("reason") or "")[:150])
+    # Case list (left) + detail (right)
+    if not cases:
+        return
 
-    st.markdown("---")
+    if "pq_hist_case" not in st.session_state or st.session_state.pq_hist_case >= len(cases):
+        st.session_state.pq_hist_case = 0
 
-    # Bar chart
-    try:
-        import altair as alt
-        import pandas as pd
+    left, right = st.columns([1, 2])
+    with left:
+        for i, case in enumerate(cases):
+            is_sel = i == st.session_state.pq_hist_case
+            icon = "✅" if case.get("status") == "passed_threshold" else "❌"
+            score = case.get("score", 0)
+            label = f"{icon} {case.get('name', '?')}\n📊 {score:.2f} / {case.get('threshold', 0.7):.2f}"
+            if st.button(label, key=f"pq_case_{i}",
+                         type="primary" if is_sel else "secondary",
+                         use_container_width=True):
+                st.session_state.pq_hist_case = i
+                st.rerun()
 
-        df = pd.DataFrame([
-            {"case": r.get("case_id", "?"), "score": r.get("score", 0.0), "passed": r.get("passed", False)}
-            for r in rows
-        ])
-        df["color"] = df["passed"].map({True: "#21c354", False: "#ff4b4b"})
+    with right:
+        c = cases[st.session_state.pq_hist_case]
+        icon = "✅" if c.get("status") == "passed_threshold" else "❌"
+        st.subheader(f"{icon} {c.get('name', '?')}")
+        mc1, mc2 = st.columns(2)
+        mc1.metric("Score", f"{c.get('score', 0):.2f}")
+        mc2.metric("Threshold", f"{c.get('threshold', 0.7):.2f}")
 
-        chart = (
-            alt.Chart(df)
-            .mark_bar()
-            .encode(
-                x=alt.X("case:N", sort=None, axis=alt.Axis(labelAngle=-30)),
-                y=alt.Y("score:Q", scale=alt.Scale(domain=[0, 1])),
-                color=alt.Color("color:N", scale=None),
-                tooltip=["case", "score", "passed"],
-            )
-            .properties(height=300, title="GEval scores by case")
-        )
-        st.altair_chart(chart, use_container_width=True)
-    except ImportError:
-        st.info("Install `altair` and `pandas` for the score chart.")
+        st.markdown("**Judge reason**")
+        st.write(c.get("reason", ""))
+        st.divider()
 
-    # Expandable detail per case
-    st.markdown("### Generated messages")
-    for r in rows:
-        label = f"{r.get('case_id','?')}  —  {r.get('score', 0):.2f}"
-        with st.expander(label, expanded=not r.get("passed")):
-            st.markdown(f"**Generated:** {r.get('generated','')}")
-            st.caption(f"Reason: {r.get('reason','')}")
+        turns = c.get("turns", [])
+        for turn in turns:
+            if turn.get("role") == "user":
+                st.markdown("**Input / Criteria**")
+                st.info(turn.get("content", ""))
+            else:
+                st.markdown("**Generated message**")
+                color = "#21c354" if c.get("status") == "passed_threshold" else "#ff4b4b"
+                st.markdown(
+                    f"<div style='background:#1e1e2e;padding:10px 14px;border-radius:6px;"
+                    f"border-left:4px solid {color}'>{turn.get('content','')}</div>",
+                    unsafe_allow_html=True,
+                )
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

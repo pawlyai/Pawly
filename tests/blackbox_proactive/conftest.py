@@ -16,10 +16,13 @@ Judge model priority:
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
+
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "tests" / "blackbox_multiturn" / "results"
 
 # Load .env before setdefault so real keys win over test placeholders
 load_dotenv(Path(__file__).resolve().parents[2] / ".env", override=False)
@@ -148,6 +151,54 @@ def deepeval_model():
         return _make_gemini_model("gemini-2.5-flash", google_key)
 
     pytest.skip("No eval LLM configured — set PAWLY_EVAL_LLM or GOOGLE_API_KEY")
+
+
+@pytest.fixture(scope="session")
+def proactive_run_collector(deepeval_model):
+    """Accumulate per-case results; write a report JSON to results/ at teardown."""
+    collected: list[dict] = []
+    yield collected
+
+    if not collected:
+        return
+
+    judge_name = getattr(deepeval_model, "model_name", None) or getattr(deepeval_model, "_model", "unknown")
+    judge_slug = str(judge_name).replace("/", "-").replace(":", "-")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    fname = f"proactive_quality_report_{judge_slug}_v{ts}.json"
+
+    passed = sum(1 for r in collected if r["passed"])
+    report = {
+        "summary": {
+            "total_cases": len(collected),
+            "passed_threshold": passed,
+            "below_threshold": len(collected) - passed,
+        },
+        "cases": [_to_report_case(r) for r in collected],
+    }
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with (RESULTS_DIR / fname).open("w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+
+
+def _to_report_case(r: dict) -> dict:
+    case = r["case"]
+    inp = case.get("input", {})
+    input_lines = [f"**Type:** {case['type']}"] + [f"**{k}:** {v}" for k, v in inp.items()]
+    input_lines.append(f"\n**Criteria:** {case.get('criteria', '')}")
+    input_str = "\n".join(input_lines)
+    return {
+        "name": case["name"],
+        "status": "passed_threshold" if r["passed"] else "below_threshold",
+        "score": round(r["score"], 3),
+        "threshold": case.get("threshold", 0.7),
+        "reason": r["reason"],
+        "turn_count": 1,
+        "turns": [
+            {"role": "user", "content": input_str},
+            {"role": "assistant", "content": r["generated"]},
+        ],
+    }
 
 
 @pytest.fixture(
