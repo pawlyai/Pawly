@@ -27,7 +27,8 @@ logger = get_logger(__name__)
 
 # -- Section keys (canonical order in the assembled prompt) -------------------
 
-SECTION_KEYS: tuple[str, ...] = (
+# System prompt XML sections (assembled into build_system_prompt).
+SYSTEM_PROMPT_KEYS: tuple[str, ...] = (
     "role",
     "persona",
     "response_format",
@@ -39,6 +40,17 @@ SECTION_KEYS: tuple[str, ...] = (
     "special_population_modifiers",
     "final_reminders",
 )
+
+# Proactive message prompt templates — loaded the same way but used by jobs/.
+PROACTIVE_SECTION_KEYS: tuple[str, ...] = (
+    "proactive_reengagement",
+    "proactive_followup",
+    "proactive_episode_checkin",
+    "proactive_summary_push",
+)
+
+# Union: everything loaded from YAML / Langfuse.
+SECTION_KEYS: tuple[str, ...] = SYSTEM_PROMPT_KEYS + PROACTIVE_SECTION_KEYS
 
 # Langfuse prompt names match YAML keys 1:1 with the pawly_ prefix.
 _LF_PROMPT_NAMES: dict[str, str] = {key: f"pawly_{key}" for key in SECTION_KEYS}
@@ -66,19 +78,26 @@ except Exception:
 # -- Load prompt sections from YAML (fallback) --------------------------------
 
 _CONFIG_FILE = pathlib.Path(__file__).parent / "prompts_config.yaml"
+_PROACTIVE_CONFIG_FILE = pathlib.Path(__file__).parent / "proactive_prompts.yaml"
 _CACHE: dict = {"mtime": None, "sections": None}
 
 
 def _load_yaml_sections() -> dict[str, str]:
     with _CONFIG_FILE.open("r", encoding="utf-8") as f:
         cfg: dict = yaml.safe_load(f)
+    with _PROACTIVE_CONFIG_FILE.open("r", encoding="utf-8") as f:
+        proactive_cfg: dict = yaml.safe_load(f) or {}
+    cfg.update(proactive_cfg)
+
     sections: dict[str, str] = {}
     for key in SECTION_KEYS:
         value = cfg.get(key)
         if value is None:
-            raise RuntimeError(
-                f"prompts_config.yaml is missing required section: {key}"
-            )
+            if key in SYSTEM_PROMPT_KEYS:
+                raise RuntimeError(
+                    f"prompts_config.yaml is missing required section: {key}"
+                )
+            continue  # proactive keys are optional (may only exist in Langfuse)
         sections[key] = str(value).rstrip("\n")
     return sections
 
@@ -126,6 +145,15 @@ def reload_prompt_sections() -> dict[str, str]:
     _CACHE["mtime"] = None
     _CACHE["sections"] = None
     return _load_sections()
+
+
+def get_proactive_prompt(key: str) -> str:
+    """Return a proactive prompt template string by key.
+
+    Templates use Python-style {variable} placeholders — call .format() on the
+    result with the required variables before passing to the LLM.
+    """
+    return _load_sections()[key]
 
 
 # -- Token budget helpers -----------------------------------------------------

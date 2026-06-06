@@ -87,10 +87,9 @@ async def run_reengagement_check(ctx: dict) -> dict[str, Any]:
             skipped += 1
             continue
 
-        text = (
-            f"Hey! It's been a couple of days — how is {pet_name} doing? 🐾\n"
-            f"Feel free to share any updates or questions about your {species}!"
-        )
+        from src.llm.prompts.system import get_proactive_prompt
+        template = get_proactive_prompt("proactive_reengagement")
+        text = template.format(pet_name=pet_name, species=species)
 
         ok = await send_proactive_message(telegram_id, text)
         if ok:

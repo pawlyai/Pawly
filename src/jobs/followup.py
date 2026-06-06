@@ -234,14 +234,17 @@ async def _generate_message(
             "Be noticeably more concerned than a first check-in, but still warm."
         )
 
-    prompt = (
-        f"You are following up {hours_elapsed} hours after advising the owner of "
-        f"{pet_name} ({pet_species}) about {symptoms_str}, which you classified as {urgency}. "
-        f"This is check-in #{stage}. "
-        f"Write ONE warm, caring message (1-2 sentences) asking how {pet_name} is doing. "
-        f"Do not repeat medical advice. Vary the wording from a generic check-in. "
-        f"{'No emoji — situation may still be serious.' if no_emoji else 'One emoji is fine.'}"
-        + (f" {stage_note}" if stage_note else "")
+    from src.llm.prompts.system import get_proactive_prompt
+    template = get_proactive_prompt("proactive_followup")
+    prompt = template.format(
+        hours_elapsed=hours_elapsed,
+        pet_name=pet_name,
+        pet_species=pet_species,
+        symptoms_str=symptoms_str,
+        urgency=urgency,
+        stage=stage,
+        emoji_rule="No emoji — situation may still be serious." if no_emoji else "One emoji is fine.",
+        stage_note=f" {stage_note}" if stage_note else "",
     )
     try:
         from src.llm.orchestrator import _active_chat_model  # type: ignore[attr-defined]
