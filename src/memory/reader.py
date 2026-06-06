@@ -52,29 +52,83 @@ _CRITICAL_FIELDS = [
 
 # Map from topic keywords → related memory fields to surface
 _TOPIC_MAP: dict[tuple[str, ...], list[str]] = {
-    ("weight", "diet", "food", "eating", "appetite", "feed"): [
+    # ── Diet / nutrition / weight ─────────────────────────────────────────────
+    ("weight", "diet", "food", "eating", "appetite", "feed", "nutrition",
+     "kibble", "wet food", "raw food", "treat", "overweight", "underweight"): [
         "exercise_habit", "feeding_method", "meal_frequency", "meal_amount",
-        "recent_diet_change", "chronic_conditions",
+        "recent_diet_change", "chronic_conditions", "food_allergy",
     ],
-    ("emotion", "behavior", "anxiety", "stress", "aggression", "hiding", "scared"): [
+    # ── Behaviour / emotion ───────────────────────────────────────────────────
+    ("emotion", "behavior", "behaviour", "anxiety", "stress", "aggression",
+     "hiding", "scared", "growl", "bark", "biting", "destructive",
+     "separation", "training", "toilet", "litter box"): [
         "home_environment", "household_members", "has_children",
         "has_other_pets", "stress_sources", "pet_human_preferences",
     ],
-    ("vomit", "diarrhea", "stomach", "bowel", "poop", "stool", "nausea"): [
+    # ── GI / digestive ────────────────────────────────────────────────────────
+    ("vomit", "diarrhea", "stomach", "bowel", "poop", "stool", "nausea",
+     "constipat", "bloat", "gas", "indigestion", "regurgitat"): [
         "recent_diet_change", "recent_food_brand", "chronic_conditions",
-        "food_allergy", "is_stomach_sensitive",
+        "food_allergy", "is_stomach_sensitive", "medication_history",
     ],
-    ("skin", "allergy", "itch", "scratch", "rash", "hair loss", "bald"): [
-        "allergy_list", "home_environment", "seasonal_issues", "food_allergy",
+    # ── Skin / coat / allergy ─────────────────────────────────────────────────
+    ("skin", "allergy", "itch", "scratch", "rash", "hair loss", "bald",
+     "fur", "coat", "dandruff", "fleas", "tick", "hotspot", "hive",
+     "swollen", "lump", "bump"): [
+        "allergy_list", "home_environment", "seasonal_issues",
+        "food_allergy", "vaccination_status",
     ],
-    ("breath", "cough", "sneeze", "nose", "respiratory", "wheeze"): [
+    # ── Respiratory ───────────────────────────────────────────────────────────
+    ("breath", "cough", "sneeze", "nose", "respiratory", "wheeze",
+     "pant", "gasp", "nasal", "discharge", "runny"): [
         "vaccination_status", "home_environment", "chronic_conditions",
+        "has_other_pets",
     ],
-    ("urin", "pee", "kidney", "bladder", "litter"): [
+    # ── Urinary / kidney ─────────────────────────────────────────────────────
+    ("urin", "pee", "kidney", "bladder", "litter", "strain", "blood in urine",
+     "frequent urination", "accident", "incontinence"): [
         "water_intake_habit", "chronic_conditions", "medication_history",
+        "neutered_status",
     ],
-    ("eye", "vision", "discharge"): [
-        "allergy_list", "chronic_conditions",
+    # ── Eyes / ears ───────────────────────────────────────────────────────────
+    ("eye", "vision", "squint", "discharge", "tear", "ear", "hearing",
+     "head shake", "scratch ear", "smell from ear"): [
+        "allergy_list", "chronic_conditions", "vaccination_status",
+    ],
+    # ── Joints / mobility / pain ──────────────────────────────────────────────
+    ("limp", "joint", "arthritis", "hip", "knee", "mobility", "stiff",
+     "pain", "hurt", "sore", "injury", "wound", "cut", "bite wound",
+     "lameness", "can't walk", "falling"): [
+        "chronic_conditions", "medication_history", "exercise_habit",
+        "weight_latest", "breed",
+    ],
+    # ── Heart / circulation / energy ─────────────────────────────────────────
+    ("heart", "letharg", "tired", "fatigue", "energy", "weak", "collapse",
+     "faint", "pale gum", "blue gum", "rapid breathing", "exercise intolerance"): [
+        "chronic_conditions", "medication_history", "vaccination_status",
+        "exercise_habit",
+    ],
+    # ── Dental / oral ─────────────────────────────────────────────────────────
+    ("teeth", "dental", "gum", "tartar", "drool", "bad breath", "mouth",
+     "tooth", "chew", "jaw", "oral"): [
+        "chronic_conditions", "feeding_method",
+    ],
+    # ── Neurological ─────────────────────────────────────────────────────────
+    ("seizure", "tremor", "twitch", "balance", "coordination", "head tilt",
+     "wobble", "disoriented", "circle", "paralysis"): [
+        "chronic_conditions", "medication_history", "vaccination_status",
+    ],
+    # ── Reproduction / hormones ───────────────────────────────────────────────
+    ("heat", "season", "pregnancy", "pregnant", "whelp", "kitten", "puppy",
+     "neuter", "spay", "castrate", "hormone", "discharge"): [
+        "neutered_status", "chronic_conditions", "vaccination_status",
+    ],
+    # ── Medication / treatment ────────────────────────────────────────────────
+    ("medication", "medicine", "drug", "antibiotic", "steroid", "dose",
+     "tablet", "pill", "injection", "side effect", "treatment", "vet visit",
+     "prescription", "supplement"): [
+        "medication_history", "chronic_conditions", "allergy_list",
+        "vaccination_status",
     ],
 }
 
