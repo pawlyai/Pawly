@@ -271,7 +271,7 @@ _client: DeepSeekClient | None = None
 def get_deepseek_client() -> DeepSeekClient:
     global _client
     if _client is None:
-        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        api_key = os.environ.get("DEEPSEEK_API_KEY", "") or settings.deepseek_api_key
         if not api_key:
             raise RuntimeError("DEEPSEEK_API_KEY not set — required for DeepSeek models.")
         _client = DeepSeekClient(api_key=api_key)

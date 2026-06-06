@@ -52,34 +52,104 @@ _CRITICAL_FIELDS = [
 
 # Map from topic keywords → related memory fields to surface
 _TOPIC_MAP: dict[tuple[str, ...], list[str]] = {
-    ("weight", "diet", "food", "eating", "appetite", "feed"): [
+    # ── Diet / nutrition / weight ─────────────────────────────────────────────
+    ("weight", "diet", "food", "eating", "appetite", "feed", "nutrition",
+     "kibble", "wet food", "raw food", "treat", "overweight", "underweight"): [
         "exercise_habit", "feeding_method", "meal_frequency", "meal_amount",
-        "recent_diet_change", "chronic_conditions",
+        "recent_diet_change", "chronic_conditions", "food_allergy",
     ],
-    ("emotion", "behavior", "anxiety", "stress", "aggression", "hiding", "scared"): [
+    # ── Behaviour / emotion ───────────────────────────────────────────────────
+    ("emotion", "behavior", "behaviour", "anxiety", "stress", "aggression",
+     "hiding", "scared", "growl", "bark", "biting", "destructive",
+     "separation", "training", "toilet", "litter box"): [
         "home_environment", "household_members", "has_children",
         "has_other_pets", "stress_sources", "pet_human_preferences",
     ],
-    ("vomit", "diarrhea", "stomach", "bowel", "poop", "stool", "nausea"): [
+    # ── GI / digestive ────────────────────────────────────────────────────────
+    ("vomit", "diarrhea", "stomach", "bowel", "poop", "stool", "nausea",
+     "constipat", "bloat", "gas", "indigestion", "regurgitat"): [
         "recent_diet_change", "recent_food_brand", "chronic_conditions",
-        "food_allergy", "is_stomach_sensitive",
+        "food_allergy", "is_stomach_sensitive", "medication_history",
     ],
-    ("skin", "allergy", "itch", "scratch", "rash", "hair loss", "bald"): [
-        "allergy_list", "home_environment", "seasonal_issues", "food_allergy",
+    # ── Skin / coat / allergy ─────────────────────────────────────────────────
+    ("skin", "allergy", "itch", "scratch", "rash", "hair loss", "bald",
+     "fur", "coat", "dandruff", "fleas", "tick", "hotspot", "hive",
+     "swollen", "lump", "bump"): [
+        "allergy_list", "home_environment", "seasonal_issues",
+        "food_allergy", "vaccination_status",
     ],
-    ("breath", "cough", "sneeze", "nose", "respiratory", "wheeze"): [
+    # ── Respiratory ───────────────────────────────────────────────────────────
+    ("breath", "cough", "sneeze", "nose", "respiratory", "wheeze",
+     "pant", "gasp", "nasal", "discharge", "runny"): [
         "vaccination_status", "home_environment", "chronic_conditions",
+        "has_other_pets",
     ],
-    ("urin", "pee", "kidney", "bladder", "litter"): [
+    # ── Urinary / kidney ─────────────────────────────────────────────────────
+    ("urin", "pee", "kidney", "bladder", "litter", "strain", "blood in urine",
+     "frequent urination", "accident", "incontinence"): [
         "water_intake_habit", "chronic_conditions", "medication_history",
+        "neutered_status",
     ],
-    ("eye", "vision", "discharge"): [
-        "allergy_list", "chronic_conditions",
+    # ── Eyes / ears ───────────────────────────────────────────────────────────
+    ("eye", "vision", "squint", "discharge", "tear", "ear", "hearing",
+     "head shake", "scratch ear", "smell from ear"): [
+        "allergy_list", "chronic_conditions", "vaccination_status",
+    ],
+    # ── Joints / mobility / pain ──────────────────────────────────────────────
+    ("limp", "joint", "arthritis", "hip", "knee", "mobility", "stiff",
+     "pain", "hurt", "sore", "injury", "wound", "cut", "bite wound",
+     "lameness", "can't walk", "falling"): [
+        "chronic_conditions", "medication_history", "exercise_habit",
+        "weight_latest", "breed",
+    ],
+    # ── Heart / circulation / energy ─────────────────────────────────────────
+    ("heart", "letharg", "tired", "fatigue", "energy", "weak", "collapse",
+     "faint", "pale gum", "blue gum", "rapid breathing", "exercise intolerance"): [
+        "chronic_conditions", "medication_history", "vaccination_status",
+        "exercise_habit",
+    ],
+    # ── Dental / oral ─────────────────────────────────────────────────────────
+    ("teeth", "dental", "gum", "tartar", "drool", "bad breath", "mouth",
+     "tooth", "chew", "jaw", "oral"): [
+        "chronic_conditions", "feeding_method",
+    ],
+    # ── Neurological ─────────────────────────────────────────────────────────
+    ("seizure", "tremor", "twitch", "balance", "coordination", "head tilt",
+     "wobble", "disoriented", "circle", "paralysis"): [
+        "chronic_conditions", "medication_history", "vaccination_status",
+    ],
+    # ── Reproduction / hormones ───────────────────────────────────────────────
+    ("heat", "season", "pregnancy", "pregnant", "whelp", "kitten", "puppy",
+     "neuter", "spay", "castrate", "hormone", "discharge"): [
+        "neutered_status", "chronic_conditions", "vaccination_status",
+    ],
+    # ── Medication / treatment ────────────────────────────────────────────────
+    ("medication", "medicine", "drug", "antibiotic", "steroid", "dose",
+     "tablet", "pill", "injection", "side effect", "treatment", "vet visit",
+     "prescription", "supplement"): [
+        "medication_history", "chronic_conditions", "allergy_list",
+        "vaccination_status",
     ],
 }
 
 # Map DB MessageRole → Gemini API role string
 _ROLE_MAP: dict[str, str] = {"user": "user", "bot": "assistant"}
+
+# ── Turn context token budgets per subscription tier ─────────────────────────
+# Token budget for recent_turns injected into the messages array.
+# At ~100 tokens/turn average: FREE ≈ 3 turns, PLUS ≈ 10 turns, PRO ≈ 16 turns.
+# Adaptive: a turn with a long medical-advice reply consumes more tokens and
+# naturally leaves less room for older turns without a hard count cap.
+_TURN_TOKEN_BUDGETS: dict[SubscriptionTier, int] = {
+    SubscriptionTier.NEW_FREE: 400,
+    SubscriptionTier.OLD_FREE: 400,
+    SubscriptionTier.PLUS:    1200,
+    SubscriptionTier.PRO:     1800,
+}
+
+# Fetch this many messages from DB before trimming to the token budget.
+# Large enough to cover the worst-case PRO budget even with short messages.
+_DB_FETCH_MAX = 40
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -121,21 +191,19 @@ async def load_pet_context(
             )
             mid_term: list[PetMemory] = []
             short_term = await _load_memories(db, pet_id, MemoryTerm.SHORT, limit=10)
-            turn_limit = 3
 
         elif tier == SubscriptionTier.PLUS:
             long_term = await _load_memories(db, pet_id, MemoryTerm.LONG, limit=20)
             mid_term = await _load_memories(db, pet_id, MemoryTerm.MID, limit=15)
             short_term = await _load_memories(db, pet_id, MemoryTerm.SHORT, limit=10)
-            turn_limit = 5
 
         else:  # PRO
             long_term = await _load_memories(db, pet_id, MemoryTerm.LONG, limit=30)
             mid_term = await _load_memories(db, pet_id, MemoryTerm.MID, limit=20)
             short_term = await _load_memories(db, pet_id, MemoryTerm.SHORT, limit=15)
-            turn_limit = 5
 
-        recent_turns = await _load_recent_turns(db, pet_id, user_id, limit=turn_limit)
+        turn_budget = _TURN_TOKEN_BUDGETS.get(tier, 1200)
+        recent_turns = await _load_recent_turns(db, pet_id, user_id, token_budget=turn_budget)
         daily_summary = await _load_latest_summary(db, pet_id, "daily")
         weekly_summary = await _load_latest_summary(db, pet_id, "weekly")
         pending = await _load_pending_confirmations(db, pet_id, limit=3)
@@ -278,17 +346,39 @@ async def _load_memories(
     return list(result.scalars().all())
 
 
+def _fit_turns_to_budget(turns: list[dict], budget_tokens: int) -> list[dict]:
+    """Return the most recent turns that fit within *budget_tokens*.
+
+    Estimates 1 token per 4 characters (standard heuristic). Always keeps
+    the most recent turn. Drops the oldest turns first when over budget.
+    """
+    if not turns:
+        return []
+    kept: list[dict] = []
+    used = 0
+    for turn in reversed(turns):
+        tokens = max(1, len(turn.get("content", "")) // 4)
+        if used + tokens > budget_tokens and kept:
+            break
+        kept.append(turn)
+        used += tokens
+    return list(reversed(kept))
+
+
 async def _load_recent_turns(
     db: AsyncSession,
     pet_id: str,
     user_id: str,
-    limit: int = 5,
+    token_budget: int = 1200,
 ) -> list[dict]:
     """
-    Load up to *limit* recent user/assistant turn pairs from the pet's
-    most recent Dialogue. Returns a list of {"role": str, "content": str}.
+    Load recent user/assistant turn pairs from the pet's most recent Dialogue,
+    trimmed to fit within *token_budget* (estimated tokens).
+
+    Fetches up to _DB_FETCH_MAX messages from the DB then selects the largest
+    recent window that fits the budget — so long medical-advice turns naturally
+    crowd out older context without a hard count cap.
     """
-    # Find the most recent dialogue that involves this pet
     dial_result = await db.execute(
         select(Dialogue.id)
         .where(Dialogue.pet_id == pet_id)
@@ -299,22 +389,22 @@ async def _load_recent_turns(
     if not dialogue_id:
         return []
 
-    # Load the most recent messages (up to limit pairs = limit*2 rows)
     msg_result = await db.execute(
         select(Message)
         .where(Message.dialogue_id == dialogue_id)
         .order_by(Message.created_at.desc())
-        .limit(limit * 2)
+        .limit(_DB_FETCH_MAX)
     )
     messages = list(reversed(msg_result.scalars().all()))
 
-    return [
+    turns = [
         {
             "role": _ROLE_MAP.get(m.role.value, m.role.value),
             "content": m.content,
         }
         for m in messages
     ]
+    return _fit_turns_to_budget(turns, token_budget)
 
 
 async def _load_latest_summary(

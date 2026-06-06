@@ -66,6 +66,7 @@ def test_handle_message_multiturn_with_conversational_geval(
         bot, dp, fake_api, _redis = build_router_runtime(user, pet)
         full_turns: list[Turn] = []
         turn_traces: list[dict[str, Any]] = []
+        full_loops: list[dict[str, Any]] = []
 
         user_turns = case.get("user_turns") or []
         for index, user_text in enumerate(user_turns, start=1):
@@ -77,6 +78,13 @@ def test_handle_message_multiturn_with_conversational_geval(
             full_turns.append(Turn(role="user", content=user_text))
             full_turns.append(Turn(role="assistant", content=assistant_text))
             runtime.record_exchange(user_text, assistant_text)
+
+            full_loop: dict[str, Any] = {
+                "system_prompt": runtime.last_system_prompt,
+                "memory_context": runtime.last_memory_context,
+                "messages_sent_count": len(runtime.recent_turns),
+            }
+            full_loops.append(full_loop)
 
             # Live triage data captured by the generate_response wrapper in conftest.
             live = runtime.triage_results[index - 1] if index - 1 < len(runtime.triage_results) else {}
@@ -121,6 +129,21 @@ def test_handle_message_multiturn_with_conversational_geval(
                     "assistant_text": assistant_text,
                     "new_message_count": len(new_messages),
                     "triage_trace": triage_trace,
+                    "full_loop": {
+                        "memory_context": runtime.last_memory_context or "",
+                        "system_prompt": runtime.last_system_prompt or "",
+                        "messages_sent_count": full_loop["messages_sent_count"],
+                        "injected_memories": [
+                            {
+                                "field": m.field,
+                                "value": m.value if isinstance(m.value, str) else str(m.value),
+                                "memory_term": m.memory_term.value,
+                                "memory_type": m.memory_type.value,
+                                "confidence": m.confidence_score,
+                            }
+                            for m in runtime.memories
+                        ],
+                    },
                 },
             )
 
@@ -157,6 +180,7 @@ def test_handle_message_multiturn_with_conversational_geval(
             t: dict[str, Any] = {"role": turn.role, "content": turn.content}
             if turn.role == "assistant":
                 t["triage_trace"] = turn_traces[i // 2]
+                t["full_loop"] = full_loops[i // 2] if i // 2 < len(full_loops) else {}
             serialized_turns.append(t)
 
         case_result: dict[str, Any] = {
