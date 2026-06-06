@@ -9,7 +9,9 @@ Public API:
     extract_memories(raw_messages, pet, existing_memories) -> list[MemoryProposal]
 """
 
+import html
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -91,11 +93,26 @@ def _format_existing(memories: list[PetMemory]) -> str:
     return "\n".join(lines)
 
 
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+def _clean_content(text: str) -> str:
+    """Strip HTML tags and decode HTML entities for clean LLM extraction input.
+
+    Telegram messages arrive with HTML parse_mode markup (<b>, <blockquote>,
+    &#x27; etc.). Passing raw HTML to the extraction LLM confuses it and inflates
+    the prompt unnecessarily. Decoding entities and stripping tags gives the LLM
+    plain readable text while preserving all factual content.
+    """
+    text = html.unescape(text)
+    text = _HTML_TAG_RE.sub("", text)
+    return text.strip()
+
+
 def _format_messages(raw_messages: list[dict]) -> str:
     lines = []
     for msg in raw_messages:
         role = "User" if msg.get("role") == "user" else "Assistant"
-        lines.append(f"{role}: {msg['content']}")
+        lines.append(f"{role}: {_clean_content(msg['content'])}")
     return "\n".join(lines)
 
 
@@ -151,14 +168,30 @@ async def extract_memories(
             system_prompt=filled_prompt,
             messages=[{"role": "user", "content": "Extract facts from the conversation above."}],
             model=extraction_model,
-            max_tokens=2048,
+            max_tokens=4096,
             temperature=0.2,
         )
-        data = json.loads(_strip_fences(raw["text"]))
+        raw_text = raw["text"]
+        if not raw_text.strip():
+            logger.warning(
+                "extract_memories: empty response from LLM",
+                model=extraction_model,
+                input_tokens=raw.get("input_tokens", 0),
+                output_tokens=raw.get("output_tokens", 0),
+                pet_id=str(pet.id),
+            )
+            return []
+        data = json.loads(_strip_fences(raw_text))
         if not isinstance(data, list):
             return []
     except Exception as exc:
-        logger.error("extract_memories failed", error=str(exc), pet_id=str(pet.id))
+        logger.error(
+            "extract_memories failed",
+            error=str(exc),
+            model=extraction_model,
+            raw_snippet=(raw.get("text", "") if "raw" in dir() else "")[:200],
+            pet_id=str(pet.id),
+        )
         return []
 
     proposals: list[MemoryProposal] = []
