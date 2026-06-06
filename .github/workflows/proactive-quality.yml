@@ -1,0 +1,76 @@
+name: Proactive Quality
+
+# Run when prompted prompt changes need validation.
+#
+# Triggers:
+#   - workflow_dispatch: manual, with judge model selector — use this when
+#     editing prompts_config.yaml to see per-case score changes
+#   - PR label `proactive-quality`: automatically gates prompt-touching PRs
+#
+# Cost: ~11 LLM calls (1 generation + 1 judge per case, 11 cases).
+# Runtime: ~5 minutes with deepseek-v4-pro judge.
+
+on:
+  workflow_dispatch:
+    inputs:
+      judge_model:
+        description: 'Judge model for GEval scoring'
+        required: false
+        default: 'deepseek-v4-pro'
+        type: choice
+        options:
+          - deepseek-v4-pro
+          - gemini-2.5-flash
+
+concurrency:
+  group: proactive-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proactive-quality:
+    name: Proactive Quality (${{ inputs.judge_model || 'deepseek-v4-pro' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PAWLY_EVAL_LLM: ${{ inputs.judge_model || 'deepseek-v4-pro' }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Clean previous results
+        run: find . -maxdepth 1 -name "proactive_quality_results.jsonl" -delete || true
+
+      - name: Run proactive quality tests
+        run: |
+          python -m pytest tests/blackbox_proactive/ \
+            -v -s --tb=short
+
+      - name: Generate step summary
+        if: always()
+        env:
+          PAWLY_EVAL_LLM: ${{ inputs.judge_model || 'deepseek-v4-pro' }}
+        run: python scripts/summarize_proactive_quality.py proactive_quality_results.jsonl >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proactive-quality-${{ github.run_id }}
+          path: proactive_quality_results.jsonl
+          retention-days: 30
+          if-no-files-found: warn
