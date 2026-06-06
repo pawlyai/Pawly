@@ -152,6 +152,8 @@ async def _generate_episode_checkin(
     severity: str,
     days_ongoing: int,
     interventions: dict | None,
+    pet_context: str = "",
+    locale: str = "en",
 ) -> str:
     intervention_str = ""
     if interventions:

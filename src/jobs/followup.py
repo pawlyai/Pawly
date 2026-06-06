@@ -211,6 +211,8 @@ async def _generate_message(
     triage_level: str,
     symptom_tags: list[str],
     stage: int,
+    pet_context: str = "",
+    locale: str = "en",
 ) -> str:
     delays = _STAGE_DELAYS.get(triage_level, _STAGE_DELAYS["ORANGE"])
     hours_elapsed = sum(delays[:stage])
@@ -246,6 +248,8 @@ async def _generate_message(
         emoji_rule="No emoji — situation may still be serious." if no_emoji else "One emoji is fine.",
         stage_note=f" {stage_note}" if stage_note else "",
     )
+    if pet_context:
+        prompt += f"\n\nPet profile context: {pet_context}"
     try:
         from src.llm.orchestrator import _active_chat_model  # type: ignore[attr-defined]
         from src.llm.providers import get_chat_client
