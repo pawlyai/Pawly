@@ -15,9 +15,9 @@ class Settings(BaseSettings):
     node_env: str = "development"
     port: int = 8000
     log_level: str = "info"
-    main_model: str = "gemini-2.0-flash"
-    extraction_model: str = "gemini-2.0-flash"
-    fallback_model: str = "gemini-2.0-flash"  # used when main_model exhausts retries
+    main_model: str = "gemini-2.5-flash"
+    extraction_model: str = "gemini-2.5-flash"
+    fallback_model: str = "gemini-2.0-flash"  # lighter fallback when main_model exhausts retries
     # Production chat model for the orchestrator. When unset, the orchestrator
     # falls back to main_model (preserves the previous Gemini-only path).
     chat_model: str = ""
