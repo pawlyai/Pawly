@@ -1,0 +1,119 @@
+name: Phase-0 200 Cross-Day Evaluation
+
+# 200-case Phase-0 cross-day dataset — tests multi-day memory continuity.
+# Cost profile: ~$11 (DeepSeek) / ~$4 (Gemini), 8-16 hrs serial.
+# Triggers:
+#   - PR label `phase0-eval`   (label-add only, single shot per add)
+#   - manual workflow_dispatch (with model + compliance model selectors)
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Primary chat model'
+        required: false
+        default: 'deepseek-v4-pro'
+        type: choice
+        options:
+          - deepseek-v4-pro
+          - gemini-2.5-flash
+      compliance_model:
+        description: 'Compliance routing model (leave blank to disable)'
+        required: false
+        default: 'gemini-2.5-flash'
+        type: string
+
+concurrency:
+  group: phase0-200-crossday
+  cancel-in-progress: false
+
+jobs:
+  phase0-200:
+    name: Phase-0 200 (${{ inputs.model || 'deepseek-v4-pro' }})
+    if: github.event_name != 'pull_request' || github.event.label.name == 'phase0-eval'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1200   # 20 hrs — 200 cases × 25 turns serial
+    env:
+      PAWLY_MODEL:         ${{ inputs.model || 'deepseek-v4-pro' }}
+      COMPLIANCE_MODEL:    ${{ inputs.compliance_model || 'gemini-2.5-flash' }}
+      DEEPSEEK_API_KEY:    ${{ secrets.DEEPSEEK_API_KEY }}
+      GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
+      LANGFUSE_HOST:       ${{ secrets.LANGFUSE_HOST }}
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Rename case file to match topic convention
+        # conftest resolves --crossday-topic=X to test_data/X_cases.json
+        # The source file is multiturn_phase0_200cases.json (no underscore before 'cases')
+        run: |
+          cp tests/blackbox_multiturn/test_data/multiturn_phase0_200cases.json \
+             tests/blackbox_multiturn/test_data/multiturn_phase0_200_cases.json
+
+      - name: Run Phase-0 200 cross-day evaluation
+        run: |
+          COMPLIANCE_ARG=""
+          if [ -n "$COMPLIANCE_MODEL" ]; then
+            COMPLIANCE_ARG="--compliance-model=$COMPLIANCE_MODEL"
+          fi
+
+          python -m pytest tests/blackbox_multiturn/test_crossday_multiturn.py \
+            --crossday-topic=multiturn_phase0_200 \
+            --model="$PAWLY_MODEL" \
+            $COMPLIANCE_ARG \
+            -s -v
+
+      - name: Upload reports as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase0-200-reports-${{ github.run_id }}
+          path: |
+            tests/blackbox_multiturn/results/multiturn_phase0_200_report_*.json
+            tests/blackbox_multiturn/logs/multiturn_phase0_200_run_*.jsonl
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Publish reports to VPS
+        if: always()
+        env:
+          VPS_HOST:    ${{ secrets.VPS_HOST }}
+          VPS_USER:    ${{ secrets.VPS_USER }}
+          VPS_PATH:    ${{ secrets.VPS_PATH }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          if [ -z "$VPS_HOST" ] || [ -z "$VPS_USER" ] || [ -z "$VPS_PATH" ] || [ -z "$VPS_SSH_KEY" ]; then
+            echo "VPS secrets not configured — skipping upload."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          REMOTE_DIR="${VPS_PATH%/}"
+          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+            "mkdir -p '$REMOTE_DIR' '$REMOTE_DIR/logs'"
+          scp -i ~/.ssh/id_ed25519 \
+            tests/blackbox_multiturn/results/multiturn_phase0_200_report_*.json \
+            "$VPS_USER@$VPS_HOST:$REMOTE_DIR/" || true
+          scp -i ~/.ssh/id_ed25519 \
+            tests/blackbox_multiturn/logs/multiturn_phase0_200_run_*.jsonl \
+            "$VPS_USER@$VPS_HOST:$REMOTE_DIR/logs/" || true
+          echo "Uploaded to $VPS_USER@$VPS_HOST:$REMOTE_DIR"
