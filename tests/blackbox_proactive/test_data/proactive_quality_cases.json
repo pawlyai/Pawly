@@ -1,0 +1,129 @@
+[
+  {
+    "id": "triage_red_stage1",
+    "name": "RED stage-1 followup — serious tone, no emoji",
+    "type": "triage_followup",
+    "input": {
+      "pet_name": "Milo",
+      "pet_species": "dog",
+      "triage_level": "RED",
+      "symptom_tags": ["seizure", "collapse"],
+      "stage": 1,
+      "pet_context": "Milo (4y male Poodle) | Known: epilepsy",
+      "locale": "en"
+    },
+    "criteria": "The message must be empathetic and focused on the owner's concern. It must NOT contain any emoji. It must ask about Milo's current condition, either explicitly or implicitly. It must NOT use hedging phrases like 'if you get a chance', 'if possible', or 'whenever you can'.",
+    "threshold": 0.75
+  },
+  {
+    "id": "triage_red_stage2",
+    "name": "RED stage-2 followup — escalated, references no response, no emoji",
+    "type": "triage_followup",
+    "input": {
+      "pet_name": "Milo",
+      "pet_species": "dog",
+      "triage_level": "RED",
+      "symptom_tags": ["seizure", "collapse"],
+      "stage": 2,
+      "pet_context": "Milo (4y male Poodle) | Known: epilepsy",
+      "locale": "en"
+    },
+    "criteria": "The message must NOT contain any emoji. It must convey that this is a follow-up after no response — the owner has not replied to the previous check-in. The tone should be noticeably more concerned than a first check-in. It must NOT use hedging phrases like 'if you get a chance' or 'if possible'.",
+    "threshold": 0.75
+  },
+  {
+    "id": "triage_red_stage3",
+    "name": "RED stage-3 followup — escalated genuine concern, no emoji",
+    "type": "triage_followup",
+    "input": {
+      "pet_name": "Milo",
+      "pet_species": "dog",
+      "triage_level": "RED",
+      "symptom_tags": ["seizure", "collapse"],
+      "stage": 3,
+      "pet_context": "Milo (4y male Poodle) | Known: epilepsy",
+      "locale": "en"
+    },
+    "criteria": "The message must express heartfelt, escalated concern — this is the third unanswered check-in for a serious emergency. It must NOT contain emoji. It must be personal and warm rather than clinical. The urgency should be noticeably higher than a first check-in. It must NOT use hedging phrases like 'if you get a chance', 'if possible', or 'whenever you can'.",
+    "threshold": 0.75
+  },
+  {
+    "id": "triage_orange_stage1",
+    "name": "ORANGE stage-1 followup — warm, emoji OK",
+    "type": "triage_followup",
+    "input": {
+      "pet_name": "Luna",
+      "pet_species": "cat",
+      "triage_level": "ORANGE",
+      "symptom_tags": ["vomiting", "lethargy"],
+      "stage": 1,
+      "pet_context": "Luna (2y female cat)",
+      "locale": "en"
+    },
+    "criteria": "The message must be warm and caring, asking about Luna's current condition. An emoji is acceptable. The tone should be concerned but not alarming. It must not repeat medical advice.",
+    "threshold": 0.7
+  },
+  {
+    "id": "episode_checkin_with_interventions",
+    "name": "Episode check-in — references symptom and ongoing duration",
+    "type": "episode_checkin",
+    "input": {
+      "pet_name": "Buddy",
+      "pet_species": "dog",
+      "symptom_type": "diarrhea",
+      "severity": "moderate",
+      "days_ongoing": 5,
+      "interventions": {"diet": "bland rice diet"},
+      "pet_context": "Buddy (5y male Labrador)",
+      "locale": "en"
+    },
+    "criteria": "The message must naturally reference diarrhea and that it has been ongoing for several days. It should ask for an update. It must not be alarmist. An emoji is acceptable.",
+    "threshold": 0.7
+  },
+  {
+    "id": "episode_checkin_no_interventions",
+    "name": "Episode check-in — no interventions recorded",
+    "type": "episode_checkin",
+    "input": {
+      "pet_name": "Bella",
+      "pet_species": "cat",
+      "symptom_type": "sneezing",
+      "severity": "mild",
+      "days_ongoing": 4,
+      "interventions": null,
+      "pet_context": "Bella (2y female cat)",
+      "locale": "en"
+    },
+    "criteria": "The message must naturally reference sneezing and that it has been ongoing for a few days. It should ask for an update. It must not be alarmist. It must not mention any treatments or interventions since none were recorded. An emoji is acceptable.",
+    "threshold": 0.7
+  },
+  {
+    "id": "reengagement_no_topic",
+    "name": "Reengagement — general inquiry with no prior topic",
+    "type": "reengagement",
+    "input": {
+      "pet_name": "Max",
+      "species": "dog",
+      "silence_days": 7,
+      "locale": "en",
+      "last_topic": ""
+    },
+    "criteria": "The message must be a warm, general check-in about Max. It should not fabricate a specific health topic. It should be short (1-2 sentences) and conversational. An emoji is acceptable.",
+    "threshold": 0.7
+  },
+  {
+    "id": "daily_summary_push",
+    "name": "Daily summary push — conversational nudge with open question",
+    "type": "daily_summary_push",
+    "input": {
+      "pet_name": "Mochi",
+      "species": "cat",
+      "unresolved": ["appetite still low", "not drinking enough water"],
+      "follow_up_reason": "dehydration risk",
+      "pet_context": "Mochi (1y female cat)",
+      "locale": "en"
+    },
+    "criteria": "The message must be warm and conversational, referencing the unresolved concerns (appetite or hydration). It must end with an open question. It must not read like a clinical report. An emoji is acceptable.",
+    "threshold": 0.7
+  }
+]

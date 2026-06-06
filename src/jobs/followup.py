@@ -216,7 +216,23 @@ async def _generate_message(
     hours_elapsed = sum(delays[:stage])
     urgency = "urgent" if triage_level == "RED" else "concerning"
     symptoms_str = ", ".join(symptom_tags) if symptom_tags else "health concerns"
-    no_emoji = triage_level == "RED" and stage == 1
+    no_emoji = triage_level == "RED"  # all RED stages — situation may still be serious
+
+    stage_note = ""
+    if stage >= 3:
+        stage_note = (
+            f"This is your third unanswered check-in — the owner has not replied to two previous messages. "
+            f"Explicitly acknowledge that you have reached out multiple times without a response. "
+            f"The urgency has escalated — express clear, genuine alarm and worry. "
+            f"The tone must be noticeably more urgent and serious than a first check-in. "
+            f"Do NOT use hedging phrases like 'if you get a chance' or 'if possible'."
+        )
+    elif stage == 2:
+        stage_note = (
+            "The owner has not responded to your previous message. "
+            "Explicitly acknowledge that you are following up after no reply. "
+            "Be noticeably more concerned than a first check-in, but still warm."
+        )
 
     prompt = (
         f"You are following up {hours_elapsed} hours after advising the owner of "
@@ -225,6 +241,7 @@ async def _generate_message(
         f"Write ONE warm, caring message (1-2 sentences) asking how {pet_name} is doing. "
         f"Do not repeat medical advice. Vary the wording from a generic check-in. "
         f"{'No emoji — situation may still be serious.' if no_emoji else 'One emoji is fine.'}"
+        + (f" {stage_note}" if stage_note else "")
     )
     try:
         from src.llm.orchestrator import _active_chat_model  # type: ignore[attr-defined]
@@ -235,7 +252,7 @@ async def _generate_message(
             system_prompt="You are Pawly. Output only the message text — no preamble, no quotes.",
             messages=[{"role": "user", "content": prompt}],
             model=chat_model,
-            max_tokens=120,
+            max_tokens=2048,
             temperature=0.7,
         )
         text = raw["text"].strip()

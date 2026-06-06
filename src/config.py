@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     admin_telegram_ids: str = ""
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
+    daily_summary_push_enabled: bool = False
 
     # Langfuse observability (optional — tracing degrades gracefully when absent)
     langfuse_public_key: str = ""
