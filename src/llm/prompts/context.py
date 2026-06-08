@@ -114,9 +114,13 @@ def build_context_block(
         sections.append("Health history: " + _join_items(health_items))
 
     # 2. Active episodes: ongoing health episodes (highest clinical relevance)
+    # P1: Sort by temporal_context to show disease progression timeline
     episode_items = _filter(mid_term, {MemoryType.EPISODE})
     if episode_items:
-        sections.append("Active episodes: " + _join_items(episode_items))
+        # P1: Group episodes by temporal context (Week 1, Week 2, Month 1, etc.)
+        # This helps LLM understand disease progression over time
+        episode_items_sorted = _sort_episodes_by_timeline(episode_items)
+        sections.append("Active episodes: " + _join_items(episode_items_sorted))
 
     # 3. Current status: recent snapshots + acute symptoms
     status_items = _filter(
@@ -184,6 +188,52 @@ def _filter(
     types: set[MemoryType],
 ) -> list[PetMemory]:
     return [m for m in memories if m.memory_type in types]
+
+
+def _sort_episodes_by_timeline(episodes: list[PetMemory]) -> list[PetMemory]:
+    """
+    P1: Sort episodes by temporal_context to show disease progression.
+
+    Extracts temporal markers (Week 1, Month 1, Day 5, etc.) and sorts them
+    chronologically so LLM can understand the progression timeline.
+
+    Example: "Week 1: mild limping" → "Week 2: moderate limping" → "Week 3: severe"
+    helps LLM understand worsening trajectory.
+    """
+    def _temporal_sort_key(episode: PetMemory) -> tuple[int, int, str]:
+        """Extract numeric sort key from temporal_context (Week 1, Month 2, Day 5, etc.)"""
+        if not episode.temporal_context:
+            return (999, 999, "")  # Put undated episodes last
+
+        context = episode.temporal_context.lower().strip()
+
+        # Parse "Week 3" → (2, 3, "week")
+        if "week" in context:
+            try:
+                week_num = int("".join(c for c in context if c.isdigit()))
+                return (2, week_num, context)
+            except (ValueError, IndexError):
+                pass
+
+        # Parse "Month 2" → (3, 2, "month")
+        if "month" in context:
+            try:
+                month_num = int("".join(c for c in context if c.isdigit()))
+                return (3, month_num, context)
+            except (ValueError, IndexError):
+                pass
+
+        # Parse "Day 5" → (1, 5, "day")
+        if "day" in context:
+            try:
+                day_num = int("".join(c for c in context if c.isdigit()))
+                return (1, day_num, context)
+            except (ValueError, IndexError):
+                pass
+
+        return (999, 999, context)  # Unknown format, sort last
+
+    return sorted(episodes, key=_temporal_sort_key)
 
 
 def _join_items(memories: list[PetMemory]) -> str:

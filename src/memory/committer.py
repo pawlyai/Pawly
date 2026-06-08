@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.engine import get_session_factory
 from src.db.models import (
     ChangeReason,
+    Episode,
     MemorySource,
     PendingMemoryChange,
     PendingStatus,
@@ -148,6 +149,9 @@ async def _apply_auto(
         expires_at=now,  # already committed; expiry is irrelevant
     ))
 
+    # P2: Auto-update Episode is_ongoing based on recovery signals
+    await _check_episode_recovery(db, pet_uuid, proposal, stored_value)
+
 
 def _add_pending(
     db: AsyncSession,
@@ -201,6 +205,67 @@ def _add_rejected(
         conflict_with_id=result.conflict_with_id,
         expires_at=now,  # rejected records expire immediately (audit only)
     ))
+
+
+async def _check_episode_recovery(
+    db: AsyncSession,
+    pet_id: uuid.UUID,
+    proposal: MemoryProposal,
+    stored_value: object,
+) -> None:
+    """
+    P2: Auto-close episodes when recovery signals detected.
+
+    Monitors extracted facts for recovery keywords like:
+      - "好了" (recovered)
+      - "康复" (recovered)
+      - "正常" (normal)
+      - "改善" (improved)
+
+    If detected, closes related ongoing episodes to keep context lean.
+    """
+    # Recovery signal keywords (Chinese medical context)
+    RECOVERY_SIGNALS = {
+        "好了",      # recovered
+        "康复",      # recovered
+        "正常",      # normal/normalized
+        "改善",      # improved
+        "消退",      # resolved
+        "缓解",      # relieved
+        "痊愈",      # fully recovered
+    }
+
+    value_str = str(stored_value).lower()
+
+    # Check if this extraction mentions recovery
+    has_recovery_signal = any(signal in value_str for signal in RECOVERY_SIGNALS)
+
+    if not has_recovery_signal:
+        return
+
+    # Find open episodes related to this field and close them
+    episodes_result = await db.execute(
+        select(Episode)
+        .where(
+            Episode.pet_id == pet_id,
+            Episode.is_ongoing.is_(True),
+        )
+    )
+    open_episodes = list(episodes_result.scalars().all())
+
+    # Match episodes by symptom type in the proposal
+    for episode in open_episodes:
+        # Simple heuristic: if episode symptom appears in the extracted value
+        if episode.symptom_type.lower() in value_str:
+            episode.is_ongoing = False
+            episode.end_date = datetime.now(timezone.utc)
+            logger.info(
+                "p2_episode_auto_closed",
+                pet_id=str(pet_id),
+                episode_id=str(episode.id),
+                symptom=episode.symptom_type,
+                recovery_signal=proposal.field,
+            )
 
 
 def _normalise(value: object) -> object:
