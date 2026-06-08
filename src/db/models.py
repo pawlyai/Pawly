@@ -259,6 +259,9 @@ class PetMemory(Base):
     source: Mapped[MemorySource] = mapped_column(enum_type(MemorySource, "memorysource"), nullable=False)
     source_message_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     observed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Mem0-inspired multi-signal retrieval fields
+    keywords: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)  # ["limping", "joint", "mobility"]
+    temporal_context: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # "Month 1", "Week 3"
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

@@ -168,6 +168,11 @@ async def load_pet_context(
         PLUS                — all long/mid/short + 5 turns
         PRO                 — all long/mid/short (higher limits) + 5 turns
 
+    P0 Enhancement: Session Bridge
+    - Detects new session start (empty recent_turns)
+    - Injects previous day's summary + open episodes
+    - Improves cross-day continuity dramatically
+
     Returns:
         {
             "pet":                   Pet | None,
@@ -178,6 +183,7 @@ async def load_pet_context(
             "daily_summary":         DailySummary | None,
             "weekly_summary":        WeeklySummary | None,
             "pending_confirmations": list[PendingMemoryChange],
+            "session_bridge":        Optional[dict] - context for new session starts,
         }
     """
     factory = get_session_factory()
@@ -208,6 +214,11 @@ async def load_pet_context(
         weekly_summary = await _load_latest_summary(db, pet_id, "weekly")
         pending = await _load_pending_confirmations(db, pet_id, limit=3)
 
+        # P0: Session Bridge - inject previous summary + open episodes on new session
+        session_bridge = None
+        if not recent_turns:  # New session detected (no conversation history)
+            session_bridge = await _build_session_bridge(db, pet_id)
+
     return {
         "pet": pet,
         "long_term_memories": long_term,
@@ -217,38 +228,80 @@ async def load_pet_context(
         "daily_summary": daily_summary,
         "weekly_summary": weekly_summary,
         "pending_confirmations": pending,
+        "session_bridge": session_bridge,  # P0: Cross-day continuity bridge
     }
 
 
 async def load_related_memories(pet_id: str, user_message: str) -> list[PetMemory]:
     """
-    Return active memories whose fields are topically related to *user_message*.
+    Return active memories topically related to *user_message* using multi-signal retrieval.
 
-    Uses a TOPIC_MAP: message keywords → specific memory field names.
-    Returns up to 10 rows, deduplicated, ordered most-recent first.
+    Mem0-inspired multi-signal approach:
+      1. Field matching: message keywords → specific memory field names (_TOPIC_MAP)
+      2. Keyword matching: message words → PetMemory.keywords field (multi-signal)
+      3. Score and rank by relevance: field match > keyword match > recency
+
+    Returns up to 10 rows, deduplicated, ordered by relevance then recency.
     """
     message_lower = user_message.lower()
+    message_words = set(message_lower.split())
+
+    # Signal 1: Topic-based field matching
     related_fields: set[str] = set()
     for keywords, fields in _TOPIC_MAP.items():
         if any(kw in message_lower for kw in keywords):
             related_fields.update(fields)
 
-    if not related_fields:
-        return []
-
     factory = get_session_factory()
     async with factory() as db:
-        result = await db.execute(
+        # Get all candidate memories
+        candidates = await db.execute(
             select(PetMemory)
             .where(
                 PetMemory.pet_id == uuid.UUID(pet_id),
-                PetMemory.field.in_(related_fields),
                 PetMemory.is_active.is_(True),
             )
             .order_by(PetMemory.created_at.desc())
-            .limit(10)
+            .limit(50)  # Fetch more to score and rank
         )
-        return list(result.scalars().all())
+        all_memories = list(candidates.scalars().all())
+
+    if not all_memories:
+        return []
+
+    # Score memories using multi-signal retrieval
+    scored_memories = []
+    for mem in all_memories:
+        score = 0.0
+
+        # Signal 1: Field match (highest priority)
+        if mem.field in related_fields:
+            score += 3.0
+
+        # Signal 2: Keyword match (Mem0 feature)
+        if mem.keywords:
+            keyword_matches = sum(1 for kw in mem.keywords if kw in message_words)
+            score += keyword_matches * 1.0
+
+        # Signal 3: Memory type match (temporal signals)
+        # ACUTE, SAFETY types are most relevant for immediate concerns
+        if mem.memory_type in ("SAFETY", "ACUTE", "EPISODE"):
+            score += 0.5
+
+        if score > 0:
+            scored_memories.append((mem, score))
+
+    # Sort by score (descending), then by recency
+    scored_memories.sort(key=lambda x: (-x[1], -x[0].created_at.timestamp()))
+
+    # Return top 10, with at least 1 from field-match to preserve original behavior
+    if related_fields:
+        # Ensure at least one field-matched memory is included
+        result = [m for m, _ in scored_memories if m.field in related_fields]
+        result += [m for m, _ in scored_memories if m.field not in related_fields]
+        return result[:10]
+    else:
+        return [m for m, _ in scored_memories][:10]
 
 
 async def get_active_pet(user_id: str) -> Optional[Pet]:
@@ -464,3 +517,67 @@ async def _load_pending_confirmations(
 
     all_pending.sort(key=_sort_key)
     return all_pending[:limit]
+
+
+async def _build_session_bridge(
+    db: AsyncSession,
+    pet_id: str,
+) -> Optional[dict]:
+    """
+    P0: Build session bridge for new conversation starts.
+
+    When user starts a new session (no recent conversation history),
+    inject the previous day's summary + open episodes to maintain
+    cross-day continuity dramatically.
+
+    Returns dict with:
+        - previous_summary: yesterday's DailySummary highlights
+        - open_episodes: list of ongoing health episodes
+        - context_hint: natural language hint for LLM
+    """
+    from src.db.models import Episode
+
+    # Load previous day's summary
+    prev_summary = await db.execute(
+        select(DailySummary)
+        .where(DailySummary.pet_id == pet_id)
+        .order_by(DailySummary.date.desc())
+        .limit(1)
+    )
+    prev_summary = prev_summary.scalar_one_or_none()
+
+    # Load open (ongoing) episodes
+    open_episodes = await db.execute(
+        select(Episode)
+        .where(
+            Episode.pet_id == uuid.UUID(pet_id),
+            Episode.is_ongoing.is_(True),
+        )
+        .order_by(Episode.start_date.desc())
+    )
+    open_episodes = list(open_episodes.scalars().all())
+
+    if not prev_summary and not open_episodes:
+        return None
+
+    # Build context hint
+    context_pieces = []
+    if prev_summary:
+        summary_text = prev_summary.summary.get("highlights") or prev_summary.summary.get("core_issues")
+        if summary_text:
+            if isinstance(summary_text, list):
+                summary_text = "; ".join(str(x) for x in summary_text)
+            context_pieces.append(f"Yesterday's summary: {summary_text}")
+
+    if open_episodes:
+        episode_text = "; ".join(
+            f"{e.symptom_type} (started {e.start_date.strftime('%Y-%m-%d')})"
+            for e in open_episodes
+        )
+        context_pieces.append(f"Ongoing issues: {episode_text}")
+
+    return {
+        "previous_summary": prev_summary,
+        "open_episodes": open_episodes,
+        "context_hint": " | ".join(context_pieces) if context_pieces else None,
+    }
