@@ -114,6 +114,9 @@ async def _apply_auto(
         source=MemorySource.AI_EXTRACTED,
         source_message_id=source_message_id or None,
         observed_at=proposal.observed_at,
+        # Mem0-inspired multi-signal retrieval fields
+        keywords=proposal.keywords,
+        temporal_context=proposal.temporal_context,
         is_active=True,
         expires_at=result.expires_at,
     )

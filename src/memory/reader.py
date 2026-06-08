@@ -222,33 +222,74 @@ async def load_pet_context(
 
 async def load_related_memories(pet_id: str, user_message: str) -> list[PetMemory]:
     """
-    Return active memories whose fields are topically related to *user_message*.
+    Return active memories topically related to *user_message* using multi-signal retrieval.
 
-    Uses a TOPIC_MAP: message keywords → specific memory field names.
-    Returns up to 10 rows, deduplicated, ordered most-recent first.
+    Mem0-inspired multi-signal approach:
+      1. Field matching: message keywords → specific memory field names (_TOPIC_MAP)
+      2. Keyword matching: message words → PetMemory.keywords field (multi-signal)
+      3. Score and rank by relevance: field match > keyword match > recency
+
+    Returns up to 10 rows, deduplicated, ordered by relevance then recency.
     """
     message_lower = user_message.lower()
+    message_words = set(message_lower.split())
+
+    # Signal 1: Topic-based field matching
     related_fields: set[str] = set()
     for keywords, fields in _TOPIC_MAP.items():
         if any(kw in message_lower for kw in keywords):
             related_fields.update(fields)
 
-    if not related_fields:
-        return []
-
     factory = get_session_factory()
     async with factory() as db:
-        result = await db.execute(
+        # Get all candidate memories
+        candidates = await db.execute(
             select(PetMemory)
             .where(
                 PetMemory.pet_id == uuid.UUID(pet_id),
-                PetMemory.field.in_(related_fields),
                 PetMemory.is_active.is_(True),
             )
             .order_by(PetMemory.created_at.desc())
-            .limit(10)
+            .limit(50)  # Fetch more to score and rank
         )
-        return list(result.scalars().all())
+        all_memories = list(candidates.scalars().all())
+
+    if not all_memories:
+        return []
+
+    # Score memories using multi-signal retrieval
+    scored_memories = []
+    for mem in all_memories:
+        score = 0.0
+
+        # Signal 1: Field match (highest priority)
+        if mem.field in related_fields:
+            score += 3.0
+
+        # Signal 2: Keyword match (Mem0 feature)
+        if mem.keywords:
+            keyword_matches = sum(1 for kw in mem.keywords if kw in message_words)
+            score += keyword_matches * 1.0
+
+        # Signal 3: Memory type match (temporal signals)
+        # ACUTE, SAFETY types are most relevant for immediate concerns
+        if mem.memory_type in ("SAFETY", "ACUTE", "EPISODE"):
+            score += 0.5
+
+        if score > 0:
+            scored_memories.append((mem, score))
+
+    # Sort by score (descending), then by recency
+    scored_memories.sort(key=lambda x: (-x[1], -x[0].created_at.timestamp()))
+
+    # Return top 10, with at least 1 from field-match to preserve original behavior
+    if related_fields:
+        # Ensure at least one field-matched memory is included
+        result = [m for m, _ in scored_memories if m.field in related_fields]
+        result += [m for m, _ in scored_memories if m.field not in related_fields]
+        return result[:10]
+    else:
+        return [m for m, _ in scored_memories][:10]
 
 
 async def get_active_pet(user_id: str) -> Optional[Pet]:

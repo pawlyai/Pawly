@@ -53,6 +53,9 @@ class MemoryProposal:
     memory_type: MemoryType
     memory_term: MemoryTerm
     observed_at: Optional[datetime] = None
+    # Mem0-inspired fields for multi-signal retrieval and temporal awareness
+    keywords: Optional[list[str]] = None  # ["limping", "joint", "mobility"]
+    temporal_context: Optional[str] = None  # "Month 1", "Week 3"
 
 
 # ══════════════════════════════════════════════════════════════════════════════

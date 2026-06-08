@@ -38,15 +38,16 @@ from src.db.models import (
 # ── Memory priority weights ───────────────────────────────────────────────────
 
 _TYPE_WEIGHT: dict[MemoryType, float] = {
-    MemoryType.CHRONIC:     1.0,
-    MemoryType.SAFETY:      1.0,
-    MemoryType.EPISODE:     0.9,
-    MemoryType.SYMPTOM:     0.8,
-    MemoryType.BASELINE:    0.6,
-    MemoryType.SNAPSHOT:    0.5,
-    MemoryType.PATTERN:     0.5,
-    MemoryType.ENVIRONMENT: 0.4,
-    MemoryType.PROFILE:     0.3,
+    MemoryType.CHRONIC:      1.0,
+    MemoryType.SAFETY:       1.0,
+    MemoryType.INTERVENTION: 0.95,
+    MemoryType.EPISODE:      0.9,
+    MemoryType.SYMPTOM:      0.8,
+    MemoryType.BASELINE:     0.6,
+    MemoryType.SNAPSHOT:     0.5,
+    MemoryType.PATTERN:      0.5,
+    MemoryType.ENVIRONMENT:  0.4,
+    MemoryType.PROFILE:      0.3,
 }
 
 _RECENCY_HALF_LIFE_DAYS = 30.0
@@ -177,11 +178,21 @@ def _filter(
 
 
 def _join_items(memories: list[PetMemory]) -> str:
+    """Format memories as readable context string.
+
+    Mem0 improvement: Include temporal_context to clarify when facts occurred.
+    Example: "symptom_severity=moderate limping (Month 2)" vs just "moderate limping"
+    helps LLM distinguish temporal trajectory.
+    """
     sorted_mems = sorted(memories, key=_memory_score, reverse=True)
     parts = []
     for m in sorted_mems:
         value = _fmt(m.value)
-        parts.append(f"{m.field}={value}")
+        # Add temporal context if available (Mem0 feature for cross-day continuity)
+        if m.temporal_context:
+            parts.append(f"{m.field}={value} ({m.temporal_context})")
+        else:
+            parts.append(f"{m.field}={value}")
     return ", ".join(parts)
 
 
