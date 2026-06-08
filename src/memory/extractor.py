@@ -499,6 +499,114 @@ async def _extract_mem0(
     return proposals
 
 
+async def _extract_mem0_with_validator(
+    raw_messages: list[dict],
+    pet: Pet,
+    existing_memories: list[PetMemory],
+) -> list[MemoryProposal]:
+    """
+    Phase B: Mem0 extraction + validator (hybrid approach).
+
+    Pipeline:
+      1. Extract facts with Mem0 (single-pass, entity linking)
+      2. Run validator for confidence adjustment
+      3. Filter by validator + confidence threshold
+
+    Research: Compare against Phase A to see if validator helps or hurts.
+    """
+    logger.info("extraction: using Mem0 + validator approach (Phase B)")
+
+    # Step 1: Extract with Mem0 (same as Phase A)
+    formatted_messages = _format_messages(raw_messages)
+    existing_facts = _format_existing(existing_memories)
+
+    filled_prompt = EXTRACTION_PROMPT.format(
+        pet_name=pet.name,
+        species=pet.species.value,
+        breed=pet.breed or "unknown",
+        age_months=pet.age_in_months or "?",
+        gender=pet.gender.value,
+        neutered=pet.neutered_status.value,
+        weight=pet.weight_latest or "?",
+        existing_facts=existing_facts,
+        messages=formatted_messages,
+    )
+
+    extraction_model = settings.extraction_model
+    client = get_chat_client(extraction_model)
+    try:
+        raw = await client.chat(
+            system_prompt=filled_prompt,
+            messages=[{"role": "user", "content": "Extract facts from the conversation above."}],
+            model=extraction_model,
+            max_tokens=4096,
+            temperature=0.2,
+        )
+        raw_text = raw["text"]
+        if not raw_text.strip():
+            return []
+
+        data = json.loads(_strip_fences(raw_text))
+        if not isinstance(data, list):
+            return []
+
+    except Exception as exc:
+        logger.error("Mem0 extraction failed", error=str(exc), model=extraction_model)
+        return []
+
+    # Filter to confidence >= 0.5
+    extracted_facts = [
+        item for item in data
+        if float(item.get("confidence", 0)) >= 0.5
+    ]
+
+    if not extracted_facts:
+        return []
+
+    logger.info(f"extraction: Mem0 extracted {len(extracted_facts)} facts, running validator")
+
+    # Step 2: Run validator on extracted facts
+    validations = await validate_facts(raw_messages, pet.name, extracted_facts)
+
+    # Step 3: Filter by validator
+    kept_indices = {
+        v.get("index")
+        for v in validations
+        if v.get("keep", False) and v.get("adjusted_confidence", 0) >= 0.5
+    }
+    filtered_facts = [f for i, f in enumerate(extracted_facts) if i in kept_indices]
+    logger.info(f"extraction: validator kept {len(filtered_facts)}/{len(extracted_facts)} facts")
+
+    # Step 4: Build proposals
+    proposals: list[MemoryProposal] = []
+
+    for i, fact in enumerate(filtered_facts):
+        try:
+            # Get validation adjustment
+            adjusted_confidence = next(
+                (v.get("adjusted_confidence", fact.get("confidence", 0.5)) for v in validations
+                 if v.get("index") == i),
+                fact.get("confidence", 0.5),
+            )
+
+            proposals.append(
+                MemoryProposal(
+                    field=str(fact.get("field", "")).strip(),
+                    value=fact.get("value"),
+                    confidence=float(adjusted_confidence),
+                    source_quote=str(fact.get("source_quote", "")),
+                    memory_type=MemoryType(fact.get("memory_type", "snapshot").lower()),
+                    memory_term=MemoryTerm(fact.get("memory_term", "short").lower()),
+                    observed_at=None,
+                )
+            )
+        except Exception as e:
+            logger.warning(f"failed to build proposal", error=str(e))
+
+    logger.info(f"extraction: Mem0+validator pipeline complete, returning {len(proposals)} proposals")
+    return proposals
+
+
 async def extract_memories(
     raw_messages: list[dict],
     pet: Pet,
@@ -507,9 +615,10 @@ async def extract_memories(
     """
     Extract new pet facts from a conversation turn.
 
-    Supports two extraction backends:
-      - "mem0": Mem0-inspired single-pass extraction (Phase A)
-      - "multiagent": Multi-specialist extraction with validation (current)
+    Supports extraction backends:
+      - "mem0": Mem0-inspired single-pass (Phase A) - no validator
+      - "mem0_validator": Mem0 + validator filtering (Phase B) - hybrid
+      - "multiagent": Multi-specialist extraction with validation - current
 
     Args:
         raw_messages:      [{"role": "user"|"assistant", "content": str}]
@@ -517,9 +626,8 @@ async def extract_memories(
         existing_memories: active PetMemory rows
 
     Returns:
-        list[MemoryProposal] — validated facts with confidence >= 0.5
+        list[MemoryProposal] — facts with confidence >= 0.5
     """
-    # Feature flag to toggle between extraction backends
     extraction_backend = getattr(settings, "extraction_backend", "multiagent")
 
     if extraction_backend == "mem0":
@@ -527,6 +635,12 @@ async def extract_memories(
             return await _extract_mem0(raw_messages, pet, existing_memories)
         except Exception as e:
             logger.error(f"Mem0 extraction failed, falling back to multiagent", error=str(e))
+            return await _extract_multiagent(raw_messages, pet, existing_memories)
+    elif extraction_backend == "mem0_validator":
+        try:
+            return await _extract_mem0_with_validator(raw_messages, pet, existing_memories)
+        except Exception as e:
+            logger.error(f"Mem0+validator extraction failed, falling back to multiagent", error=str(e))
             return await _extract_multiagent(raw_messages, pet, existing_memories)
     else:
         # Default to multi-agent approach
