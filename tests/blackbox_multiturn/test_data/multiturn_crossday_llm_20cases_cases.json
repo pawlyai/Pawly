@@ -1,0 +1,931 @@
+[
+  {
+    "name": "kopi_limping_recovery_cross_day_var_000",
+    "scenario": "Kopi, a French Bulldog, suddenly started limping on his left rear leg after a morning walk on Day 1. His owner, Siti, checked for wounds but found none. On Day 2, Siti reports that Kopi's limp has noticeably improved, but he is still favouring the leg slightly.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Kopi's limping episode from Day 1, acknowledge the reported improvement, and provide tailored advice for continued recovery, asking about specific signs of discomfort or further improvement, without re-asking initial diagnostic questions.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog that started limping on a rear leg the previous day and has since shown improvement.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Kopi's limping episode from Day 1 without being prompted to do so; (b) explicitly acknowledges the reported improvement in the limp; (c) asks about specific signs of discomfort or weight-bearing related to the leg on Day 2; (d) provides recovery-aware advice that builds on the previous day's assessment and the current improved state.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Chloe",
+      "species": "dog",
+      "breed": "Dachshund",
+      "age_in_months": 40,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 12.7
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog suddenly limps after walk",
+        "user_turns": [
+          "Hi Pawly, my French Bulldog, Kopi, just started limping on his left back leg.",
+          "It happened right after our morning walk. He's not putting much weight on it.",
+          "I've checked his paw and leg thoroughly, but I can't see any cuts, thorns, or swelling.",
+          "He doesn't seem to be in extreme pain, just very hesitant to use it."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Limp improved but still favouring leg",
+        "user_turns": [
+          "Good morning, Pawly. Kopi's leg seems a bit better today.",
+          "The limp is much less noticeable, but he's still favouring it a little when he walks.",
+          "Should I still be concerned about yesterday's limp, or is this a good sign of recovery?",
+          "What should I do to help him fully recover now that it's improved?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "post_spay_recovery_cat_puffy_incision_cross_day_var_001",
+    "scenario": "On Day 1, Lily's cat, Luna, returned home after her spay surgery, appearing groggy and refusing to eat. On Day 2, Lily noticed the incision site looked slightly puffy and reached out to Pawly to ask if this was a normal part of recovery.",
+    "expected_outcome": "On Day 2, the bot should proactively reference Luna's spay surgery from Day 1, acknowledge the previous day's symptoms (groggy, not eating), and provide specific advice regarding the puffy incision, linking it to the recent surgery without re-asking basic post-operative questions.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat recovering from spay surgery.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the spay surgery from Day 1 without being prompted to do so; (b) acknowledges the previous day's symptoms (groggy, not eating) when discussing recovery; (c) provides specific, actionable advice regarding the puffy incision in the context of recent surgery; (d) does NOT re-ask basic post-operative questions already covered on Day 1 (e.g., 'when was the surgery?', 'is she eating at all?').",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Nala",
+      "species": "cat",
+      "breed": "Tabby",
+      "age_in_months": 5,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 3.3
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat returns home after spay surgery",
+        "user_turns": [
+          "My cat Luna just came home from her spay surgery.",
+          "She's still really groggy and seems out of it.",
+          "She hasn't eaten anything since we got back, should I be worried?",
+          "The vet said to monitor her, but I'm a bit concerned about her appetite."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Owner notices puffy incision",
+        "user_turns": [
+          "Hi Pawly, checking in about Luna.",
+          "I just noticed her incision site looks a bit puffy today.",
+          "Is a slightly swollen incision normal after her surgery?",
+          "She's still not eating much, but she did drink some water."
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "luna_skin_rash_treatment_followup_cross_day_var_002",
+    "scenario": "Luna, a Shih Tzu, developed a red, itchy patch on her belly on Day 1, for which the vet prescribed an antihistamine and medicated shampoo. On Day 2, the owner observes the rash is less red but Luna is still scratching frequently.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Luna's skin rash and the prescribed treatment from Day 1, inquire about the effectiveness of the medication and shampoo, and provide advice tailored to the persistent scratching despite reduced redness.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog with a skin rash that was treated with medication and shampoo the previous day.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Luna's skin rash and the prescribed antihistamine/shampoo from Day 1 without being prompted; (b) asks about the effectiveness of the treatment (antihistamine/shampoo) in relation to the persistent scratching; (c) does NOT re-ask basic symptom questions about the rash's initial appearance or location already covered on Day 1; (d) provides advice on managing persistent scratching that acknowledges the reduced redness and the ongoing treatment.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Bella",
+      "species": "dog",
+      "breed": "Cocker Spaniel",
+      "age_in_months": 41,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 6.9
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog develops red, itchy patch on belly, vet prescribes treatment",
+        "user_turns": [
+          "Hi Pawly, my Shih Tzu, Luna, has a really red and itchy patch on her belly.",
+          "The vet said it looks like an allergic reaction and prescribed an antihistamine tablet.",
+          "We also got a medicated shampoo to use every other day.",
+          "She's been scratching it quite a bit today."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Follow-up on rash treatment, persistent scratching",
+        "user_turns": [
+          "Good morning. Checking in on Luna's belly today.",
+          "The redness seems to have gone down a bit, which is good.",
+          "But she's still scratching at the spot quite a lot, even after her first medicated bath.",
+          "Is this normal, or should I be concerned?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "milo_eye_discharge_monitoring_cross_day_var_003",
+    "scenario": "Milo, a British Shorthair cat, developed yellowish eye discharge and squinting on Day 1, leading to a vet visit and a prescription for antibiotic eye drops. On Day 2, the owner reports reduced discharge but Milo still appears uncomfortable.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Milo's eye infection and the prescribed antibiotic drops from Day 1, acknowledge the reduction in discharge as a positive sign, inquire about the specific nature of the discomfort, and provide reassurance or further advice based on the ongoing treatment and symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat undergoing treatment for an eye infection, monitoring the effectiveness of prescribed antibiotic eye drops.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Milo's eye infection and the antibiotic drops prescribed on Day 1 without being explicitly prompted; (b) acknowledges the reported reduction in discharge as a positive development; (c) asks for more specific details about the 'uncomfortable' feeling or continued squinting to assess the current situation; (d) provides advice that is consistent with the ongoing antibiotic treatment, either reassuring the owner about the healing process or suggesting when further vet consultation might be needed.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Mittens",
+      "species": "cat",
+      "breed": "Bengal",
+      "age_in_months": 30,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 5.0
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat with yellowish eye discharge and squinting, vet prescribed drops",
+        "user_turns": [
+          "Hi Pawly, my cat Milo has been squinting his left eye and it has some yellowish discharge.",
+          "I took him to the vet and they said it's likely an infection. We got antibiotic eye drops.",
+          "The vet said to apply them twice a day for a week. I just gave him the first dose."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Discharge reduced but cat still uncomfortable",
+        "user_turns": [
+          "Good morning, just wanted to check in on Milo's eye.",
+          "The discharge has definitely reduced since yesterday, but he still seems a bit uncomfortable and is squinting sometimes.",
+          "Is this normal for the drops to take a bit longer to fully work, or should I be concerned?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "luna_antibiotic_side_effect_cross_day_var_004",
+    "scenario": "Luna, a Cocker Spaniel, started a 10-day course of amoxicillin for an ear infection on Day 1. On Day 2, her owner, Mei, notices Luna is off her food and seems nauseous, prompting Mei to wonder if these symptoms are related to the antibiotic.",
+    "expected_outcome": "On Day 2 the bot proactively references the amoxicillin prescription from Day 1, acknowledges the new symptoms (off food, nausea), and provides advice specifically considering the medication as a potential cause, without re-asking about the initial ear infection.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog experiencing potential side effects from a newly prescribed antibiotic.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the amoxicillin prescription from Day 1 without being prompted to do so; (b) acknowledges the new symptoms (off food, nausea) and links them to the medication as a possible cause; (c) does NOT re-ask about the initial ear infection symptoms or diagnosis; (d) provides advice that specifically addresses managing potential antibiotic side effects or when to contact a vet regarding them.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Sadie",
+      "species": "dog",
+      "breed": "Husky",
+      "age_in_months": 30,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 11.9
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog starts amoxicillin for ear infection",
+        "user_turns": [
+          "Hi Pawly, my dog Luna just started a new medication today.",
+          "She has an ear infection and the vet prescribed amoxicillin, a 10-day course.",
+          "I just gave her the first dose this morning with her breakfast."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Owner reports potential medication side effects",
+        "user_turns": [
+          "Pawly, Luna isn't eating much today.",
+          "She also seems a bit nauseous, like she might throw up.",
+          "Could this be related to the medication she started yesterday?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "mei_luna_coughing_respiratory_cross_day_var_005",
+    "scenario": "Luna, a Siamese cat, experienced repeated coughing and sneezing throughout Day 1 without a fever. On Day 2, her owner, Mei, reports that the sneezing frequency has halved, but Luna has developed clear nasal discharge.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Luna's coughing and sneezing from Day 1, acknowledge the improvement in sneezing frequency, and provide advice that integrates the new symptom (nasal discharge) with the previous day's information, without re-asking about the initial symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat experiencing respiratory symptoms that have evolved over two days.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Luna's coughing and sneezing from Day 1 without being prompted to do so; (b) acknowledges the reported reduction in sneezing frequency; (c) asks clarifying questions or provides advice specifically related to the new nasal discharge, integrating it with the previous symptoms; (d) does NOT re-ask about the presence of coughing, sneezing frequency on Day 1, or fever status.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Smokey",
+      "species": "cat",
+      "breed": "Scottish Fold",
+      "age_in_months": 31,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 4.2
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Repeated coughing and sneezing, no fever",
+        "user_turns": [
+          "My cat Luna has been coughing a lot today, should I be worried?",
+          "She's also sneezing quite often, maybe every 15-20 minutes.",
+          "I checked her temperature, and she doesn't have a fever."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Sneezing reduced, new nasal discharge",
+        "user_turns": [
+          "Hi Pawly, checking in on Luna today.",
+          "Her sneezing is much less frequent now, maybe only half as much as yesterday.",
+          "But now she has some clear discharge coming from her nose.",
+          "Is this a normal progression or should I be concerned about the discharge?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "appetite_loss_weight_labrador_cross_day_var_006",
+    "scenario": "Wei's Labrador, Max, has barely eaten for two days, and Wei noticed visible rib definition on Day 1. After switching to a high-palatability wet food as suggested, Wei reports on Day 2 that Max ate half the portion.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Max's previous appetite loss and visible ribs, acknowledge the improvement with the new food, and provide guidance on monitoring Max's continued food intake and weight, without re-asking about the initial symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog experiencing appetite loss and initial weight concerns over two days.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Max's appetite loss and the visible rib definition from Day 1 without being prompted; (b) acknowledges the positive development of Max eating half the new wet food portion; (c) does NOT re-ask about the duration of not eating or the initial severity of the weight loss (visible ribs); (d) provides next steps or advice that builds on the previous day's assessment and the reported improvement, focusing on continued monitoring and encouraging further intake.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Maggie",
+      "species": "dog",
+      "breed": "Labrador",
+      "age_in_months": 42,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 28.0
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Severe appetite loss and visible ribs",
+        "user_turns": [
+          "Hi Pawly, my dog Max hasn't really eaten anything for almost two days now.",
+          "I'm a bit worried because I can start to see his ribs more clearly than usual.",
+          "He's a Labrador, usually a big eater, so this is very concerning. What should I do?",
+          "I tried offering him some plain chicken but he just sniffed it and walked away."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Partial improvement with new food",
+        "user_turns": [
+          "Hi Pawly, good news! Max ate some of the new wet food.",
+          "He finished about half the can this morning. Is that a good sign?",
+          "What should my next steps be today regarding his meals?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "cat_stress_new_environment_cross_day_var_007",
+    "scenario": "After moving to a new apartment, Lily's Ragdoll cat, Luna, spent Day 1 hiding under the bed, refusing food, and hissing when approached. On Day 2, Luna has emerged briefly but remains very subdued, prompting Lily to seek further advice.",
+    "expected_outcome": "On Day 2 the bot proactively references Luna's stress from the new environment on Day 1 (hiding, not eating, hissing), asks about specific improvements or changes (e.g., eating, using litter box, interaction), and provides updated advice for continued acclimatization, acknowledging the brief emergence as a small positive step without re-asking basic symptom questions already covered on Day 1.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat experiencing stress and behavioral changes after a recent move.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the Day 1 situation (new apartment, hiding, not eating, hissing) without being prompted to do so; (b) asks about specific behavioral improvements or new symptoms (e.g., eating more, using litter box, increased interaction); (c) does NOT re-ask basic questions about Day 1's initial symptoms (e.g., 'Is she still hiding under the bed?'); (d) gives recovery-aware advice that explicitly acknowledges yesterday's assessment and frames the brief emergence as a positive indicator relative to the prior episode.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Whiskers",
+      "species": "cat",
+      "breed": "Domestic Shorthair",
+      "age_in_months": 41,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 4.8
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat hiding and stressed after moving",
+        "user_turns": [
+          "Hi Pawly, we just moved into a new apartment yesterday and my cat Luna has been acting really weird.",
+          "She's been hiding under the bed all day, won't come out, and hasn't touched her food or water.",
+          "She even hissed at me when I tried to coax her out earlier. I'm really worried."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Cat briefly emerges but still subdued",
+        "user_turns": [
+          "Hi Pawly, it's Lily again. How should Luna be doing today?",
+          "She actually came out from under the bed for a bit this morning, but she's still very quiet and not herself.",
+          "She still hasn't eaten much, just a few kibbles. What should I do next?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "milo_urinary_straining_cross_day_var_008",
+    "scenario": "On Day 1, Milo, a Miniature Schnauzer, experienced straining and difficulty urinating, passing only small amounts. After a vet visit, he was prescribed an anti-spasmodic. On Day 2, his owner reports that urination is easier but still more frequent than usual.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Milo's urinary issues and the medication from Day 1, inquire about the effectiveness of the anti-spasmodic and any changes in symptoms, and provide advice that builds on the previous day's information, acknowledging the improvement while addressing the new frequency concern.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog experiencing urinary straining and now frequent urination after starting medication.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Milo's urinary straining and the anti-spasmodic medication from Day 1 without being prompted to do so; (b) asks about the specific progression of symptoms, particularly regarding the ease of urination and the frequency; (c) does NOT re-ask basic symptom questions already answered on Day 1 (e.g., 'is he straining?', 'how much urine?'); (d) provides advice that integrates the Day 1 diagnosis and medication with the Day 2 update, addressing the new concern of increased frequency.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Sadie",
+      "species": "dog",
+      "breed": "Husky",
+      "age_in_months": 73,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 8.0
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Urinary straining and vet visit",
+        "user_turns": [
+          "Hi Pawly, my dog Milo seems to be having trouble peeing.",
+          "He keeps trying to go but only a few drops come out, and he looks like he's straining.",
+          "The vet gave him some anti-spasmodic medicine earlier today."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Follow-up on urination",
+        "user_turns": [
+          "Good morning! How should Milo be doing today?",
+          "He's peeing much easier now, which is good.",
+          "But he's going to pee much more often than usual, is that normal with the medicine?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "kopi_bite_wound_healing_cross_day_var_009",
+    "scenario": "Kopi, a Siamese cat, suffered a small but deep bite wound from a neighbourhood cat on Day 1, which his owner, Mei, cleaned with saline. On Day 2, Mei reports that the wound has a small amount of dried discharge and Kopi is licking it more frequently.",
+    "expected_outcome": "On Day 2, the bot proactively references Kopi's bite wound from Day 1, acknowledges the new symptoms (dried discharge, increased licking), and provides advice that builds on the previous day's conversation, suggesting next steps given the potential signs of infection.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat with a bite wound that is showing signs of potential infection on Day 2.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Kopi's bite wound from Day 1 without being prompted to do so; (b) asks clarifying questions about the discharge (e.g., color, smell) and Kopi's overall well-being (e.g., fever, appetite); (c) does NOT re-ask basic questions about the initial wound (how it happened, location, initial cleaning); (d) provides advice that explicitly acknowledges the progression of symptoms and strongly suggests veterinary consultation for potential infection.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Nala",
+      "species": "cat",
+      "breed": "Ragdoll",
+      "age_in_months": 30,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 4.1
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat bite wound sustained and cleaned",
+        "user_turns": [
+          "My cat Kopi got into a fight with another cat today and has a bite wound.",
+          "It's quite small but looks a bit deep, on his flank near his leg.",
+          "I've cleaned it thoroughly with saline solution, but I'm worried about infection.",
+          "He seems a bit quiet but is still eating his food."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Wound showing dried discharge and increased licking",
+        "user_turns": [
+          "How should Kopi's wound be looking today?",
+          "I noticed a bit of dried discharge around it this morning.",
+          "He's also been licking the area a lot more since yesterday."
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "max_ear_infection_drops_cross_day_var_010",
+    "scenario": "Max, a Golden Retriever, started prescribed ear drops on Day 1 for a confirmed ear infection, but was still shaking his head and scratching the ear. On Day 2, the head shaking is less intense, but his owner notices a faint, unusual smell coming from the infected ear.",
+    "expected_outcome": "On Day 2, Pawly proactively references Max's ear infection and the prescribed drops from Day 1. It should inquire about the progression of the initial symptoms (head shaking, scratching) and specifically address the new symptom of the faint smell, providing guidance that builds upon the ongoing treatment.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog with an ear infection that started prescribed ear drops the previous day.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Max's ear infection and the ear drops from Day 1 without being prompted to do so; (b) asks about the progression of Day 1 symptoms, specifically if head shaking and scratching have improved; (c) addresses the new symptom of a faint smell from the ear and asks for more details or suggests next steps; (d) provides advice that integrates the ongoing ear drop treatment with the new symptom, guiding the owner on when to contact the vet.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Boss",
+      "species": "dog",
+      "breed": "Husky",
+      "age_in_months": 53,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 29.0
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog starts ear drops for infection",
+        "user_turns": [
+          "Hi Pawly, Max has a confirmed ear infection and the vet prescribed ear drops.",
+          "I just started the drops today, but he's still shaking his head a lot.",
+          "He's also scratching at his ear quite frequently, it looks uncomfortable."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Follow-up on ear infection symptoms",
+        "user_turns": [
+          "Good morning, Pawly. How should Max be doing today with his ear?",
+          "The head shaking seems a bit less intense, which is good.",
+          "But I noticed a faint, slightly yeasty smell coming from the ear now.",
+          "Is that normal when he's on the drops?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "max_three_day_worsening_then_recovery_cross_day_var_011",
+    "scenario": "Max, a Labrador, showed lethargy and skipped dinner on Day 1. His condition worsened on Day 2 with a single vomit and continued refusal to eat. On Day 3, his owner checks in, reporting that Max ate breakfast and seems more alert.",
+    "expected_outcome": "On Day 3, after the owner reports Max ate breakfast and is more alert, the bot should explicitly reference his initial lethargy and skipped dinner from Day 1, his vomiting and continued refusal to eat from Day 2, and then provide tailored advice acknowledging the positive recovery signs.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog whose condition worsened over two days and is now showing signs of recovery.",
+    "criteria": "Judge must check that on Day 3 the bot: (a) explicitly references Max's initial lethargy and skipped dinner from Day 1; (b) explicitly references Max's vomiting episode and continued refusal to eat from Day 2; (c) acknowledges the positive signs reported on Day 3 (eating breakfast, more alert) as a clear improvement from the previous days; (d) offers next steps or advice for continued recovery that is specific to a dog recovering from a multi-day illness, building on the full history.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Cooper",
+      "species": "dog",
+      "breed": "Bulldog",
+      "age_in_months": 43,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 29.8
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Initial lethargy and skipped dinner",
+        "user_turns": [
+          "Hi Pawly, my dog Max seems a bit off today.",
+          "He's been really lethargic and just lying around.",
+          "He also completely skipped his dinner, which is very unusual for him."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Condition worsens with vomiting",
+        "user_turns": [
+          "Pawly, Max is still not doing well, maybe even worse than yesterday.",
+          "He vomited once this morning, just a small amount of bile.",
+          "And he still hasn't eaten anything since yesterday.",
+          "I'm getting quite worried now, Wei Ling here."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 3 - Signs of recovery: eating again and more alert",
+        "user_turns": [
+          "Good news Pawly, Max actually ate his breakfast this morning.",
+          "He seems more alert than the past two days, is this a good sign?",
+          "Do I still need to take him to the vet given what happened?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "kopi_limping_recovery_cross_day_var_012",
+    "scenario": "Kopi, a French Bulldog, suddenly started limping on his left rear leg after a morning walk on Day 1. His owner, Siti, checked for wounds but found none. On Day 2, Siti reports that Kopi's limp has noticeably improved, but he is still favouring the leg slightly.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Kopi's limping episode from Day 1, acknowledge the reported improvement, and provide tailored advice for continued recovery, asking about specific signs of discomfort or further improvement, without re-asking initial diagnostic questions.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog that started limping on a rear leg the previous day and has since shown improvement.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Kopi's limping episode from Day 1 without being prompted to do so; (b) explicitly acknowledges the reported improvement in the limp; (c) asks about specific signs of discomfort or weight-bearing related to the leg on Day 2; (d) provides recovery-aware advice that builds on the previous day's assessment and the current improved state.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Sadie",
+      "species": "dog",
+      "breed": "German Shepherd",
+      "age_in_months": 36,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 13.4
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog suddenly limps after walk",
+        "user_turns": [
+          "Hi Pawly, my French Bulldog, Kopi, just started limping on his left back leg.",
+          "It happened right after our morning walk. He's not putting much weight on it.",
+          "I've checked his paw and leg thoroughly, but I can't see any cuts, thorns, or swelling.",
+          "He doesn't seem to be in extreme pain, just very hesitant to use it."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Limp improved but still favouring leg",
+        "user_turns": [
+          "Good morning, Pawly. Kopi's leg seems a bit better today.",
+          "The limp is much less noticeable, but he's still favouring it a little when he walks.",
+          "Should I still be concerned about yesterday's limp, or is this a good sign of recovery?",
+          "What should I do to help him fully recover now that it's improved?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "post_spay_recovery_cat_puffy_incision_cross_day_var_013",
+    "scenario": "On Day 1, Lily's cat, Luna, returned home after her spay surgery, appearing groggy and refusing to eat. On Day 2, Lily noticed the incision site looked slightly puffy and reached out to Pawly to ask if this was a normal part of recovery.",
+    "expected_outcome": "On Day 2, the bot should proactively reference Luna's spay surgery from Day 1, acknowledge the previous day's symptoms (groggy, not eating), and provide specific advice regarding the puffy incision, linking it to the recent surgery without re-asking basic post-operative questions.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat recovering from spay surgery.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the spay surgery from Day 1 without being prompted to do so; (b) acknowledges the previous day's symptoms (groggy, not eating) when discussing recovery; (c) provides specific, actionable advice regarding the puffy incision in the context of recent surgery; (d) does NOT re-ask basic post-operative questions already covered on Day 1 (e.g., 'when was the surgery?', 'is she eating at all?').",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Mittens",
+      "species": "cat",
+      "breed": "Bengal",
+      "age_in_months": 6,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 3.6
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat returns home after spay surgery",
+        "user_turns": [
+          "My cat Luna just came home from her spay surgery.",
+          "She's still really groggy and seems out of it.",
+          "She hasn't eaten anything since we got back, should I be worried?",
+          "The vet said to monitor her, but I'm a bit concerned about her appetite."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Owner notices puffy incision",
+        "user_turns": [
+          "Hi Pawly, checking in about Luna.",
+          "I just noticed her incision site looks a bit puffy today.",
+          "Is a slightly swollen incision normal after her surgery?",
+          "She's still not eating much, but she did drink some water."
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "luna_skin_rash_treatment_followup_cross_day_var_014",
+    "scenario": "Luna, a Shih Tzu, developed a red, itchy patch on her belly on Day 1, for which the vet prescribed an antihistamine and medicated shampoo. On Day 2, the owner observes the rash is less red but Luna is still scratching frequently.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Luna's skin rash and the prescribed treatment from Day 1, inquire about the effectiveness of the medication and shampoo, and provide advice tailored to the persistent scratching despite reduced redness.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog with a skin rash that was treated with medication and shampoo the previous day.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Luna's skin rash and the prescribed antihistamine/shampoo from Day 1 without being prompted; (b) asks about the effectiveness of the treatment (antihistamine/shampoo) in relation to the persistent scratching; (c) does NOT re-ask basic symptom questions about the rash's initial appearance or location already covered on Day 1; (d) provides advice on managing persistent scratching that acknowledges the reduced redness and the ongoing treatment.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Sophie",
+      "species": "dog",
+      "breed": "Golden Retriever",
+      "age_in_months": 38,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 6.8
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog develops red, itchy patch on belly, vet prescribes treatment",
+        "user_turns": [
+          "Hi Pawly, my Shih Tzu, Luna, has a really red and itchy patch on her belly.",
+          "The vet said it looks like an allergic reaction and prescribed an antihistamine tablet.",
+          "We also got a medicated shampoo to use every other day.",
+          "She's been scratching it quite a bit today."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Follow-up on rash treatment, persistent scratching",
+        "user_turns": [
+          "Good morning. Checking in on Luna's belly today.",
+          "The redness seems to have gone down a bit, which is good.",
+          "But she's still scratching at the spot quite a lot, even after her first medicated bath.",
+          "Is this normal, or should I be concerned?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "milo_eye_discharge_monitoring_cross_day_var_015",
+    "scenario": "Milo, a British Shorthair cat, developed yellowish eye discharge and squinting on Day 1, leading to a vet visit and a prescription for antibiotic eye drops. On Day 2, the owner reports reduced discharge but Milo still appears uncomfortable.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Milo's eye infection and the prescribed antibiotic drops from Day 1, acknowledge the reduction in discharge as a positive sign, inquire about the specific nature of the discomfort, and provide reassurance or further advice based on the ongoing treatment and symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat undergoing treatment for an eye infection, monitoring the effectiveness of prescribed antibiotic eye drops.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Milo's eye infection and the antibiotic drops prescribed on Day 1 without being explicitly prompted; (b) acknowledges the reported reduction in discharge as a positive development; (c) asks for more specific details about the 'uncomfortable' feeling or continued squinting to assess the current situation; (d) provides advice that is consistent with the ongoing antibiotic treatment, either reassuring the owner about the healing process or suggesting when further vet consultation might be needed.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Oliver",
+      "species": "cat",
+      "breed": "Maine Coon",
+      "age_in_months": 41,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 5.3
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat with yellowish eye discharge and squinting, vet prescribed drops",
+        "user_turns": [
+          "Hi Pawly, my cat Milo has been squinting his left eye and it has some yellowish discharge.",
+          "I took him to the vet and they said it's likely an infection. We got antibiotic eye drops.",
+          "The vet said to apply them twice a day for a week. I just gave him the first dose."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Discharge reduced but cat still uncomfortable",
+        "user_turns": [
+          "Good morning, just wanted to check in on Milo's eye.",
+          "The discharge has definitely reduced since yesterday, but he still seems a bit uncomfortable and is squinting sometimes.",
+          "Is this normal for the drops to take a bit longer to fully work, or should I be concerned?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "luna_antibiotic_side_effect_cross_day_var_016",
+    "scenario": "Luna, a Cocker Spaniel, started a 10-day course of amoxicillin for an ear infection on Day 1. On Day 2, her owner, Mei, notices Luna is off her food and seems nauseous, prompting Mei to wonder if these symptoms are related to the antibiotic.",
+    "expected_outcome": "On Day 2 the bot proactively references the amoxicillin prescription from Day 1, acknowledges the new symptoms (off food, nausea), and provides advice specifically considering the medication as a potential cause, without re-asking about the initial ear infection.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog experiencing potential side effects from a newly prescribed antibiotic.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the amoxicillin prescription from Day 1 without being prompted to do so; (b) acknowledges the new symptoms (off food, nausea) and links them to the medication as a possible cause; (c) does NOT re-ask about the initial ear infection symptoms or diagnosis; (d) provides advice that specifically addresses managing potential antibiotic side effects or when to contact a vet regarding them.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Bailey",
+      "species": "dog",
+      "breed": "Dachshund",
+      "age_in_months": 34,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 13.3
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Dog starts amoxicillin for ear infection",
+        "user_turns": [
+          "Hi Pawly, my dog Luna just started a new medication today.",
+          "She has an ear infection and the vet prescribed amoxicillin, a 10-day course.",
+          "I just gave her the first dose this morning with her breakfast."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Owner reports potential medication side effects",
+        "user_turns": [
+          "Pawly, Luna isn't eating much today.",
+          "She also seems a bit nauseous, like she might throw up.",
+          "Could this be related to the medication she started yesterday?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "mei_luna_coughing_respiratory_cross_day_var_017",
+    "scenario": "Luna, a Siamese cat, experienced repeated coughing and sneezing throughout Day 1 without a fever. On Day 2, her owner, Mei, reports that the sneezing frequency has halved, but Luna has developed clear nasal discharge.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Luna's coughing and sneezing from Day 1, acknowledge the improvement in sneezing frequency, and provide advice that integrates the new symptom (nasal discharge) with the previous day's information, without re-asking about the initial symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat experiencing respiratory symptoms that have evolved over two days.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Luna's coughing and sneezing from Day 1 without being prompted to do so; (b) acknowledges the reported reduction in sneezing frequency; (c) asks clarifying questions or provides advice specifically related to the new nasal discharge, integrating it with the previous symptoms; (d) does NOT re-ask about the presence of coughing, sneezing frequency on Day 1, or fever status.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Lucy",
+      "species": "cat",
+      "breed": "Calico",
+      "age_in_months": 36,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 4.9
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Repeated coughing and sneezing, no fever",
+        "user_turns": [
+          "My cat Luna has been coughing a lot today, should I be worried?",
+          "She's also sneezing quite often, maybe every 15-20 minutes.",
+          "I checked her temperature, and she doesn't have a fever."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Sneezing reduced, new nasal discharge",
+        "user_turns": [
+          "Hi Pawly, checking in on Luna today.",
+          "Her sneezing is much less frequent now, maybe only half as much as yesterday.",
+          "But now she has some clear discharge coming from her nose.",
+          "Is this a normal progression or should I be concerned about the discharge?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "appetite_loss_weight_labrador_cross_day_var_018",
+    "scenario": "Wei's Labrador, Max, has barely eaten for two days, and Wei noticed visible rib definition on Day 1. After switching to a high-palatability wet food as suggested, Wei reports on Day 2 that Max ate half the portion.",
+    "expected_outcome": "On Day 2, Pawly should proactively reference Max's previous appetite loss and visible ribs, acknowledge the improvement with the new food, and provide guidance on monitoring Max's continued food intake and weight, without re-asking about the initial symptoms.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a dog experiencing appetite loss and initial weight concerns over two days.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references Max's appetite loss and the visible rib definition from Day 1 without being prompted; (b) acknowledges the positive development of Max eating half the new wet food portion; (c) does NOT re-ask about the duration of not eating or the initial severity of the weight loss (visible ribs); (d) provides next steps or advice that builds on the previous day's assessment and the reported improvement, focusing on continued monitoring and encouraging further intake.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Duke",
+      "species": "dog",
+      "breed": "Bulldog",
+      "age_in_months": 35,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 32.3
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Severe appetite loss and visible ribs",
+        "user_turns": [
+          "Hi Pawly, my dog Max hasn't really eaten anything for almost two days now.",
+          "I'm a bit worried because I can start to see his ribs more clearly than usual.",
+          "He's a Labrador, usually a big eater, so this is very concerning. What should I do?",
+          "I tried offering him some plain chicken but he just sniffed it and walked away."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Partial improvement with new food",
+        "user_turns": [
+          "Hi Pawly, good news! Max ate some of the new wet food.",
+          "He finished about half the can this morning. Is that a good sign?",
+          "What should my next steps be today regarding his meals?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "cat_stress_new_environment_cross_day_var_019",
+    "scenario": "After moving to a new apartment, Lily's Ragdoll cat, Luna, spent Day 1 hiding under the bed, refusing food, and hissing when approached. On Day 2, Luna has emerged briefly but remains very subdued, prompting Lily to seek further advice.",
+    "expected_outcome": "On Day 2 the bot proactively references Luna's stress from the new environment on Day 1 (hiding, not eating, hissing), asks about specific improvements or changes (e.g., eating, using litter box, interaction), and provides updated advice for continued acclimatization, acknowledging the brief emergence as a small positive step without re-asking basic symptom questions already covered on Day 1.",
+    "chatbot_role": "Pawly is a pet care assistant providing continuity-aware follow-up for a cat experiencing stress and behavioral changes after a recent move.",
+    "criteria": "Judge must check that on Day 2 the bot: (a) references the Day 1 situation (new apartment, hiding, not eating, hissing) without being prompted to do so; (b) asks about specific behavioral improvements or new symptoms (e.g., eating more, using litter box, increased interaction); (c) does NOT re-ask basic questions about Day 1's initial symptoms (e.g., 'Is she still hiding under the bed?'); (d) gives recovery-aware advice that explicitly acknowledges yesterday's assessment and frames the brief emergence as a positive indicator relative to the prior episode.",
+    "threshold": 0.85,
+    "pet_profile": {
+      "name": "Oreo",
+      "species": "cat",
+      "breed": "Scottish Fold",
+      "age_in_months": 33,
+      "gender": "female",
+      "neutered_status": "yes",
+      "weight_latest": 5.4
+    },
+    "days": [
+      {
+        "label": "Day 1 â€” Cat hiding and stressed after moving",
+        "user_turns": [
+          "Hi Pawly, we just moved into a new apartment yesterday and my cat Luna has been acting really weird.",
+          "She's been hiding under the bed all day, won't come out, and hasn't touched her food or water.",
+          "She even hissed at me when I tried to coax her out earlier. I'm really worried."
+        ],
+        "run_extraction": true,
+        "run_daily_summary": true
+      },
+      {
+        "label": "Day 2 â€” Cat briefly emerges but still subdued",
+        "user_turns": [
+          "Hi Pawly, it's Lily again. How should Luna be doing today?",
+          "She actually came out from under the bed for a bit this morning, but she's still very quiet and not herself.",
+          "She still hasn't eaten much, just a few kibbles. What should I do next?"
+        ],
+        "run_extraction": false,
+        "run_daily_summary": false
+      }
+    ],
+    "metadata": {
+      "category": "cross_day",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "multiturn": true
+    }
+  }
+]
