@@ -168,6 +168,11 @@ async def load_pet_context(
         PLUS                — all long/mid/short + 5 turns
         PRO                 — all long/mid/short (higher limits) + 5 turns
 
+    P0 Enhancement: Session Bridge
+    - Detects new session start (empty recent_turns)
+    - Injects previous day's summary + open episodes
+    - Improves cross-day continuity dramatically
+
     Returns:
         {
             "pet":                   Pet | None,
@@ -178,6 +183,7 @@ async def load_pet_context(
             "daily_summary":         DailySummary | None,
             "weekly_summary":        WeeklySummary | None,
             "pending_confirmations": list[PendingMemoryChange],
+            "session_bridge":        Optional[dict] - context for new session starts,
         }
     """
     factory = get_session_factory()
@@ -208,6 +214,11 @@ async def load_pet_context(
         weekly_summary = await _load_latest_summary(db, pet_id, "weekly")
         pending = await _load_pending_confirmations(db, pet_id, limit=3)
 
+        # P0: Session Bridge - inject previous summary + open episodes on new session
+        session_bridge = None
+        if not recent_turns:  # New session detected (no conversation history)
+            session_bridge = await _build_session_bridge(db, pet_id)
+
     return {
         "pet": pet,
         "long_term_memories": long_term,
@@ -217,6 +228,7 @@ async def load_pet_context(
         "daily_summary": daily_summary,
         "weekly_summary": weekly_summary,
         "pending_confirmations": pending,
+        "session_bridge": session_bridge,  # P0: Cross-day continuity bridge
     }
 
 
@@ -505,3 +517,67 @@ async def _load_pending_confirmations(
 
     all_pending.sort(key=_sort_key)
     return all_pending[:limit]
+
+
+async def _build_session_bridge(
+    db: AsyncSession,
+    pet_id: str,
+) -> Optional[dict]:
+    """
+    P0: Build session bridge for new conversation starts.
+
+    When user starts a new session (no recent conversation history),
+    inject the previous day's summary + open episodes to maintain
+    cross-day continuity dramatically.
+
+    Returns dict with:
+        - previous_summary: yesterday's DailySummary highlights
+        - open_episodes: list of ongoing health episodes
+        - context_hint: natural language hint for LLM
+    """
+    from src.db.models import Episode
+
+    # Load previous day's summary
+    prev_summary = await db.execute(
+        select(DailySummary)
+        .where(DailySummary.pet_id == pet_id)
+        .order_by(DailySummary.date.desc())
+        .limit(1)
+    )
+    prev_summary = prev_summary.scalar_one_or_none()
+
+    # Load open (ongoing) episodes
+    open_episodes = await db.execute(
+        select(Episode)
+        .where(
+            Episode.pet_id == uuid.UUID(pet_id),
+            Episode.is_ongoing.is_(True),
+        )
+        .order_by(Episode.start_date.desc())
+    )
+    open_episodes = list(open_episodes.scalars().all())
+
+    if not prev_summary and not open_episodes:
+        return None
+
+    # Build context hint
+    context_pieces = []
+    if prev_summary:
+        summary_text = prev_summary.summary.get("highlights") or prev_summary.summary.get("core_issues")
+        if summary_text:
+            if isinstance(summary_text, list):
+                summary_text = "; ".join(str(x) for x in summary_text)
+            context_pieces.append(f"Yesterday's summary: {summary_text}")
+
+    if open_episodes:
+        episode_text = "; ".join(
+            f"{e.symptom_type} (started {e.start_date.strftime('%Y-%m-%d')})"
+            for e in open_episodes
+        )
+        context_pieces.append(f"Ongoing issues: {episode_text}")
+
+    return {
+        "previous_summary": prev_summary,
+        "open_episodes": open_episodes,
+        "context_hint": " | ".join(context_pieces) if context_pieces else None,
+    }

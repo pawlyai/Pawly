@@ -85,12 +85,17 @@ def build_context_block(
     pending: list[PendingMemoryChange],
     weekly_summary: Optional[WeeklySummary] = None,
     max_memory_tokens: int = _DEFAULT_MAX_MEMORY_TOKENS,
+    session_bridge: Optional[dict] = None,  # P0: Cross-day continuity
 ) -> tuple[str, str]:
     """
     Returns (memory_context, pending_confirmation).
 
     memory_context      — formatted multi-section string for system prompt injection
     pending_confirmation — single sentence describing the top unconfirmed change
+
+    P0 Enhancement: Session Bridge
+    - If session_bridge provided (new session), inject previous day's summary first
+    - Dramatically improves cross-day continuity
     """
 
     # ── Build ordered section list ────────────────────────────────────────────
@@ -98,6 +103,10 @@ def build_context_block(
     # max_memory_tokens is exceeded, sections.pop() removes the least important.
 
     sections: list[str] = []
+
+    # P0: Session bridge (highest priority for new sessions)
+    if session_bridge and session_bridge.get("context_hint"):
+        sections.append(f"Continuity from previous session: {session_bridge['context_hint']}")
 
     # 1. Health history: chronic conditions, allergies, safety flags
     health_items = _filter(long_term, {MemoryType.CHRONIC, MemoryType.SAFETY})
