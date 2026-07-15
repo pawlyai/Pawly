@@ -31,3 +31,34 @@ jobs:
           TELEGRAM_BOT_TOKEN: ci-test-token
           GOOGLE_API_KEY: ci-test-key
         run: python -m pytest tests/memory -q
+
+  triage-parity:
+    name: Triage parity check (Python-only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+
+      - name: Run parity runner (Python-only mode)
+        run: |
+          python scripts/parity_runner.py \
+            --corpus scripts/parity_corpus.json \
+            --output parity_report.json
+
+      - name: Upload parity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-report
+          path: parity_report.json

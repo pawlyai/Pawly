@@ -1,0 +1,1598 @@
+[
+  {
+    "id": "c001",
+    "user_message": "my dog ate chocolate",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c002",
+    "user_message": "she swallowed xylitol gum",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c003",
+    "user_message": "my cat ate grapes off the counter",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c004",
+    "user_message": "my dog ate raisins",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c005",
+    "user_message": "she ingested antifreeze from the garage",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c006",
+    "user_message": "my cat licked ibuprofen tablets",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c007",
+    "user_message": "he got into the rat poison",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c008",
+    "user_message": "my cat chewed on a lily plant",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c009",
+    "user_message": "my dog ate garlic",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c010",
+    "user_message": "my dog consumed marijuana",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c011",
+    "user_message": "my cat can't breathe",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "respiratory_distress"
+  },
+  {
+    "id": "c012",
+    "user_message": "my dog cannot breathe properly",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "respiratory_distress"
+  },
+  {
+    "id": "c013",
+    "user_message": "she stopped breathing for a moment",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "respiratory_distress"
+  },
+  {
+    "id": "c014",
+    "user_message": "my dog is gasping for air",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "gasping"
+  },
+  {
+    "id": "c015",
+    "user_message": "my cat is gasping for breath",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "gasping"
+  },
+  {
+    "id": "c016",
+    "user_message": "my dog has labored breathing",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "labored_breathing"
+  },
+  {
+    "id": "c017",
+    "user_message": "my cat is struggling to breathe",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "labored_breathing"
+  },
+  {
+    "id": "c018",
+    "user_message": "my dog has blue gums",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "cyanosis"
+  },
+  {
+    "id": "c019",
+    "user_message": "her gums are pale white",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "cyanosis"
+  },
+  {
+    "id": "c020",
+    "user_message": "my dog is having a seizure",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "seizure_active"
+  },
+  {
+    "id": "c021",
+    "user_message": "she just had a seizure",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "seizure_active"
+  },
+  {
+    "id": "c022",
+    "user_message": "my dog is having a seizure right now",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "seizure_now"
+  },
+  {
+    "id": "c023",
+    "user_message": "my dog is convulsing",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "convulsion"
+  },
+  {
+    "id": "c024",
+    "user_message": "my dog just collapsed",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "collapsed"
+  },
+  {
+    "id": "c025",
+    "user_message": "he has collapsed and won't wake up",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "collapsed"
+  },
+  {
+    "id": "c026",
+    "user_message": "my dog is unconscious",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "unconscious"
+  },
+  {
+    "id": "c027",
+    "user_message": "she is unresponsive",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "unconscious"
+  },
+  {
+    "id": "c028",
+    "user_message": "my cat is not responding",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "unconscious"
+  },
+  {
+    "id": "c029",
+    "user_message": "there is heavy bleeding from his leg",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "heavy_bleeding"
+  },
+  {
+    "id": "c030",
+    "user_message": "it won't stop bleeding anywhere",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "bleeding_wont_stop"
+  },
+  {
+    "id": "c031",
+    "user_message": "my dog is vomiting blood",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "hematemesis"
+  },
+  {
+    "id": "c032",
+    "user_message": "she is throwing up blood",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "hematemesis"
+  },
+  {
+    "id": "c033",
+    "user_message": "my dog is coughing up blood",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "hemoptysis"
+  },
+  {
+    "id": "c034",
+    "user_message": "there is blood in her urine",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "blood_in_urine"
+  },
+  {
+    "id": "c035",
+    "user_message": "my dog was hit by a car",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "hit_by_car"
+  },
+  {
+    "id": "c036",
+    "user_message": "she was struck by a vehicle on the road",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "vehicle_strike"
+  },
+  {
+    "id": "c037",
+    "user_message": "my dog has heatstroke",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "heatstroke"
+  },
+  {
+    "id": "c038",
+    "user_message": "my dog is overheated and panting hard",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "overheating_severe"
+  },
+  {
+    "id": "c039",
+    "user_message": "his eye popped out of the socket",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "eye_prolapse"
+  },
+  {
+    "id": "c040",
+    "user_message": "my dog has a bloated stomach and is pacing around",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "bloat_pacing"
+  },
+  {
+    "id": "c041",
+    "user_message": "she is retching but nothing comes up",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "non_productive_retching"
+  },
+  {
+    "id": "c042",
+    "user_message": "she is paralyzed in her hind legs",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "paralysis_acute"
+  },
+  {
+    "id": "c043",
+    "user_message": "my dog is dragging his hind legs on the ground",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "dragging_legs"
+  },
+  {
+    "id": "c044",
+    "user_message": "my cat can't pee at all",
+    "pet_context": {
+      "species": "cat",
+      "gender": "male",
+      "life_stage": "adult"
+    },
+    "category": "RED",
+    "notes": "male_cat_urinary_blockage"
+  },
+  {
+    "id": "c045",
+    "user_message": "he is straining in the litter box to pee",
+    "pet_context": {
+      "species": "cat",
+      "gender": "male",
+      "life_stage": "adult"
+    },
+    "category": "RED",
+    "notes": "male_cat_urinary_blockage"
+  },
+  {
+    "id": "c046",
+    "user_message": "my puppy won't eat anything",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "puppy"
+    },
+    "category": "RED",
+    "notes": "young_animal_anorexia"
+  },
+  {
+    "id": "c047",
+    "user_message": "my kitten is not eating at all",
+    "pet_context": {
+      "species": "cat",
+      "life_stage": "kitten"
+    },
+    "category": "RED",
+    "notes": "young_animal_anorexia"
+  },
+  {
+    "id": "c048",
+    "user_message": "my puppy has diarrhea",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "puppy"
+    },
+    "category": "RED",
+    "notes": "young_animal_acute_gi"
+  },
+  {
+    "id": "c049",
+    "user_message": "my kitten is vomiting",
+    "pet_context": {
+      "species": "cat",
+      "life_stage": "kitten"
+    },
+    "category": "RED",
+    "notes": "young_animal_acute_gi"
+  },
+  {
+    "id": "c050",
+    "user_message": "my dog is panting hard",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "adult",
+      "breed": "pug"
+    },
+    "category": "RED",
+    "notes": "brachycephalic_respiratory"
+  },
+  {
+    "id": "c051",
+    "user_message": "breathing fast and won't calm down",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "adult",
+      "breed": "french bulldog"
+    },
+    "category": "RED",
+    "notes": "brachycephalic_respiratory"
+  },
+  {
+    "id": "c052",
+    "user_message": "I want to kill myself",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis"
+  },
+  {
+    "id": "c053",
+    "user_message": "I'm suicidal",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis"
+  },
+  {
+    "id": "c054",
+    "user_message": "I've been thinking about ending my life",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis"
+  },
+  {
+    "id": "c055",
+    "user_message": "there is nothing to live for",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis"
+  },
+  {
+    "id": "c056",
+    "user_message": "I wish I were dead",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis"
+  },
+  {
+    "id": "c057",
+    "user_message": "my chest hurts",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_medical_emergency"
+  },
+  {
+    "id": "c058",
+    "user_message": "I think I'm having a heart attack",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_medical_emergency"
+  },
+  {
+    "id": "c059",
+    "user_message": "I can't breathe",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_medical_emergency"
+  },
+  {
+    "id": "c060",
+    "user_message": "bloody diarrhea and my dog is very lethargic",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "combo_bloody_diarrhea_lethargy"
+  },
+  {
+    "id": "c061",
+    "user_message": "blood in the stool, diarrhea, and she is very tired",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "combo_bloody_diarrhea_lethargy"
+  },
+  {
+    "id": "c062",
+    "user_message": "my dog can't breathe and is also vomiting",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "combo_breathing_plus_other"
+  },
+  {
+    "id": "c063",
+    "user_message": "my cat is gasping and has diarrhea",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "combo_breathing_plus_other"
+  },
+  {
+    "id": "c064",
+    "user_message": "my dog might be poisoned",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_poisoned"
+  },
+  {
+    "id": "c065",
+    "user_message": "my dog's abdomen is distended and he seems in pain",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "bloat_pacing"
+  },
+  {
+    "id": "c066",
+    "user_message": "my male cat is straining to urinate",
+    "pet_context": {
+      "species": "cat",
+      "gender": "male",
+      "life_stage": "adult"
+    },
+    "category": "RED",
+    "notes": "male_cat_urinary_blockage"
+  },
+  {
+    "id": "c067",
+    "user_message": "my kitten has watery stool",
+    "pet_context": {
+      "species": "cat",
+      "life_stage": "kitten"
+    },
+    "category": "RED",
+    "notes": "young_animal_acute_gi"
+  },
+  {
+    "id": "c068",
+    "user_message": "my puppy has no appetite since yesterday",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "puppy"
+    },
+    "category": "RED",
+    "notes": "young_animal_anorexia"
+  },
+  {
+    "id": "c069",
+    "user_message": "my cat has grey gums",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "cyanosis"
+  },
+  {
+    "id": "c070",
+    "user_message": "my dog is paralyzed in her front legs",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "paralysis_acute"
+  },
+  {
+    "id": "c071",
+    "user_message": "my dog has been vomiting since morning",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "vomiting"
+  },
+  {
+    "id": "c072",
+    "user_message": "she threw up once this afternoon",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "vomiting"
+  },
+  {
+    "id": "c073",
+    "user_message": "my cat is puking",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "vomiting"
+  },
+  {
+    "id": "c074",
+    "user_message": "my dog is vomiting this morning",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "vomiting"
+  },
+  {
+    "id": "c075",
+    "user_message": "she has been throwing up repeatedly",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "vomiting"
+  },
+  {
+    "id": "c076",
+    "user_message": "my dog has diarrhea",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "diarrhea"
+  },
+  {
+    "id": "c077",
+    "user_message": "she has loose stool since this morning",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "diarrhea"
+  },
+  {
+    "id": "c078",
+    "user_message": "my cat has watery stool",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "diarrhea"
+  },
+  {
+    "id": "c079",
+    "user_message": "he has had diarrhoea for two days",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "diarrhea"
+  },
+  {
+    "id": "c080",
+    "user_message": "cat is not eating today",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "anorexia"
+  },
+  {
+    "id": "c081",
+    "user_message": "my dog won't eat anything",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "anorexia"
+  },
+  {
+    "id": "c082",
+    "user_message": "he is refusing food since yesterday",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "anorexia"
+  },
+  {
+    "id": "c083",
+    "user_message": "my cat has no appetite",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "anorexia"
+  },
+  {
+    "id": "c084",
+    "user_message": "my dog is very lethargic",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lethargy"
+  },
+  {
+    "id": "c085",
+    "user_message": "my cat has been sleeping all day",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lethargy"
+  },
+  {
+    "id": "c086",
+    "user_message": "my dog has no energy today",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lethargy"
+  },
+  {
+    "id": "c087",
+    "user_message": "she seems very tired today",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lethargy"
+  },
+  {
+    "id": "c088",
+    "user_message": "my dog is limping today",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "limping"
+  },
+  {
+    "id": "c089",
+    "user_message": "she's limping on her back leg",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "limping"
+  },
+  {
+    "id": "c090",
+    "user_message": "my cat is limping when she walks",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "limping"
+  },
+  {
+    "id": "c091",
+    "user_message": "my dog is panting heavily",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "rapid_breathing"
+  },
+  {
+    "id": "c092",
+    "user_message": "my cat is breathing fast today",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "rapid_breathing"
+  },
+  {
+    "id": "c093",
+    "user_message": "my dog is scratching at her ears constantly",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "scratching_excessive"
+  },
+  {
+    "id": "c094",
+    "user_message": "my dog has a bald patch on his back",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "hair_loss"
+  },
+  {
+    "id": "c095",
+    "user_message": "my cat has patchy fur around her neck",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "hair_loss"
+  },
+  {
+    "id": "c096",
+    "user_message": "I found a new lump on my dog's side",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lump"
+  },
+  {
+    "id": "c097",
+    "user_message": "my cat has a new growth on her neck",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "lump"
+  },
+  {
+    "id": "c098",
+    "user_message": "my cat has been sneezing a lot lately",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "sneezing_persistent"
+  },
+  {
+    "id": "c099",
+    "user_message": "my dog has persistent sneezing for 2 days",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "sneezing_persistent"
+  },
+  {
+    "id": "c100",
+    "user_message": "my dog has been coughing persistently for a week",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "cough"
+  },
+  {
+    "id": "c101",
+    "user_message": "my dog has a honking cough",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "cough"
+  },
+  {
+    "id": "c102",
+    "user_message": "my cat has eye discharge",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "eye_discharge"
+  },
+  {
+    "id": "c103",
+    "user_message": "my dog has runny eyes",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "eye_discharge"
+  },
+  {
+    "id": "c104",
+    "user_message": "my dog has a runny nose",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "nose_discharge"
+  },
+  {
+    "id": "c105",
+    "user_message": "my dog is drinking way more than usual",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "polydipsia"
+  },
+  {
+    "id": "c106",
+    "user_message": "she has increased thirst",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "polydipsia"
+  },
+  {
+    "id": "c107",
+    "user_message": "my dog is urinating more frequently than before",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "polyuria"
+  },
+  {
+    "id": "c108",
+    "user_message": "my dog is losing weight",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "weight_change"
+  },
+  {
+    "id": "c109",
+    "user_message": "my cat has significant weight loss recently",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "weight_change"
+  },
+  {
+    "id": "c110",
+    "user_message": "my dog is vomiting and very lethargic",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "multiple_signals"
+  },
+  {
+    "id": "c111",
+    "user_message": "she has diarrhea, vomiting, and no appetite",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "multiple_signals"
+  },
+  {
+    "id": "c112",
+    "user_message": "my cat is lethargic and not eating",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "multiple_signals"
+  },
+  {
+    "id": "c113",
+    "user_message": "my senior dog has been vomiting",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "senior"
+    },
+    "category": "ORANGE",
+    "notes": "age_escalation"
+  },
+  {
+    "id": "c114",
+    "user_message": "my senior cat is not eating today",
+    "pet_context": {
+      "species": "cat",
+      "life_stage": "senior"
+    },
+    "category": "ORANGE",
+    "notes": "age_escalation"
+  },
+  {
+    "id": "c115",
+    "user_message": "my dog is panting hard after a walk",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "adult",
+      "breed": "labrador"
+    },
+    "category": "ORANGE",
+    "notes": "post_exercise_cap"
+  },
+  {
+    "id": "c116",
+    "user_message": "my labrador is breathing fast after a run",
+    "pet_context": {
+      "species": "dog",
+      "life_stage": "adult",
+      "breed": "labrador"
+    },
+    "category": "ORANGE",
+    "notes": "post_exercise_cap"
+  },
+  {
+    "id": "c117",
+    "user_message": "she strains in the litter box",
+    "pet_context": {
+      "species": "cat",
+      "gender": "female",
+      "life_stage": "adult"
+    },
+    "category": "ORANGE",
+    "notes": "female_cat_not_red"
+  },
+  {
+    "id": "c118",
+    "user_message": "vomiting, lethargic, and not eating at all",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "orange_cap"
+  },
+  {
+    "id": "c119",
+    "user_message": "my dog has been gaining weight lately",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "weight_change"
+  },
+  {
+    "id": "c120",
+    "user_message": "my dog is scratching all the time",
+    "pet_context": null,
+    "category": "ORANGE",
+    "notes": "scratching_excessive"
+  },
+  {
+    "id": "c121",
+    "user_message": "my dog had a seizure 3 years ago",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c122",
+    "user_message": "he collapsed 2 months ago but is fine now",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c123",
+    "user_message": "my cat used to vomit a lot but not anymore",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c124",
+    "user_message": "she had a seizure in the past",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c125",
+    "user_message": "my dog had heavy bleeding after surgery previously",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c126",
+    "user_message": "he has a history of a seizure disorder",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c127",
+    "user_message": "what if my dog has a seizure",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c128",
+    "user_message": "hypothetically if she collapses, what should I do?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c129",
+    "user_message": "if my cat ever gets poisoned, what are the signs?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c130",
+    "user_message": "just curious about what seizures look like in dogs",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c131",
+    "user_message": "in case my dog has a seizure, should I call the vet?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c132",
+    "user_message": "what if my puppy gets chocolate someday?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c133",
+    "user_message": "there is no blood in the stool",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c134",
+    "user_message": "she didn't have a seizure",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c135",
+    "user_message": "my dog hasn't collapsed",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c136",
+    "user_message": "she hasn't had a seizure",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c137",
+    "user_message": "my cat is not vomiting",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c138",
+    "user_message": "there is no heavy bleeding",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c139",
+    "user_message": "she isn't limping anymore",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c140",
+    "user_message": "he has never collapsed before",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c141",
+    "user_message": "my cat doesn't have diarrhea",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c142",
+    "user_message": "he wasn't poisoned by anything",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c143",
+    "user_message": "there is no blood in the urine",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c144",
+    "user_message": "my dog is not responding to training commands",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation_unconscious_exclusion"
+  },
+  {
+    "id": "c145",
+    "user_message": "I had a panic attack today",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c146",
+    "user_message": "I've been struggling with depression",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c147",
+    "user_message": "I am feeling very anxious today",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c148",
+    "user_message": "I've been crying a lot lately",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c149",
+    "user_message": "I feel depressed sometimes",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c150",
+    "user_message": "the vet recommended a blood test",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "blood_test_exclusion"
+  },
+  {
+    "id": "c151",
+    "user_message": "she needs blood work done",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "blood_test_exclusion"
+  },
+  {
+    "id": "c152",
+    "user_message": "my vet wants to do a blood panel",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "blood_test_exclusion"
+  },
+  {
+    "id": "c153",
+    "user_message": "her blood results came back normal",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "blood_test_exclusion"
+  },
+  {
+    "id": "c154",
+    "user_message": "how often should I feed my cat?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c155",
+    "user_message": "what is the best food for a golden retriever?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c156",
+    "user_message": "when should I start training my puppy?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c157",
+    "user_message": "how often should I bathe my dog?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c158",
+    "user_message": "what vaccines does my kitten need?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c159",
+    "user_message": "is it normal for cats to sleep a lot?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c160",
+    "user_message": "how much exercise does a labrador need per day?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c161",
+    "user_message": "can dogs eat bananas?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c162",
+    "user_message": "how do I brush my dog's teeth?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c163",
+    "user_message": "what are signs of a healthy cat?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c164",
+    "user_message": "how do I introduce a new cat to my dog?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c165",
+    "user_message": "at what age do dogs stop growing?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c166",
+    "user_message": "what is the best age to neuter a male cat?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c167",
+    "user_message": "can cats drink milk?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c168",
+    "user_message": "why does my dog bark at strangers?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c169",
+    "user_message": "is it normal for puppies to bite a lot?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c170",
+    "user_message": "what should I feed my senior dog?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c171",
+    "user_message": "my cat purrs a lot, what does that mean?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c172",
+    "user_message": "can dogs eat peanut butter?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c173",
+    "user_message": "is it safe for dogs to eat apples?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c174",
+    "user_message": "how do I train my cat to use a litter box?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c175",
+    "user_message": "my dog loves to chew on toys, is this normal?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c176",
+    "user_message": "my dog ate chocolate yesterday and is fine now",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense_toxin"
+  },
+  {
+    "id": "c177",
+    "user_message": "she was poisoned months back but recovered",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense_toxin"
+  },
+  {
+    "id": "c178",
+    "user_message": "my dog has been seizure-free since last year",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c179",
+    "user_message": "my cat had surgery for a tumor previously",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c180",
+    "user_message": "she had a blood transfusion in the past",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c181",
+    "user_message": "my dog used to limp after long runs",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "past_tense"
+  },
+  {
+    "id": "c182",
+    "user_message": "if my dog ever has heatstroke, what should I do?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c183",
+    "user_message": "hypothetically speaking, if a dog can't breathe, what do you do?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c184",
+    "user_message": "what if she has a seizure in the future?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c185",
+    "user_message": "in case of heatstroke, how do I help my dog?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "hypothetical"
+  },
+  {
+    "id": "c186",
+    "user_message": "my dog doesn't have heatstroke",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c187",
+    "user_message": "she is not unconscious",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "negation"
+  },
+  {
+    "id": "c188",
+    "user_message": "I was diagnosed with anxiety disorder",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c189",
+    "user_message": "I have been feeling really sad lately",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "owner_self"
+  },
+  {
+    "id": "c190",
+    "user_message": "my dog just arrived at the emergency vet",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c191",
+    "user_message": "we are at the vet now",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c192",
+    "user_message": "she's fine now, just a false alarm",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c193",
+    "user_message": "the vet confirmed she is stable",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c194",
+    "user_message": "she's recovering well now",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c195",
+    "user_message": "she is okay now, the vet said it's fine",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "resolution_signal"
+  },
+  {
+    "id": "c196",
+    "user_message": "my dog scratching but no bald patch or sign of infection",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine_scratching"
+  },
+  {
+    "id": "c197",
+    "user_message": "how do I help with normal shedding?",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine"
+  },
+  {
+    "id": "c198",
+    "user_message": "my dog sneezes once in a while, nothing persistent",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine_sneezing"
+  },
+  {
+    "id": "c199",
+    "user_message": "she coughed once today after drinking water fast",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "isolated_cough"
+  },
+  {
+    "id": "c200",
+    "user_message": "my dog woke up with mild eye goop this morning",
+    "pet_context": null,
+    "category": "GREEN",
+    "notes": "routine_eye"
+  },
+  {
+    "id": "c201",
+    "user_message": "my dog ate some onions that fell on the floor",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c202",
+    "user_message": "my cat swallowed an acetaminophen pill",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c203",
+    "user_message": "my dog ingested rodenticide pellets",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c204",
+    "user_message": "she chewed up the slug bait in the garden",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "toxin_ingestion"
+  },
+  {
+    "id": "c205",
+    "user_message": "my dog is shaking uncontrollably",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "convulsion"
+  },
+  {
+    "id": "c206",
+    "user_message": "my cat collapsed outside in the yard",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "collapsed"
+  },
+  {
+    "id": "c207",
+    "user_message": "my dog's wound won't stop bleeding",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "bleeding_wont_stop"
+  },
+  {
+    "id": "c208",
+    "user_message": "my dog has heat exhaustion from being in the sun",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "heatstroke"
+  },
+  {
+    "id": "c209",
+    "user_message": "he was run over by a truck",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "vehicle_strike"
+  },
+  {
+    "id": "c210",
+    "user_message": "自杀",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis_chinese"
+  },
+  {
+    "id": "c211",
+    "user_message": "不想活着了",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis_chinese"
+  },
+  {
+    "id": "c212",
+    "user_message": "想死",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_crisis_chinese"
+  },
+  {
+    "id": "c213",
+    "user_message": "心脏病发",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "human_medical_chinese"
+  },
+  {
+    "id": "c214",
+    "user_message": "my dog is dragging her hind legs",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "dragging_legs"
+  },
+  {
+    "id": "c215",
+    "user_message": "my cat keeps trying to vomit but nothing is coming up",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "non_productive_retching"
+  },
+  {
+    "id": "c216",
+    "user_message": "my dog is not responding to anything",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "unconscious"
+  },
+  {
+    "id": "c217",
+    "user_message": "he won't wake up at all",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "unconscious"
+  },
+  {
+    "id": "c218",
+    "user_message": "my dog was hit by a car on the street",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "hit_by_car"
+  },
+  {
+    "id": "c219",
+    "user_message": "my dog has grey gums and seems weak",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "cyanosis"
+  },
+  {
+    "id": "c220",
+    "user_message": "her gums are pale white and she is not moving",
+    "pet_context": null,
+    "category": "RED",
+    "notes": "cyanosis"
+  }
+]
