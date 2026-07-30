@@ -223,14 +223,25 @@ def render_stability(reports: dict[str, dict[str, Any]]) -> None:
             # A run of failures followed by a run of passes is a fix, not a
             # flake, and calling it flaky buries the most useful thing the
             # history has to say.
-            first_pass = scored.index(True)
-            last_fail = len(scored) - 1 - scored[::-1].index(False)
-            if first_pass > last_fail:
-                verdict = f"fixed (last {n - first_pass} pass)"
-            elif scored.index(False) > (len(scored) - 1 - scored[::-1].index(True)):
-                verdict = "REGRESSED"
-            else:
+            #
+            # Both verdicts need TWO consecutive results at the end. One
+            # trailing pass after a failure is equally consistent with a flake
+            # that happened to land well, and one trailing failure after a
+            # streak of passes is the single most common shape a flake takes.
+            # Naming either on a sample of one puts a claim on screen that the
+            # data does not carry.
+            # Length of the trailing run of identical results. The all-same case
+            # already returned above, so this run is always shorter than n.
+            tail = 1
+            while tail < len(scored) and scored[-1 - tail] == scored[-1]:
+                tail += 1
+
+            if tail < 2:
                 verdict = f"FLAKY ({ok}/{n})"
+            elif scored[-1]:
+                verdict = f"fixed ({tail} straight)"
+            else:
+                verdict = f"REGRESSED ({tail} straight)"
 
         rows.append({
             "Case": name,

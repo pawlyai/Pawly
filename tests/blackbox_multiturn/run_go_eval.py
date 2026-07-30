@@ -107,7 +107,12 @@ def main() -> int:
         # leaking into the next is exactly what attribution cases are sensitive
         # to. uuid4 keeps reruns from colliding on the ON CONFLICT DO NOTHING.
         user_id = str(uuid.uuid4())
-        phone = f"+65{9000000 + i:07d}{int(time.time()) % 100:02d}"[:15]
+        # Derived from the user id, not from the clock. `phone` carries a UNIQUE
+        # index and the insert only says ON CONFLICT (id) DO NOTHING, so a
+        # repeated number is a constraint violation rather than a no-op — and a
+        # counter salted with `time % 100` repeats every hundred runs against a
+        # long-lived stack.
+        phone = "+65" + str(int(user_id.replace("-", "")[:12], 16))[:11]
 
         print(f"[{i}/{len(cases)}] {name} ... ", end="", flush=True)
         started = time.monotonic()
