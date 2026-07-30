@@ -92,6 +92,9 @@ class CaseRun:
     memories_seeded: int = 0
     #: Corpus `recent_turns` are not replayed; recorded so a report can say so.
     recent_turns_skipped: int = 0
+    #: Other pets created for the household. Empty for a single-pet case; a
+    #: non-empty list is what makes multiPet true on the service side.
+    extra_pet_ids: list[str] = field(default_factory=list)
 
     @property
     def transcript(self) -> list[str]:
@@ -304,6 +307,15 @@ class GoChatDriver:
         token = mint_token(user_id, self.jwt_secret)
         pet_id = self.create_pet(token, case["pet_profile"])
         seeded = self.seed_memories(token, pet_id, case.get("memories") or [])
+
+        # `extra_pets` makes the household multi-pet. The session is still opened
+        # against `pet_profile`, which is what gives attribution cases something
+        # to get wrong: the owner asks about one of these instead, and the reply
+        # has to follow the question rather than the session binding.
+        extra_ids = [
+            self.create_pet(token, p) for p in (case.get("extra_pets") or [])
+        ]
+
         session_id = self.create_session(token, pet_id)
 
         run = CaseRun(
@@ -313,6 +325,7 @@ class GoChatDriver:
             user_id=user_id,
             memories_seeded=seeded,
             recent_turns_skipped=len(case.get("recent_turns") or []),
+            extra_pet_ids=extra_ids,
         )
         for content in case["user_turns"]:
             run.turns.append(self.send_turn(token, session_id, content))
