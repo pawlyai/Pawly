@@ -312,9 +312,19 @@ class GoChatDriver:
         # against `pet_profile`, which is what gives attribution cases something
         # to get wrong: the owner asks about one of these instead, and the reply
         # has to follow the question rather than the session binding.
-        extra_ids = [
-            self.create_pet(token, p) for p in (case.get("extra_pets") or [])
-        ]
+        #
+        # An extra pet may carry its own `memories`. Seeding both pets is what
+        # makes the household look established rather than newly registered: a
+        # store holding facts for only the session pet is a state a real
+        # multi-pet owner passes through in the first minutes and then leaves.
+        # It also creates the interference worth testing — retrieval is keyed on
+        # the pet, so a lopsided store is a chance for the wrong pet's history
+        # to colour a reply.
+        extra_ids: list[str] = []
+        for p in case.get("extra_pets") or []:
+            extra_id = self.create_pet(token, p)
+            extra_ids.append(extra_id)
+            seeded += self.seed_memories(token, extra_id, p.get("memories") or [])
 
         session_id = self.create_session(token, pet_id)
 

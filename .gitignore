@@ -11,3 +11,6 @@ skills-lock.json
 uv.lock
 tests/blackbox_multiturn/venv/
 .DS_Store
+# deepeval local telemetry/cache, written on every scoring run
+tests/blackbox_multiturn/.deepeval/
+.deepeval/

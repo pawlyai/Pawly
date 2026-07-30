@@ -131,10 +131,53 @@
         "age_in_months": 60,
         "gender": "male",
         "neutered_status": "neutered",
-        "weight_latest": 19.0
+        "weight_latest": 19.0,
+        "memories": [
+          {
+            "memory_type": "baseline",
+            "memory_term": "long",
+            "field": "exercise_habit",
+            "value": {
+              "detail": "Two long off-lead runs a day; very high drive, will not self-limit."
+            }
+          },
+          {
+            "memory_type": "baseline",
+            "memory_term": "long",
+            "field": "vet_diagnosis",
+            "value": {
+              "detail": "Early hip laxity noted on a routine check; monitor, no treatment yet."
+            }
+          }
+        ]
       }
     ],
-    "memories": [],
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "chronic_conditions",
+        "value": {
+          "detail": "Mild seasonal rhinitis; sneezing flares in humid weather."
+        }
+      },
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "feeding_method",
+        "value": {
+          "detail": "Indoor only, free-fed dry food with a wet-food topper at night."
+        }
+      },
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "vaccination_status",
+        "value": {
+          "detail": "Up to date on FVRCP; last booster four months ago."
+        }
+      }
+    ],
     "recent_turns": [],
     "user_turns": [
       "Pudding has been sneezing a few times a day since the weekend.",
@@ -178,10 +221,45 @@
         "age_in_months": 96,
         "gender": "male",
         "neutered_status": "neutered",
-        "weight_latest": 5.5
+        "weight_latest": 5.5,
+        "memories": [
+          {
+            "memory_type": "baseline",
+            "memory_term": "long",
+            "field": "is_stomach_sensitive",
+            "value": {
+              "detail": "Eats too fast and brings food back up; feeds from a slow bowl."
+            }
+          },
+          {
+            "memory_type": "baseline",
+            "memory_term": "long",
+            "field": "chronic_conditions",
+            "value": {
+              "detail": "Early chronic kidney disease, diagnosed last year, on a renal diet."
+            }
+          }
+        ]
       }
     ],
-    "memories": [],
+    "memories": [
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "is_stomach_sensitive",
+        "value": {
+          "detail": "Vomits hairballs roughly twice a month; long coat needs daily brushing."
+        }
+      },
+      {
+        "memory_type": "baseline",
+        "memory_term": "long",
+        "field": "recent_food_brand",
+        "value": {
+          "detail": "Switched to a salmon-based kibble three weeks ago."
+        }
+      }
+    ],
     "recent_turns": [],
     "user_turns": [
       "My cat threw up twice this morning."
