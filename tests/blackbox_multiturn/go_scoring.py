@@ -36,42 +36,6 @@ _TRIAGE_ORDER = {"green": 0, "orange": 1, "red": 2}
 # ── Judge ────────────────────────────────────────────────────────────────────
 
 
-def build_deepseek_judge(model_name: str = "deepseek-chat") -> tuple[Any, str | None]:
-    """DeepSeek as the judge. Returns (judge, error)."""
-    key = os.environ.get("DEEPSEEK_API_KEY", "")
-    if not key:
-        return None, "DEEPSEEK_API_KEY not set"
-    try:
-        from deepeval.models import DeepEvalBaseLLM
-        from openai import OpenAI
-    except ImportError as e:  # pragma: no cover
-        return None, f"missing dependency: {e}"
-
-    class _DeepSeekJudge(DeepEvalBaseLLM):
-        def __init__(self) -> None:
-            self._client = OpenAI(api_key=key, base_url=DEEPSEEK_BASE_URL)
-            self.model_name = model_name
-
-        def load_model(self):
-            return self._client
-
-        def generate(self, prompt: str, schema=None) -> str:
-            resp = self._client.chat.completions.create(
-                model=self.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=4096,
-            )
-            return resp.choices[0].message.content or ""
-
-        async def a_generate(self, prompt: str, schema=None) -> str:
-            return self.generate(prompt, schema)
-
-        def get_model_name(self) -> str:
-            return self.model_name
-
-    return _DeepSeekJudge(), None
-
-
 def build_gemini_judge(model_name: str = "gemini-pro-latest") -> tuple[Any, str | None]:
     key = os.environ.get("GOOGLE_API_KEY", "")
     if not key:
@@ -122,6 +86,92 @@ def build_gemini_judge(model_name: str = "gemini-pro-latest") -> tuple[Any, str 
     return _GeminiJudge(), None
 
 
+def build_openai_compatible_judge(
+    model_name: str, *, base_url: str, key_env: str
+) -> tuple[Any, str | None]:
+    """Judge over any OpenAI-compatible endpoint (DeepSeek, OpenAI, others)."""
+    key = os.environ.get(key_env, "")
+    if not key:
+        return None, f"{key_env} not set"
+    try:
+        from deepeval.models import DeepEvalBaseLLM
+        from openai import OpenAI
+    except ImportError as e:  # pragma: no cover
+        return None, f"missing dependency: {e}"
+
+    class _Judge(DeepEvalBaseLLM):
+        def __init__(self) -> None:
+            self._client = OpenAI(api_key=key, base_url=base_url)
+            self.model_name = model_name
+
+        def load_model(self):
+            return self._client
+
+        def generate(self, prompt: str, schema=None) -> str:
+            kwargs: dict[str, Any] = {
+                "model": self.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 4096,
+                "temperature": 0.0,
+            }
+            # Same reason as the Gemini judge: deepeval parses the return value
+            # as one JSON object, and a model left to its own devices wraps it
+            # in prose or emits a second one.
+            if schema is not None:
+                kwargs["response_format"] = {"type": "json_object"}
+            resp = self._client.chat.completions.create(**kwargs)
+            return resp.choices[0].message.content or ""
+
+        async def a_generate(self, prompt: str, schema=None) -> str:
+            return self.generate(prompt, schema)
+
+        def get_model_name(self) -> str:
+            return self.model_name
+
+    return _Judge(), None
+
+
+def build_anthropic_judge(model_name: str) -> tuple[Any, str | None]:
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key:
+        return None, "ANTHROPIC_API_KEY not set"
+    try:
+        from deepeval.models import DeepEvalBaseLLM
+        import anthropic
+    except ImportError as e:  # pragma: no cover
+        return None, f"missing dependency: {e}"
+
+    class _AnthropicJudge(DeepEvalBaseLLM):
+        def __init__(self) -> None:
+            self._client = anthropic.Anthropic(api_key=key)
+            self.model_name = model_name
+
+        def load_model(self):
+            return self._client
+
+        def generate(self, prompt: str, schema=None) -> str:
+            # No JSON mode on this API; prefilling the assistant turn with "{"
+            # is the supported way to force the reply to start as an object,
+            # so it has to be put back on the front of the response.
+            msgs = [{"role": "user", "content": prompt}]
+            prefill = schema is not None
+            if prefill:
+                msgs.append({"role": "assistant", "content": "{"})
+            resp = self._client.messages.create(
+                model=self.model_name, max_tokens=4096, temperature=0.0, messages=msgs
+            )
+            text = "".join(b.text for b in resp.content if b.type == "text")
+            return ("{" + text) if prefill else text
+
+        async def a_generate(self, prompt: str, schema=None) -> str:
+            return self.generate(prompt, schema)
+
+        def get_model_name(self) -> str:
+            return self.model_name
+
+    return _AnthropicJudge(), None
+
+
 def build_judge(model_name: str) -> tuple[Any, str | None, str | None]:
     """Pick a judge backend from the model name. Returns (judge, error, warning).
 
@@ -132,12 +182,23 @@ def build_judge(model_name: str) -> tuple[Any, str | None, str | None]:
     that ignores this warning is reading a friendlier number than it thinks.
     """
     if model_name.startswith("deepseek"):
-        judge, err = build_deepseek_judge(model_name)
+        judge, err = build_openai_compatible_judge(
+            model_name, base_url=DEEPSEEK_BASE_URL, key_env="DEEPSEEK_API_KEY")
+        return judge, err, None
+    if model_name.startswith(("gpt-", "o1", "o3", "o4")):
+        judge, err = build_openai_compatible_judge(
+            model_name, base_url="https://api.openai.com/v1", key_env="OPENAI_API_KEY")
+        return judge, err, None
+    if model_name.startswith("claude"):
+        judge, err = build_anthropic_judge(model_name)
         return judge, err, None
     if model_name.startswith("gemini"):
         judge, err = build_gemini_judge(model_name)
         return judge, err, None
-    return None, f"unknown judge model {model_name!r} (expected deepseek-* or gemini-*)", None
+    return None, (
+        f"unknown judge model {model_name!r} "
+        f"(expected deepseek-*, gpt-*/o1*/o3*/o4*, claude-*, or gemini-*)"
+    ), None
 
 
 # ── Deterministic assertions ─────────────────────────────────────────────────
