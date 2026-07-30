@@ -16,11 +16,15 @@ happen to open.
 from __future__ import annotations
 
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import streamlit as st
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from lang import lang_toggle, t  # noqa: E402
 
 st.set_page_config(page_title="Go Eval", page_icon="🐹", layout="wide")
 
@@ -69,10 +73,10 @@ def render_summary(report: dict[str, Any]) -> None:
     passed = s.get("passed_threshold", 0)
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Cases", total)
-    c2.metric("Passed", passed)
-    c3.metric("Failed", s.get("below_threshold", 0))
-    c4.metric("Pass rate", f"{(passed / total * 100) if total else 0:.0f}%")
+    c1.metric(t("total_cases"), total)
+    c2.metric(t("passed"), passed)
+    c3.metric(t("failed"), s.get("below_threshold", 0))
+    c4.metric(t("pass_rate"), f"{(passed / total * 100) if total else 0:.0f}%")
 
     sut = s.get("llm_model", "?")
     judge = s.get("judge_model", "?")
@@ -81,13 +85,9 @@ def render_summary(report: dict[str, Any]) -> None:
         # as the system under test shares its blind spots, so the failures most
         # worth catching are the ones least likely to be flagged. Anyone reading
         # a pass rate off this screen should know that before they quote it.
-        st.warning(
-            f"Judge **{judge}** and system under test **{sut}** are the same "
-            f"model family. Scores on subjective criteria are optimistic; the "
-            f"assertions below are unaffected."
-        )
+        st.warning(t("go_same_family", judge=judge, sut=sut))
     else:
-        st.caption(f"System under test **{sut}** · judged by **{judge}**")
+        st.caption(t("go_judged_by", sut=sut, judge=judge))
 
 
 def render_case_table(report: dict[str, Any]) -> None:
@@ -100,12 +100,12 @@ def render_case_table(report: dict[str, Any]) -> None:
         md = c.get("metadata") or {}
         rows.append({
             "": "✅" if c["status"] == "passed_threshold" else "❌",
-            "Case": c["name"],
-            "Score": f"{c['score']:.2f} / {c['threshold']:.2f}",
-            "Asserts": f"{ok}/{len(a)}" if a else "—",
-            "Failed assert": ", ".join(md.get("assert_failures") or []) or "",
-            "Mem": md.get("memories_seeded", 0),
-            "Turns": c.get("turn_count", 0),
+            t("case"): c["name"],
+            t("score"): f"{c['score']:.2f} / {c['threshold']:.2f}",
+            t("go_col_asserts"): f"{ok}/{len(a)}" if a else "—",
+            t("go_col_failed_assert"): ", ".join(md.get("assert_failures") or []) or "",
+            t("go_col_mem"): md.get("memories_seeded", 0),
+            t("go_col_turns"): c.get("turn_count", 0),
         })
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
@@ -122,14 +122,14 @@ def render_case_detail(case: dict[str, Any]) -> None:
     score_ok = case["score"] >= case["threshold"]
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**Assertions** — wire fields, not opinions")
+        st.markdown(t("go_assertions"))
         if not a:
-            st.caption("none declared")
+            st.caption(t("go_no_asserts"))
         for x in a:
             icon = "✅" if x["passed"] else "❌"
             st.markdown(f"{icon} `{x['name']}` — {x['detail']}")
     with c2:
-        st.markdown("**Judged score** — the case's own criteria")
+        st.markdown(t("go_judged_score"))
         st.markdown(
             f"{'✅' if score_ok else '❌'} **{case['score']:.2f}** / {case['threshold']:.2f}"
         )
@@ -138,10 +138,7 @@ def render_case_detail(case: dict[str, Any]) -> None:
     # Spelling out the conjunction is the point of the page: "Failed" next to a
     # perfect score is otherwise indistinguishable from a broken report.
     if not passed and score_ok:
-        st.info(
-            "Cleared the rubric but failed an assertion. The judge scored the "
-            "prose; the assertion checked what actually went over the wire."
-        )
+        st.info(t("go_rubric_but_assert"))
     st.divider()
 
     pet = case.get("pet_profile") or {}
@@ -153,16 +150,16 @@ def render_case_detail(case: dict[str, Any]) -> None:
         ]
         age = pet.get("age_in_months")
         label = " · ".join([b for b in bits if b] + ([f"{age}mo"] if age else []))
-        with st.expander(f"Context — {label} · {md.get('memories_seeded', 0)} memories seeded"):
+        with st.expander(t("go_context", label=label, n=md.get("memories_seeded", 0))):
             for m in mems:
                 v = m.get("value", {})
                 detail = v.get("detail", v) if isinstance(v, dict) else v
                 st.caption(f"`{m.get('field')}` — {detail}")
 
-    st.markdown("**Transcript**")
+    st.markdown(f"**{t('transcript')}**")
     for i, turn in enumerate(case.get("turns") or []):
         if turn.get("role") == "user":
-            st.markdown(f"**👤 User**")
+            st.markdown(f"**👤 {t('go_user')}**")
             st.info(turn.get("content", ""))
             continue
         lvl = ((turn.get("triage_trace") or {}).get("resolved") or {}).get("level", "")
@@ -171,11 +168,11 @@ def render_case_detail(case: dict[str, Any]) -> None:
         if alert:
             badge += f" · alert {_ALERT_ICON.get(alert, '')} `{alert}`"
         else:
-            badge += " · no alert"
+            badge += " · " + t("go_no_alert")
         lat = turn.get("latency_s")
         if lat:
             badge += f" · {lat:.1f}s"
-        st.markdown(f"**🤖 Assistant** — {badge}")
+        st.markdown(f"**🤖 {t('go_assistant')}** — {badge}")
         st.success(turn.get("content", ""))
 
 
@@ -214,11 +211,11 @@ def render_stability(reports: dict[str, dict[str, Any]]) -> None:
         n, ok = len(scored), sum(1 for r in scored if r)
 
         if n == 0:
-            verdict = "never ran"
+            verdict = t("go_v_never_ran")
         elif ok == n:
-            verdict = "stable pass"
+            verdict = t("go_v_stable_pass")
         elif ok == 0:
-            verdict = "stable fail"
+            verdict = t("go_v_stable_fail")
         else:
             # A run of failures followed by a run of passes is a fix, not a
             # flake, and calling it flaky buries the most useful thing the
@@ -237,40 +234,37 @@ def render_stability(reports: dict[str, dict[str, Any]]) -> None:
                 tail += 1
 
             if tail < 2:
-                verdict = f"FLAKY ({ok}/{n})"
+                verdict = t("go_v_flaky", ok=ok, n=n)
             elif scored[-1]:
-                verdict = f"fixed ({tail} straight)"
+                verdict = t("go_v_fixed", n=tail)
             else:
-                verdict = f"REGRESSED ({tail} straight)"
+                verdict = t("go_v_regressed", n=tail)
 
         rows.append({
-            "Case": name,
-            "Scored": n,
-            "Passed": ok,
-            "Rate": f"{ok / n * 100:.0f}%" if n else "—",
-            "Verdict": verdict,
-            "History": "".join("." if r else "x" if r is False else "!" for r in runs),
+            t("case"): name,
+            t("go_col_scored"): n,
+            t("passed"): ok,
+            t("go_col_rate"): f"{ok / n * 100:.0f}%" if n else "—",
+            t("go_col_verdict"): verdict,
+            t("go_col_history"): "".join("." if r else "x" if r is False else "!" for r in runs),
             # Always a string: mixing int and "" in one column makes Arrow fall
             # back to a coerced type and log a serialization error per render.
-            "Drive errors": str(errs) if errs else "",
+            t("go_col_drive_errors"): str(errs) if errs else "",
         })
 
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-    st.caption(
-        "History reads oldest to newest: `.` pass, `x` fail, `!` the driver "
-        "never reached the model (excluded from the rate). A genuinely mixed "
-        "row means the run you opened decided the verdict, not the code."
-    )
+    st.caption(t("go_history_caption"))
 
 
 # ── Page ──────────────────────────────────────────────────────────────────────
 
-st.title("🐹 Go Eval")
+lang_toggle()
+st.title(f"🐹 {t('go_title')}")
 
 reports = load_go_reports()
 if not reports:
     st.info(
-        "No Go reports yet. Bring the eval stack up and run:\n\n"
+        t("go_no_reports") + "\n\n"
         "```\ndocker compose -f deploy/docker-compose.eval.yml -p pawly-eval up -d --build\n"
         "python tests/blackbox_multiturn/run_go_eval.py\n```"
     )
@@ -283,10 +277,10 @@ names = [
         reports.items(), key=lambda kv: kv[1]["summary"].get("timestamp", "")
     )
 ]
-tab_run, tab_stability = st.tabs(["Run", f"Stability across {len(names)} runs"])
+tab_run, tab_stability = st.tabs([t("go_tab_run"), t("go_tab_stability", n=len(names))])
 
 with tab_run:
-    selected = st.selectbox("Report", names, index=len(names) - 1)
+    selected = st.selectbox(t("go_report"), names, index=len(names) - 1)
     report = reports[selected]
     render_summary(report)
     st.divider()
@@ -299,7 +293,7 @@ with tab_run:
     first_bad = next(
         (i for i, c in enumerate(report["cases"]) if c["status"] != "passed_threshold"), 0
     )
-    chosen = st.selectbox("Case", case_names, index=first_bad)
+    chosen = st.selectbox(t("case"), case_names, index=first_bad)
     render_case_detail(next(c for c in report["cases"] if c["name"] == chosen))
 
 with tab_stability:
