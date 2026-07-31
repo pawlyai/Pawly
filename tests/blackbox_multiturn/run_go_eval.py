@@ -166,6 +166,15 @@ def main() -> int:
 
     s = report["summary"]
     print(f"\n{s['passed_threshold']}/{s['total_cases']} passed -> {out_path.name}")
+    print(f"assertions (judge-independent): {s['assertions_passed']}/{s['total_cases']}")
+    if s.get("unscored"):
+        # Loud, because the headline number above is not a result when this is
+        # non-zero: an exhausted judge quota reports every unscored case as a
+        # failure, which reads as a regression that never happened.
+        print(f"\nWARNING: {s['unscored']}/{s['total_cases']} cases were never scored "
+              f"(judge error). The pass rate above is NOT a valid result for this "
+              f"run -- only the assertion count is.", file=sys.stderr)
+        return 2
     return 0 if s["below_threshold"] == 0 else 1
 
 
