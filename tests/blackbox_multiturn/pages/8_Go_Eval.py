@@ -199,7 +199,11 @@ def render_stability(reports: dict[str, dict[str, Any]]) -> None:
             # `or ""` because the key is present and explicitly null on a case
             # that succeeded — a default only applies to a missing key.
             err = (c.get("metadata") or {}).get("error") or ""
-            if err.startswith("drive failed"):
+            # Scoring failures belong here too, for the same reason: a judge
+            # that ran out of credit says nothing about the system. One run had
+            # 48 cases unscored that way, and counting them as failures would
+            # have written a 48-case regression into this table.
+            if err.startswith(("drive failed", "scoring failed")):
                 tally[c["name"]].append(None)
             else:
                 tally[c["name"]].append(c["status"] == "passed_threshold")
