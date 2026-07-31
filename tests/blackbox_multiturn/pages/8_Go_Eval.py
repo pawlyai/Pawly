@@ -199,7 +199,11 @@ def render_stability(reports: dict[str, dict[str, Any]]) -> None:
             # `or ""` because the key is present and explicitly null on a case
             # that succeeded — a default only applies to a missing key.
             err = (c.get("metadata") or {}).get("error") or ""
-            if err.startswith("drive failed"):
+            # Scoring failures belong here too, for the same reason: a judge
+            # that ran out of credit says nothing about the system. One run had
+            # 48 cases unscored that way, and counting them as failures would
+            # have written a 48-case regression into this table.
+            if err.startswith(("drive failed", "scoring failed")):
                 tally[c["name"]].append(None)
             else:
                 tally[c["name"]].append(c["status"] == "passed_threshold")
@@ -279,8 +283,24 @@ names = [
 ]
 tab_run, tab_stability = st.tabs([t("go_tab_run"), t("go_tab_stability", n=len(names))])
 
+
+def _label(name: str) -> str:
+    """Report name with its size, so a 5-case probe cannot pass for a full run."""
+    s = reports[name]["summary"]
+    return f"{name}  —  {s.get('total_cases', 0)} cases"
+
+
 with tab_run:
-    selected = st.selectbox(t("go_report"), names, index=len(names) - 1)
+    # Newest FULL run, not newest run. Sorting by timestamp alone meant every
+    # small debugging probe displaced the thing a reader came to see: the page
+    # was opening an 8-case fixup report while two 120-case runs sat below it.
+    biggest = max(r["summary"].get("total_cases", 0) for r in reports.values())
+    default_i = max(
+        (i for i, n in enumerate(names)
+         if reports[n]["summary"].get("total_cases", 0) == biggest),
+        default=len(names) - 1,
+    )
+    selected = st.selectbox(t("go_report"), names, index=default_i, format_func=_label)
     report = reports[selected]
     render_summary(report)
     st.divider()
