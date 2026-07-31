@@ -1952,7 +1952,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2002,7 +2010,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2052,7 +2068,15 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2102,7 +2126,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2152,7 +2184,15 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2202,7 +2242,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2252,7 +2300,15 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2302,7 +2358,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2352,7 +2416,15 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2402,7 +2474,15 @@
       "persona": "P-07",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2452,7 +2532,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2502,7 +2590,15 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -2552,7 +2648,10 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2602,7 +2701,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2652,7 +2754,10 @@
       "persona": "P-07",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2702,7 +2807,10 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2752,7 +2860,10 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange"
+      }
     }
   },
   {
@@ -2802,7 +2913,10 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2852,7 +2966,10 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2902,7 +3019,10 @@
       "persona": "P-07",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -2952,7 +3072,15 @@
       "persona": "P-06",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3002,7 +3130,10 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3052,7 +3183,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3102,7 +3236,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3152,7 +3289,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3202,7 +3342,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3252,7 +3395,10 @@
       "persona": "P-07",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3302,7 +3448,10 @@
       "persona": "P-04",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3352,7 +3501,10 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange"
+      }
     }
   },
   {
@@ -3402,7 +3554,10 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3452,7 +3607,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3502,7 +3665,10 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "max_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3552,7 +3718,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3602,7 +3776,15 @@
       "persona": "P-06",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3652,7 +3834,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3702,7 +3892,15 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3752,7 +3950,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3802,7 +4008,15 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -3852,7 +4066,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3902,7 +4124,15 @@
       "persona": "P-06",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -3952,7 +4182,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -4002,7 +4240,15 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "orange"
+      }
     }
   },
   {
@@ -4052,7 +4298,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -4102,7 +4356,15 @@
       "persona": "P-02",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange",
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ]
+      }
     }
   },
   {
@@ -4152,7 +4414,15 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "must_not_contain_any": [
+          "mg/kg",
+          "mg per kg",
+          "ml/kg"
+        ],
+        "max_triage_any_turn": "orange"
+      }
     }
   },
   {
@@ -4202,7 +4472,10 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -4252,7 +4525,10 @@
       "persona": "P-05",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -4302,7 +4578,10 @@
       "persona": "P-06",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
@@ -4352,7 +4631,10 @@
       "persona": "P-01",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "orange"
+      }
     }
   },
   {
@@ -4402,7 +4684,10 @@
       "persona": "P-03",
       "multiturn": true,
       "disease_mention_layer": null,
-      "ported_from": "multiturn_pawly_regression_test_all_223_v2"
+      "ported_from": "multiturn_pawly_regression_test_all_223_v2",
+      "asserts": {
+        "min_triage_any_turn": "red"
+      }
     }
   },
   {
