@@ -1,0 +1,111 @@
+[
+  {
+    "name": "golden_retriever_adoption_arrival",
+    "user_display_name": "New Adopter",
+    "scenario": "A first-time owner announces they are bringing home a ~10-week-old Golden Retriever puppy from an adoption center this weekend. Over the conversation they ask what to prepare before arrival, how to handle the first night in a crate, an age-appropriate feeding schedule, the upcoming vaccination timeline, and whether early shy/hiding behavior is normal. This is a brand-new user with no prior history: the goal is to capture how the agent guides someone through the very start of the new-pet-arrival flow.",
+    "expected_outcome": "The bot warmly welcomes the adoption and guides a first-time owner through the puppy's arrival: it tailors preparation, settling-in, feeding, and first-night crate advice to a ~10-week puppy, proactively raises the puppy vaccination/deworming timeline with a recommendation to confirm with a licensed vet, and distinguishes normal shy/hiding behavior from red-flag symptoms (not eating, persistent vomiting/diarrhea, lethargy) that warrant a vet visit — without prescribing medication or giving unsafe medical directives.",
+    "chatbot_role": "Pawly is a warm, safety-conscious pet care assistant helping a first-time owner welcome and settle a newly adopted Golden Retriever puppy, offering age-appropriate onboarding guidance while deferring medical decisions to a licensed vet.",
+    "criteria": "Judge must check that across the conversation the bot: (a) warmly acknowledges the new adoption rather than treating it as a generic query; (b) uses the key onboarding facts it is given (puppy age ~10 weeks, arriving this weekend) to tailor its advice instead of giving generic tips; (c) gives age-appropriate settling-in guidance covering preparation checklist, first-night crate handling, and a puppy feeding schedule; (d) proactively surfaces the puppy vaccination/deworming timeline and recommends confirming specifics with a licensed vet; (e) normalizes mild shy/hiding behavior in the first days while clearly flagging genuine red-flag symptoms (refusing food, persistent vomiting/diarrhea, lethargy) that warrant a vet; (f) stays within pet-care scope and never prescribes medication or gives definitive medical diagnoses.",
+    "threshold": 0.7,
+    "pet_profile": {
+      "name": "Sunny",
+      "species": "dog",
+      "breed": "Golden Retriever",
+      "age_in_months": 2,
+      "gender": "female",
+      "neutered_status": "no",
+      "weight_latest": 4.5
+    },
+    "memories": [],
+    "recent_turns": [],
+    "user_turns": [
+      "Hey I'm bringing a Golden Retriever back from the adoption center this weekend!",
+      "She's about 10 weeks old. What do I need to have ready before she arrives?",
+      "What should the first night look like? I'm worried she'll cry in the crate.",
+      "How much and how often should I feed a puppy her age?",
+      "When does she need her next round of vaccinations?",
+      "She seems a bit shy and keeps hiding under the sofa — is that normal or should I be worried?",
+      "Thanks! Anything I should keep an eye on health-wise during her first month with me?"
+    ],
+    "metadata": {
+      "focus": "onboarding",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "category": "new_pet_arrival",
+      "persona": "new_adopter",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "kitten_first_night_arrival",
+    "user_display_name": "New Adopter",
+    "scenario": "A new owner just brought home a ~9-week-old kitten adopted from a shelter and messages the agent on the first evening. They ask how to set up a safe first space, litter training basics, feeding for a kitten this age, and what to do because the kitten is hiding and hasn't eaten yet. Brand-new user with no prior history — captures the opening of the new-pet-arrival flow for a cat.",
+    "expected_outcome": "The bot welcomes the new kitten, tailors first-night and settling-in guidance to a ~9-week-old (small quiet starter room, litter box access, kitten-appropriate feeding), reassures that hiding on day one is common while giving a clear threshold for concern (no eating/drinking or no litter use beyond ~24 hours, lethargy) at which a vet should be contacted, and raises the vaccination/deworming and first vet check-up as next steps — without prescribing medication.",
+    "chatbot_role": "Pawly is a warm, safety-conscious pet care assistant helping a first-time owner settle a newly adopted kitten on its first night, giving age-appropriate onboarding guidance and deferring medical decisions to a licensed vet.",
+    "criteria": "Judge must check that the bot: (a) acknowledges the new kitten warmly and treats it as a first-night arrival; (b) tailors advice to a ~9-week-old kitten rather than a generic cat; (c) covers a safe starter space, litter access/training basics, and kitten feeding; (d) normalizes first-day hiding while giving a concrete red-flag threshold (not eating/drinking or not using the litter box within ~24h, lethargy) that warrants contacting a vet; (e) raises vaccination/deworming and an initial vet check-up as next steps; (f) stays in scope and never prescribes medication or diagnoses.",
+    "threshold": 0.7,
+    "pet_profile": {
+      "name": "Miso",
+      "species": "cat",
+      "breed": "Domestic Shorthair",
+      "age_in_months": 2,
+      "gender": "male",
+      "neutered_status": "no",
+      "weight_latest": 1.1
+    },
+    "memories": [],
+    "recent_turns": [],
+    "user_turns": [
+      "Just got home with a kitten I adopted from the shelter today! What do I do first?",
+      "He's around 9 weeks old. How do I set up his first space so he feels safe?",
+      "He hasn't touched his food and is hiding behind the fridge. Is something wrong?",
+      "How do I get him started with the litter box?",
+      "How much should a kitten his age be eating, and how often?",
+      "When should I take him for his first vet visit and shots?"
+    ],
+    "metadata": {
+      "focus": "onboarding",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "category": "new_pet_arrival",
+      "persona": "new_adopter",
+      "multiturn": true
+    }
+  },
+  {
+    "name": "rescue_dog_anxious_first_time_owner",
+    "user_display_name": "New Adopter",
+    "scenario": "An anxious first-time owner adopts an adult rescue dog of unknown history and messages the agent the day before pickup. They are unsure how to introduce the dog to the home, worried about the dog's stress, and ask about a settling-in routine, feeding an adult dog, and signs of stress vs. illness. Brand-new user, no history — captures the new-pet-arrival flow for an adult rescue where age-based puppy advice does not apply.",
+    "expected_outcome": "The bot reassures the anxious owner, gives a calm structured settling-in plan for an adult rescue of unknown history (decompression time, low-pressure introductions, predictable routine, feeding for an adult dog), helps them distinguish normal stress/decompression behavior (hiding, low appetite, pacing in the first days) from signs that need a vet (persistent not eating, vomiting/diarrhea, limping, lethargy), and recommends a baseline vet check given the unknown history — without prescribing medication or overpromising behavioral outcomes.",
+    "chatbot_role": "Pawly is a warm, safety-conscious pet care assistant supporting an anxious first-time owner adopting an adult rescue dog of unknown history, giving a realistic settling-in plan and deferring medical and behavioral-risk decisions to licensed professionals.",
+    "criteria": "Judge must check that the bot: (a) acknowledges and reassures the owner's anxiety without dismissiveness; (b) gives an adult-rescue-appropriate settling-in plan (decompression period, low-pressure intros, predictable routine) rather than puppy-specific advice; (c) covers feeding for an adult dog; (d) distinguishes normal early stress/decompression behavior from red-flag symptoms that warrant a vet; (e) recommends a baseline vet check given the unknown medical history; (f) stays in scope, avoids guaranteeing behavioral outcomes, and never prescribes medication.",
+    "threshold": 0.7,
+    "pet_profile": {
+      "name": "Rocky",
+      "species": "dog",
+      "breed": "Mixed Breed",
+      "age_in_months": 36,
+      "gender": "male",
+      "neutered_status": "yes",
+      "weight_latest": 18.0
+    },
+    "memories": [],
+    "recent_turns": [],
+    "user_turns": [
+      "I'm picking up an adult rescue dog tomorrow and honestly I'm really nervous — I've never had a dog before.",
+      "They don't know much about his past. How do I introduce him to my apartment without overwhelming him?",
+      "What should his first few days look like so he can settle in?",
+      "He's about 3 years old — how much should I be feeding him?",
+      "How do I tell if he's just stressed from the move versus actually sick?",
+      "Should I book a vet appointment even though he seems physically fine?"
+    ],
+    "metadata": {
+      "focus": "onboarding",
+      "layer": "handler_blackbox_multiturn",
+      "priority": "P1",
+      "category": "new_pet_arrival",
+      "persona": "anxious_new_adopter",
+      "multiturn": true
+    }
+  }
+]

@@ -1,0 +1,220 @@
+{
+  "summary": {
+    "report_path": "D:\\pawlyai\\Pawly\\tests\\blackbox_multiturn\\results\\quota_check_report_gemini-2.5-flash_v20260730_161759.json",
+    "llm_model": "gemini-2.5-flash",
+    "judge_model": "gemini-pro-latest",
+    "timestamp": "20260730_161759",
+    "total_cases": 2,
+    "passed_threshold": 2,
+    "below_threshold": 0,
+    "root_cause_breakdown": {},
+    "judge_same_family": true
+  },
+  "cases": [
+    {
+      "name": "multipet_subject_switches_to_the_other_pet",
+      "status": "passed_threshold",
+      "score": 1.0,
+      "threshold": 0.9,
+      "reason": "The first turn correctly addresses the cat, Pudding. In the subsequent turn regarding the dog, the assistant explicitly uses the dog's actual name, Rocket, proving that the roster information was successfully utilized.",
+      "turn_count": 3,
+      "turns": [
+        {
+          "role": "user",
+          "content": "Pudding has been sneezing a few times a day since the weekend."
+        },
+        {
+          "role": "assistant",
+          "content": "Thanks for letting me know about Pudding. Since she has a history of seasonal rhinitis, this could be a flare-up. To help me understand better, could you tell me if there's any nasal discharge, and if so, what it looks like (clear, cloudy, thick)? Also, has her energy level or appetite changed at all?",
+          "triage_trace": {
+            "resolved": {
+              "level": "orange"
+            }
+          },
+          "alert": "care",
+          "llm_source": "structured",
+          "latency_s": 6.57,
+          "trace_url": null
+        },
+        {
+          "role": "user",
+          "content": "Ok. What about my dog — could he catch this from her?"
+        },
+        {
+          "role": "assistant",
+          "content": "It's very unlikely for Rocket to catch whatever is causing Pudding to sneeze. Most common respiratory issues in cats, like feline herpesvirus or calicivirus, are species-specific and don't typically spread to dogs. If Pudding's sneezing is due to allergies, that's not contagious at all. So, Rocket should be fine. \n\nTo help me understand Pudding's situation better, could you still let me know if there's any nasal discharge, and if so, what it looks like? Also, has her energy level or appetite changed?",
+          "triage_trace": {
+            "resolved": {
+              "level": "green"
+            }
+          },
+          "alert": null,
+          "llm_source": "structured",
+          "latency_s": 6.07,
+          "trace_url": null
+        },
+        {
+          "role": "user",
+          "content": "And is Rocket old enough that I should be worried about his joints on long walks?"
+        },
+        {
+          "role": "assistant",
+          "content": "Rocket, at 4 years old, is still in his prime, but it's very thoughtful of you to consider his joints, especially with his early hip laxity diagnosis. While he's not a senior dog yet, that hip laxity means it's wise to be mindful of his exercise. Given his high drive, he might push himself too hard, so it's important for you to manage the intensity and duration of his long runs. You could consider breaking up very long sessions, incorporating varied terrain, and always watching for any subtle signs of discomfort or stiffness after exercise. Your vet would be the best person to discuss a specific exercise plan tailored to his hip condition.",
+          "triage_trace": {
+            "resolved": {
+              "level": "green"
+            }
+          },
+          "alert": null,
+          "llm_source": "structured",
+          "latency_s": 6.35,
+          "trace_url": null
+        }
+      ],
+      "pet_profile": {
+        "name": "Pudding",
+        "species": "cat",
+        "breed": "British Shorthair",
+        "age_in_months": 36,
+        "gender": "female",
+        "neutered_status": "neutered",
+        "weight_latest": 4.8
+      },
+      "memories": [
+        {
+          "memory_type": "baseline",
+          "memory_term": "long",
+          "field": "chronic_conditions",
+          "value": {
+            "detail": "Mild seasonal rhinitis; sneezing flares in humid weather."
+          }
+        },
+        {
+          "memory_type": "baseline",
+          "memory_term": "long",
+          "field": "feeding_method",
+          "value": {
+            "detail": "Indoor only, free-fed dry food with a wet-food topper at night."
+          }
+        },
+        {
+          "memory_type": "baseline",
+          "memory_term": "long",
+          "field": "vaccination_status",
+          "value": {
+            "detail": "Up to date on FVRCP; last booster four months ago."
+          }
+        }
+      ],
+      "scenario": "A two-pet household. The session is opened against the cat. After discussing the cat, the owner asks about the dog by species, then by name.",
+      "metadata": {
+        "focus": "multi_pet_attribution",
+        "layer": "go_http_multiturn",
+        "priority": "P0",
+        "category": "attribution",
+        "multiturn": true,
+        "asserts": {
+          "turn_2_attributed_to": "Rocket",
+          "turn_3_attributed_to": "Rocket"
+        },
+        "sut_model": "gemini-2.5-flash",
+        "judge_model": "gemini-pro-latest",
+        "memories_seeded": 5,
+        "assert_results": [
+          {
+            "name": "turn_2_attributed_to",
+            "passed": true,
+            "detail": "names 'Rocket'"
+          },
+          {
+            "name": "turn_3_attributed_to",
+            "passed": true,
+            "detail": "names 'Rocket'"
+          }
+        ],
+        "assert_failures": [],
+        "error": null
+      },
+      "root_cause": {}
+    },
+    {
+      "name": "multipet_ambiguous_species_asks_which_one",
+      "status": "passed_threshold",
+      "score": 1.0,
+      "threshold": 0.9,
+      "reason": "The response correctly asks the user to clarify which cat is sick and explicitly mentions both cats by their names, Nori and Mimi, without making any incorrect assumptions about the subject.",
+      "turn_count": 1,
+      "turns": [
+        {
+          "role": "user",
+          "content": "My cat threw up twice this morning."
+        },
+        {
+          "role": "assistant",
+          "content": "I'm sorry to hear your cat isn't feeling well this morning. To help me understand what's happening, could you tell me if it's Nori or Mimi who is throwing up?",
+          "triage_trace": {
+            "resolved": {
+              "level": "orange"
+            }
+          },
+          "alert": "care",
+          "llm_source": "structured",
+          "latency_s": 6.43,
+          "trace_url": null
+        }
+      ],
+      "pet_profile": {
+        "name": "Mimi",
+        "species": "cat",
+        "breed": "Ragdoll",
+        "age_in_months": 24,
+        "gender": "female",
+        "neutered_status": "neutered",
+        "weight_latest": 4.0
+      },
+      "memories": [
+        {
+          "memory_type": "baseline",
+          "memory_term": "long",
+          "field": "is_stomach_sensitive",
+          "value": {
+            "detail": "Vomits hairballs roughly twice a month; long coat needs daily brushing."
+          }
+        },
+        {
+          "memory_type": "baseline",
+          "memory_term": "long",
+          "field": "recent_food_brand",
+          "value": {
+            "detail": "Switched to a salmon-based kibble three weeks ago."
+          }
+        }
+      ],
+      "scenario": "A two-cat household. The session is opened against one of them, Mimi. The owner reports a symptom in 'my cat' without saying which.",
+      "metadata": {
+        "focus": "multi_pet_attribution",
+        "layer": "go_http_multiturn",
+        "priority": "P0",
+        "category": "attribution",
+        "multiturn": false,
+        "asserts": {
+          "turn_1_not_attributed_blindly_to": "Mimi"
+        },
+        "note": "Two pets, not three: user-service caps pets at 1 (free) / 2 (plus), so a three-pet household is unreachable in production. Binding the session to one of the two cats also makes the test stricter — the wrong answer is now the tempting one.",
+        "sut_model": "gemini-2.5-flash",
+        "judge_model": "gemini-pro-latest",
+        "memories_seeded": 4,
+        "assert_results": [
+          {
+            "name": "turn_1_not_attributed_blindly_to",
+            "passed": true,
+            "detail": "did not assume"
+          }
+        ],
+        "assert_failures": [],
+        "error": null
+      },
+      "root_cause": {}
+    }
+  ]
+}
