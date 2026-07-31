@@ -57,10 +57,22 @@ def main() -> int:
     ap.add_argument("--compose-file", default="deploy/docker-compose.eval.yml")
     ap.add_argument("--compose-project", default="pawly-eval")
     ap.add_argument("--backend-dir", default=str(Path(__file__).resolve().parents[3] / "backend"))
-    # The judge must not be the model under test. Grading your own output
-    # inflates precisely the subjective dimensions GEval exists to measure.
+    # Cross-family by default, and not the model under test. Two reasons for
+    # this particular default:
+    #
+    #   gemini-pro-latest shares a family with the SUT, and scored 1.00 on 29 of
+    #   30 cases -- a judge that finds everything perfect is not grading.
+    #
+    #   claude-haiku-4.5 spreads scores but not reliably: of five cases where it
+    #   disagreed with the others, one verdict contradicted its own stated
+    #   reasoning, one applied a prompt rule to a hardcoded response the model
+    #   never generates, and one marked a correct veterinary claim wrong. A judge
+    #   that moves scores at random is worse than one that does not move them.
+    #
+    # Sonnet agreed with a manual read of all five. See rescore_report.py, which
+    # compares judges over identical stored transcripts.
     ap.add_argument("--judge-model",
-                    default=os.environ.get("EVAL_JUDGE_MODEL", "gemini-pro-latest"))
+                    default=os.environ.get("EVAL_JUDGE_MODEL", "claude-sonnet-5"))
     ap.add_argument("--sut-model", default=os.environ.get("EVAL_LLM_MODEL", "gemini-2.5-flash"))
     ap.add_argument("--topic", default="multiturn_go_regression")
     ap.add_argument("--only", default="", help="substring filter on case name")
