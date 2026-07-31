@@ -76,7 +76,8 @@ def main() -> int:
                     default=os.environ.get("EVAL_JUDGE_MODEL", "claude-sonnet-5"))
     ap.add_argument("--sut-model", default=os.environ.get("EVAL_LLM_MODEL", "gemini-2.5-flash"))
     ap.add_argument("--topic", default="multiturn_go_regression")
-    ap.add_argument("--only", default="", help="substring filter on case name")
+    ap.add_argument("--only", default="",
+                    help="comma-separated substrings; run cases matching any of them")
     ap.add_argument("--no-score", action="store_true",
                     help="drive the cases and write transcripts, skip the judge")
     # Cases are independent — each gets its own user, pets and session — so the
@@ -93,9 +94,12 @@ def main() -> int:
     if isinstance(cases, dict):
         cases = cases.get("cases", [])
     if args.only:
-        cases = [c for c in cases if args.only in c["name"]]
+        # Comma-separated, because a plain substring match silently selected
+        # nothing when given a list and the run just reported "no cases".
+        wanted = [s.strip() for s in args.only.split(",") if s.strip()]
+        cases = [c for c in cases if any(s in c["name"] for s in wanted)]
     if not cases:
-        print("no cases selected", file=sys.stderr)
+        print(f"no cases matched --only={args.only!r}", file=sys.stderr)
         return 2
 
     judge = None
