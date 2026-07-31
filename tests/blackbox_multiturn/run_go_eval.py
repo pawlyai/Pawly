@@ -16,6 +16,7 @@ with the stack.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures as cf
 import json
 import os
 import subprocess
@@ -78,6 +79,14 @@ def main() -> int:
     ap.add_argument("--only", default="", help="substring filter on case name")
     ap.add_argument("--no-score", action="store_true",
                     help="drive the cases and write transcripts, skip the judge")
+    # Cases are independent — each gets its own user, pets and session — so the
+    # only shared resources are the eval stack and the two model APIs. Four is
+    # chosen for the APIs, not the stack: the system under test and the judge
+    # are both rate-limited, and an exhausted quota partway through a 120-case
+    # run costs more than the wall clock it saved. Raise it if you are paying
+    # for headroom.
+    ap.add_argument("--workers", type=int, default=4,
+                    help="cases to drive concurrently (default 4)")
     args = ap.parse_args()
 
     cases = json.loads(Path(args.corpus).read_text(encoding="utf-8"))
@@ -112,12 +121,14 @@ def main() -> int:
         jwt_secret=args.jwt_secret,
     )
 
-    results = []
-    for i, case in enumerate(cases, 1):
+    from go_scoring import CaseResult, check_asserts, flatten_turns
+
+    def run_one(case: dict) -> CaseResult:
+        """Drive and score one case. Never raises: a broken case is a result."""
         name = case["name"]
         # A distinct user per case: pets are per-user and one case's roster
         # leaking into the next is exactly what attribution cases are sensitive
-        # to. uuid4 keeps reruns from colliding on the ON CONFLICT DO NOTHING.
+        # to. This is also what makes the cases safe to run concurrently.
         user_id = str(uuid.uuid4())
         # Derived from the user id, not from the clock. `phone` carries a UNIQUE
         # index and the insert only says ON CONFLICT (id) DO NOTHING, so a
@@ -126,42 +137,53 @@ def main() -> int:
         # long-lived stack.
         phone = "+65" + str(int(user_id.replace("-", "")[:12], 16))[:11]
 
-        print(f"[{i}/{len(cases)}] {name} ... ", end="", flush=True)
-        started = time.monotonic()
         try:
             provision_user(args, user_id, phone)
             run = driver.run_case(case, user_id)
         except Exception as e:  # noqa: BLE001 — one broken case must not end the run
             detail = getattr(getattr(e, "response", None), "text", "") or str(e)
-            print(f"DRIVE FAILED - {detail[:200]}")
-            from go_scoring import CaseResult
-            results.append(CaseResult(
+            return CaseResult(
                 name=name, passed=False, score=0.0,
                 threshold=float(case.get("threshold", 0.7)),
                 reason="", error=f"drive failed: {detail[:500]}",
-            ))
-            continue
+            )
 
         if judge is None:
-            from go_scoring import CaseResult, check_asserts, flatten_turns
             asserts = check_asserts(case, run)
-            res = CaseResult(
+            return CaseResult(
                 name=name, passed=all(a.passed for a in asserts), score=0.0,
                 threshold=float(case.get("threshold", 0.7)),
                 reason="scoring skipped (--no-score)", asserts=asserts,
                 memories_seeded=run.memories_seeded, turns=flatten_turns(run),
             )
-        else:
-            res = evaluate(case, run, judge)
+        return evaluate(case, run, judge)
 
-        results.append(res)
-        elapsed = time.monotonic() - started
-        mark = "PASS" if res.passed else "FAIL"
-        bad = ", ".join(a.name for a in res.assert_failures)
-        print(f"{mark} score={res.score:.2f}/{res.threshold} "
-              f"mem={res.memories_seeded} {elapsed:.0f}s"
-              + (f" | asserts: {bad}" if bad else "")
-              + (f" | {res.error}" if res.error else ""))
+    by_name: dict[str, CaseResult] = {}
+    workers = max(1, min(args.workers, len(cases)))
+    started_all = time.monotonic()
+    done = 0
+
+    with cf.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(run_one, c): c for c in cases}
+        for fut in cf.as_completed(futures):
+            case = futures[fut]
+            res = fut.result()
+            by_name[res.name] = res
+            done += 1
+            mark = "PASS" if res.passed else "FAIL"
+            bad = ", ".join(a.name for a in res.assert_failures)
+            # Completion order is not corpus order once this is concurrent, so
+            # the name has to lead the line rather than an index into the list.
+            print(f"[{done}/{len(cases)}] {mark} {res.name[:46]:46s} "
+                  f"score={res.score:.2f}/{res.threshold} mem={res.memories_seeded}"
+                  + (f" | asserts: {bad}" if bad else "")
+                  + (f" | {res.error[:90]}" if res.error else ""), flush=True)
+
+    # Reordered to match the corpus so two reports of the same suite diff
+    # cleanly, whatever order the pool happened to finish in.
+    results = [by_name[c["name"]] for c in cases if c["name"] in by_name]
+    print(f"\ndrove {len(results)} cases on {workers} workers "
+          f"in {time.monotonic() - started_all:.0f}s")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")

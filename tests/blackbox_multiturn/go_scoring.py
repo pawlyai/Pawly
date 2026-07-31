@@ -163,7 +163,17 @@ def build_anthropic_judge(model_name: str) -> tuple[Any, str | None]:
 
         def generate(self, prompt: str, schema=None) -> str:
             want_json = schema is not None
-            for _ in range(3):  # at most one retry per capability
+            # Whether THIS call has already backed off each capability. The
+            # instance flags are a cache so later calls skip the doomed attempt;
+            # they cannot drive the retry decision, because concurrent workers
+            # share the judge. One worker flipping a flag made the next worker's
+            # identical 400 look unrecognised -- its own error was about
+            # temperature, but the flag was already False, so it fell through to
+            # the prefill branch and raised. Three of five concurrent cases died
+            # that way while the same error was being handled fine serially.
+            tried_temp = tried_prefill = False
+
+            for _ in range(3):
                 msgs: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
                 prefill = want_json and self._can_prefill
                 if prefill:
@@ -179,10 +189,12 @@ def build_anthropic_judge(model_name: str) -> tuple[Any, str | None]:
                     resp = self._client.messages.create(**kwargs)
                 except Exception as e:  # noqa: BLE001
                     msg = str(e)
-                    if self._send_temperature and "temperature" in msg:
+                    if "temperature" in msg and not tried_temp:
+                        tried_temp = True
                         self._send_temperature = False
                         continue
-                    if self._can_prefill and "prefill" in msg:
+                    if "prefill" in msg and not tried_prefill:
+                        tried_prefill = True
                         self._can_prefill = False
                         continue
                     raise
