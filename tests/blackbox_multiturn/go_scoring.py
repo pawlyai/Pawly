@@ -146,23 +146,54 @@ def build_anthropic_judge(model_name: str) -> tuple[Any, str | None]:
         def __init__(self) -> None:
             self._client = anthropic.Anthropic(api_key=key)
             self.model_name = model_name
+            # Two capabilities this API has been narrowing, both rejected with a
+            # 400 rather than ignored, and both differing BETWEEN models of the
+            # same family — haiku-4.5 accepts each, sonnet-5 accepts neither. So
+            # they are attempted optimistically and switched off for the rest of
+            # the run the first time they are refused, instead of being hardcoded
+            # per model name and going stale on the next release.
+            #
+            #   temperature=0        what makes a judge repeatable
+            #   assistant prefill    "{" to force the reply to start as an object
+            self._send_temperature = True
+            self._can_prefill = True
 
         def load_model(self):
             return self._client
 
         def generate(self, prompt: str, schema=None) -> str:
-            # No JSON mode on this API; prefilling the assistant turn with "{"
-            # is the supported way to force the reply to start as an object,
-            # so it has to be put back on the front of the response.
-            msgs = [{"role": "user", "content": prompt}]
-            prefill = schema is not None
-            if prefill:
-                msgs.append({"role": "assistant", "content": "{"})
-            resp = self._client.messages.create(
-                model=self.model_name, max_tokens=4096, temperature=0.0, messages=msgs
-            )
-            text = "".join(b.text for b in resp.content if b.type == "text")
-            return ("{" + text) if prefill else text
+            want_json = schema is not None
+            for _ in range(3):  # at most one retry per capability
+                msgs: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+                prefill = want_json and self._can_prefill
+                if prefill:
+                    msgs.append({"role": "assistant", "content": "{"})
+
+                kwargs: dict[str, Any] = {
+                    "model": self.model_name, "max_tokens": 4096, "messages": msgs,
+                }
+                if self._send_temperature:
+                    kwargs["temperature"] = 0.0
+
+                try:
+                    resp = self._client.messages.create(**kwargs)
+                except Exception as e:  # noqa: BLE001
+                    msg = str(e)
+                    if self._send_temperature and "temperature" in msg:
+                        self._send_temperature = False
+                        continue
+                    if self._can_prefill and "prefill" in msg:
+                        self._can_prefill = False
+                        continue
+                    raise
+
+                text = "".join(b.text for b in resp.content if b.type == "text")
+                # Without the prefill the model wraps the object in prose or a
+                # fence; deepeval's trimAndLoadJson handles both, so the text is
+                # returned as-is and only the prefilled brace is restored.
+                return ("{" + text) if prefill else text
+
+            raise RuntimeError("anthropic judge: exhausted capability fallbacks")
 
         async def a_generate(self, prompt: str, schema=None) -> str:
             return self.generate(prompt, schema)
