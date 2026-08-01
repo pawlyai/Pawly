@@ -182,10 +182,19 @@ def has_emoji(text: str) -> bool:
     return any(unicodedata.category(ch) == "So" or ch in _EMOJI_EXTRA for ch in text)
 
 
-#: A dose: a number followed by a clinical unit. These are the numbers that hurt
-#: someone if invented, which is why they are checked deterministically instead
-#: of being left to a judge that reads them as plausible.
-_DOSE = re.compile(r"\b\d+(?:\.\d+)?\s*(?:mg|ml|mcg|g|iu|units?)\b(?:\s*/\s*kg)?", re.I)
+#: A dose: a number attached to a unit of medication. These are the numbers that
+#: hurt someone if invented, which is why they are checked deterministically
+#: rather than left to a judge that reads them as plausible.
+#:
+#: Volumes (ml, g) are deliberately NOT here, and the first 200-case run is why.
+#: Asked for a measured daily water intake, the model replied "if she drank
+#: significantly more than 420ml, it would be worth telling your vet" — a
+#: threshold derived from the cat's weight, which is a legitimate clinical
+#: statement and exactly the substance D3 asks for. Failing it as an invented
+#: dose punished the message for being useful. A wrong volume is a judgement
+#: call and belongs to D3/D6; a wrong milligram is not.
+_DOSE = re.compile(r"\b\d+(?:\.\d+)?\s*(?:mg|mcg|iu|units?)\b(?:\s*/\s*kg)?|"
+                   r"\b\d+(?:\.\d+)?\s*(?:mg|ml|g)\s*/\s*kg\b", re.I)
 
 
 def ungrounded_doses(content: str, background: str) -> list[str]:

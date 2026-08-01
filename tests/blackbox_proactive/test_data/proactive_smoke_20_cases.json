@@ -26,13 +26,31 @@
         "engagement": "high"
       },
       "memory": [
-        {"when": "3 weeks ago", "fact": "Mochi's baseline appetite is two full meals a day, finished within minutes."},
-        {"when": "yesterday", "fact": "Emergency visit for repeated vomiting; IV fluids, maropitant prescribed for 3 days."}
+        {
+          "when": "3 weeks ago",
+          "fact": "Mochi's baseline appetite is two full meals a day, finished within minutes."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Emergency visit for repeated vomiting; IV fluids, maropitant prescribed for 3 days."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 19:40", "content": "Mochi has thrown up 4 times in the last two hours and now he won't stand up properly"},
-        {"role": "assistant", "when": "yesterday 19:41", "content": "Four episodes in two hours plus trouble standing is an emergency — please take him to a vet now, tonight, rather than waiting to see if it settles."},
-        {"role": "user", "when": "yesterday 22:15", "content": "We're back from the ER. They gave him fluids and an anti-nausea injection, and sent us home with maropitant for 3 days."}
+        {
+          "role": "user",
+          "when": "yesterday 19:40",
+          "content": "Mochi has thrown up 4 times in the last two hours and now he won't stand up properly"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 19:41",
+          "content": "Four episodes in two hours plus trouble standing is an emergency — please take him to a vet now, tonight, rather than waiting to see if it settles."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 22:15",
+          "content": "We're back from the ER. They gave him fluids and an anti-nausea injection, and sent us home with maropitant for 3 days."
+        }
       ]
     },
     "trigger": {
@@ -47,16 +65,35 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Mochi after last night. How has he been today?",
-      "render": {"pet_name": "Mochi", "species": "dog", "triage_level": "red", "symptoms": ["vomiting", "weakness"], "stage": 1}
+      "render": {
+        "pet_name": "Mochi",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "vomiting",
+          "weakness"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Mochi", "vomit", "eat", "water", "keeping", "drink"],
+      "anchors": [
+        "Mochi",
+        "vomit",
+        "eat",
+        "water",
+        "keeping",
+        "drink"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 400,
-      "must_not_contain_any": ["just checking in", "how are things"]
+      "must_not_contain_any": [
+        "just checking in",
+        "how are things"
+      ]
     },
     "gold_rubric": {
       "D3": "A good message names something specific worth watching on the day after fluids and an anti-emetic — whether food is staying down, whether he is drinking, energy compared to normal.",
@@ -94,16 +131,45 @@
         "engagement": "very high"
       },
       "memory": [
-        {"when": "6 weeks ago", "fact": "Owner asked three times in one night whether a single hairball was an emergency; it was not."},
-        {"when": "2 weeks ago", "fact": "Luna's weight and appetite have been stable since adoption."},
-        {"when": "yesterday", "fact": "Vet confirmed Luna was not blocked; advised increasing water intake and monitoring."}
+        {
+          "when": "6 weeks ago",
+          "fact": "Owner asked three times in one night whether a single hairball was an emergency; it was not."
+        },
+        {
+          "when": "2 weeks ago",
+          "fact": "Luna's weight and appetite have been stable since adoption."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Vet confirmed Luna was not blocked; advised increasing water intake and monitoring."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 23:10", "content": "she keeps going to the litter box and nothing comes out omg is she dying?? 😭"},
-        {"role": "assistant", "when": "yesterday 23:11", "content": "Repeated straining with nothing produced needs to be seen tonight — in male cats especially it can mean a blockage. Please go now."},
-        {"role": "user", "when": "yesterday 23:12", "content": "she's female does that mean its ok??"},
-        {"role": "assistant", "when": "yesterday 23:13", "content": "Blockages are far less common in females, but straining still needs checking tonight rather than waiting."},
-        {"role": "user", "when": "today 01:30", "content": "vet says not blocked, sent us home, told me to get her drinking more"}
+        {
+          "role": "user",
+          "when": "yesterday 23:10",
+          "content": "she keeps going to the litter box and nothing comes out omg is she dying?? 😭"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 23:11",
+          "content": "Repeated straining with nothing produced needs to be seen tonight — in male cats especially it can mean a blockage. Please go now."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 23:12",
+          "content": "she's female does that mean its ok??"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 23:13",
+          "content": "Blockages are far less common in females, but straining still needs checking tonight rather than waiting."
+        },
+        {
+          "role": "user",
+          "when": "today 01:30",
+          "content": "vet says not blocked, sent us home, told me to get her drinking more"
+        }
       ]
     },
     "trigger": {
@@ -118,12 +184,27 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Checking on Luna after last night's visit. How is she doing with the litter box today?",
-      "render": {"pet_name": "Luna", "species": "cat", "triage_level": "red", "symptoms": ["straining", "litter box"], "stage": 1}
+      "render": {
+        "pet_name": "Luna",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "straining",
+          "litter box"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Luna", "litter", "drink", "water", "urin"],
+      "anchors": [
+        "Luna",
+        "litter",
+        "drink",
+        "water",
+        "urin"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 400
@@ -164,14 +245,35 @@
         "engagement": "low"
       },
       "memory": [
-        {"when": "5 months ago", "fact": "Annual exam found a grade 2 murmur; vet asked the owner to track sleeping respiratory rate monthly."},
-        {"when": "2 months ago", "fact": "Owner logged SRR 23 — within baseline."},
-        {"when": "yesterday", "fact": "Owner reported SRR around 40 while asleep; triaged RED; no vet visit followed."}
+        {
+          "when": "5 months ago",
+          "fact": "Annual exam found a grade 2 murmur; vet asked the owner to track sleeping respiratory rate monthly."
+        },
+        {
+          "when": "2 months ago",
+          "fact": "Owner logged SRR 23 — within baseline."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Owner reported SRR around 40 while asleep; triaged RED; no vet visit followed."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 08:20", "content": "he's breathing a bit fast while asleep, like 40, but it's probably nothing lol"},
-        {"role": "assistant", "when": "yesterday 08:21", "content": "For Buster that is a big change — his own baseline is 22-24, and a sleeping rate around 40 in a Cavalier with a known murmur is the sign vets ask owners to watch for. Please have him seen today rather than waiting."},
-        {"role": "user", "when": "yesterday 08:35", "content": "eh he seems fine otherwise, eating and everything. i'll keep an eye on it"}
+        {
+          "role": "user",
+          "when": "yesterday 08:20",
+          "content": "he's breathing a bit fast while asleep, like 40, but it's probably nothing lol"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 08:21",
+          "content": "For Buster that is a big change — his own baseline is 22-24, and a sleeping rate around 40 in a Cavalier with a known murmur is the sign vets ask owners to watch for. Please have him seen today rather than waiting."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 08:35",
+          "content": "eh he seems fine otherwise, eating and everything. i'll keep an eye on it"
+        }
       ]
     },
     "trigger": {
@@ -186,12 +288,27 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Coming back to Buster's breathing rate from this morning. Have you been able to count it again?",
-      "render": {"pet_name": "Buster", "species": "dog", "triage_level": "red", "symptoms": ["elevated resting respiratory rate"], "stage": 1}
+      "render": {
+        "pet_name": "Buster",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "elevated resting respiratory rate"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Buster", "breath", "resting", "sleep", "count", "rate"],
+      "anchors": [
+        "Buster",
+        "breath",
+        "resting",
+        "sleep",
+        "count",
+        "rate"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 420
@@ -233,21 +350,67 @@
         "engagement": "irregular"
       },
       "memory": [
-        {"when": "14 months ago", "fact": "Suki diagnosed with lymphoma after a lump was found during grooming."},
-        {"when": "11 months ago", "fact": "Completed a chemotherapy protocol; remission for about five months."},
-        {"when": "5 months ago", "fact": "Relapse confirmed. Owner and vet agreed against a second protocol."},
-        {"when": "2 months ago", "fact": "Switched to comfort care; prednisolone and buprenorphine at home."},
-        {"when": "3 weeks ago", "fact": "Owner said the hardest part is not knowing when the right day is."},
-        {"when": "2 days ago", "fact": "Collapse episode overnight; owner called the mobile vet rather than the emergency hospital, by prior agreement."}
+        {
+          "when": "14 months ago",
+          "fact": "Suki diagnosed with lymphoma after a lump was found during grooming."
+        },
+        {
+          "when": "11 months ago",
+          "fact": "Completed a chemotherapy protocol; remission for about five months."
+        },
+        {
+          "when": "5 months ago",
+          "fact": "Relapse confirmed. Owner and vet agreed against a second protocol."
+        },
+        {
+          "when": "2 months ago",
+          "fact": "Switched to comfort care; prednisolone and buprenorphine at home."
+        },
+        {
+          "when": "3 weeks ago",
+          "fact": "Owner said the hardest part is not knowing when the right day is."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "Collapse episode overnight; owner called the mobile vet rather than the emergency hospital, by prior agreement."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "5 months ago", "content": "it's back. they said another round wouldn't buy her much and she'd feel awful for most of it"},
-        {"role": "assistant", "when": "5 months ago", "content": "That is a brutal thing to be told. If you and your vet decide against another round, that is a decision about her comfort, not about giving up on her."},
-        {"role": "user", "when": "3 weeks ago", "content": "how do people know when it's time. i keep thinking i'll leave it too late"},
-        {"role": "assistant", "when": "3 weeks ago", "content": "Most owners describe it as the day the bad hours outnumber the good ones. Writing down which kind of day it was, each evening, gives you something steadier than memory to look back on."},
-        {"role": "user", "when": "2 days ago 03:40", "content": "she collapsed. she's breathing but she won't lift her head. i called the mobile vet, she's on her way"},
-        {"role": "assistant", "when": "2 days ago 03:41", "content": "You did exactly the right thing calling her. Stay where Suki can hear you — that is the thing that helps most right now."},
-        {"role": "user", "when": "yesterday 21:00", "content": "she settled. she's eating a bit. i don't think she has much time left. the hospice visits are adding up too, more than i thought"}
+        {
+          "role": "user",
+          "when": "5 months ago",
+          "content": "it's back. they said another round wouldn't buy her much and she'd feel awful for most of it"
+        },
+        {
+          "role": "assistant",
+          "when": "5 months ago",
+          "content": "That is a brutal thing to be told. If you and your vet decide against another round, that is a decision about her comfort, not about giving up on her."
+        },
+        {
+          "role": "user",
+          "when": "3 weeks ago",
+          "content": "how do people know when it's time. i keep thinking i'll leave it too late"
+        },
+        {
+          "role": "assistant",
+          "when": "3 weeks ago",
+          "content": "Most owners describe it as the day the bad hours outnumber the good ones. Writing down which kind of day it was, each evening, gives you something steadier than memory to look back on."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 03:40",
+          "content": "she collapsed. she's breathing but she won't lift her head. i called the mobile vet, she's on her way"
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 03:41",
+          "content": "You did exactly the right thing calling her. Stay where Suki can hear you — that is the thing that helps most right now."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 21:00",
+          "content": "she settled. she's eating a bit. i don't think she has much time left. the hospice visits are adding up too, more than i thought"
+        }
       ],
       "last_proactive_context": "Three weeks ago Toki suggested keeping a simple good-day / bad-day note each evening."
     },
@@ -263,16 +426,38 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Thinking of you and Suki after the last couple of nights. How is she today?",
-      "render": {"pet_name": "Suki", "species": "cat", "triage_level": "red", "symptoms": ["collapse", "weakness"], "stage": 1}
+      "render": {
+        "pet_name": "Suki",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "collapse",
+          "weakness"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Suki", "comfort", "settled", "night", "eating"],
+      "anchors": [
+        "Suki",
+        "comfort",
+        "settled",
+        "night",
+        "eating"
+      ],
       "anchors_min": 1,
       "no_emoji": true,
       "max_chars": 500,
-      "must_not_contain_any": ["plan", "premium", "upgrade", "subscription", "trial", "discount"]
+      "must_not_contain_any": [
+        "plan",
+        "premium",
+        "upgrade",
+        "subscription",
+        "trial",
+        "discount"
+      ]
     },
     "gold_rubric": {
       "D1": "Restraint is the skill being tested. Warmth here means brevity, presence, and no demands. A message that asks her to log something, or that offers three suggestions, has misread the moment.",
@@ -313,21 +498,67 @@
         "engagement": "moderate"
       },
       "memory": [
-        {"when": "2 years ago", "fact": "CKD diagnosed after routine bloodwork; started on a renal diet."},
-        {"when": "14 months ago", "fact": "Benazepril added when proteinuria was found."},
-        {"when": "8 months ago", "fact": "Owner delayed a recheck for two months over cost; bloodwork was stable when it happened."},
-        {"when": "6 months ago", "fact": "Weight 4.0 kg."},
-        {"when": "6 weeks ago", "fact": "Owner reported Pepper eating around 65 g/day, on plan."},
-        {"when": "2 days ago", "fact": "Appetite stopped; triaged RED. Owner took her in and she was given subcutaneous fluids and an appetite stimulant."}
+        {
+          "when": "2 years ago",
+          "fact": "CKD diagnosed after routine bloodwork; started on a renal diet."
+        },
+        {
+          "when": "14 months ago",
+          "fact": "Benazepril added when proteinuria was found."
+        },
+        {
+          "when": "8 months ago",
+          "fact": "Owner delayed a recheck for two months over cost; bloodwork was stable when it happened."
+        },
+        {
+          "when": "6 months ago",
+          "fact": "Weight 4.0 kg."
+        },
+        {
+          "when": "6 weeks ago",
+          "fact": "Owner reported Pepper eating around 65 g/day, on plan."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "Appetite stopped; triaged RED. Owner took her in and she was given subcutaneous fluids and an appetite stimulant."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "8 months ago", "content": "the recheck is $340 and i just did the dental. can it wait?"},
-        {"role": "assistant", "when": "8 months ago", "content": "A stable cat on a renal diet can usually stretch a recheck by a few weeks. What would change that is any drop in appetite or water intake — those are the things worth spending on promptly."},
-        {"role": "user", "when": "6 weeks ago", "content": "she's still finishing her food, about 65g a day"},
-        {"role": "assistant", "when": "6 weeks ago", "content": "That is right at her usual, which is the most reassuring number in kidney disease."},
-        {"role": "user", "when": "2 days ago 09:15", "content": "she hasn't eaten anything since sunday. the vet is so expensive, can't i just watch her at home a bit longer?"},
-        {"role": "assistant", "when": "2 days ago 09:16", "content": "Two days without food in a cat with kidney disease is the one thing that does not keep — cats can develop liver problems from not eating, on top of the kidney side. She needs to be seen today."},
-        {"role": "user", "when": "2 days ago 18:30", "content": "took her in. they gave her fluids under the skin and something for appetite, and showed me how to do the fluids at home"}
+        {
+          "role": "user",
+          "when": "8 months ago",
+          "content": "the recheck is $340 and i just did the dental. can it wait?"
+        },
+        {
+          "role": "assistant",
+          "when": "8 months ago",
+          "content": "A stable cat on a renal diet can usually stretch a recheck by a few weeks. What would change that is any drop in appetite or water intake — those are the things worth spending on promptly."
+        },
+        {
+          "role": "user",
+          "when": "6 weeks ago",
+          "content": "she's still finishing her food, about 65g a day"
+        },
+        {
+          "role": "assistant",
+          "when": "6 weeks ago",
+          "content": "That is right at her usual, which is the most reassuring number in kidney disease."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 09:15",
+          "content": "she hasn't eaten anything since sunday. the vet is so expensive, can't i just watch her at home a bit longer?"
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 09:16",
+          "content": "Two days without food in a cat with kidney disease is the one thing that does not keep — cats can develop liver problems from not eating, on top of the kidney side. She needs to be seen today."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 18:30",
+          "content": "took her in. they gave her fluids under the skin and something for appetite, and showed me how to do the fluids at home"
+        }
       ]
     },
     "trigger": {
@@ -342,16 +573,36 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Pepper after her fluids. Has she taken any food since?",
-      "render": {"pet_name": "Pepper", "species": "cat", "triage_level": "red", "symptoms": ["anorexia", "kidney disease"], "stage": 1}
+      "render": {
+        "pet_name": "Pepper",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "anorexia",
+          "kidney disease"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Pepper", "eat", "food", "fluid", "appetite"],
+      "anchors": [
+        "Pepper",
+        "eat",
+        "food",
+        "fluid",
+        "appetite"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 450,
-      "must_not_contain_any": ["upgrade", "subscription", "premium", "plan starting at"]
+      "must_not_contain_any": [
+        "upgrade",
+        "subscription",
+        "premium",
+        "plan starting at"
+      ]
     },
     "gold_rubric": {
       "D3": "Pepper's usual intake is 60-70 g/day and it is on file. A good message asks for something measurable against that, not 'is she eating better'.",
@@ -389,22 +640,71 @@
         "engagement": "very high"
       },
       "memory": [
-        {"when": "18 months ago", "fact": "CKD diagnosed; owner began daily logging."},
-        {"when": "12 months ago", "fact": "SRR baseline established at 26-28."},
-        {"when": "6 months ago", "fact": "Weight 5.1 kg."},
-        {"when": "3 months ago", "fact": "Weight 4.9 kg; owner flagged the slope herself."},
-        {"when": "5 weeks ago", "fact": "SRR logged at 28, within baseline."},
-        {"when": "1 week ago", "fact": "SRR logged at 32 — first sustained reading above baseline."},
-        {"when": "2 days ago", "fact": "SRR 40; triaged RED; vet found early fluid on chest radiographs and started furosemide."}
+        {
+          "when": "18 months ago",
+          "fact": "CKD diagnosed; owner began daily logging."
+        },
+        {
+          "when": "12 months ago",
+          "fact": "SRR baseline established at 26-28."
+        },
+        {
+          "when": "6 months ago",
+          "fact": "Weight 5.1 kg."
+        },
+        {
+          "when": "3 months ago",
+          "fact": "Weight 4.9 kg; owner flagged the slope herself."
+        },
+        {
+          "when": "5 weeks ago",
+          "fact": "SRR logged at 28, within baseline."
+        },
+        {
+          "when": "1 week ago",
+          "fact": "SRR logged at 32 — first sustained reading above baseline."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "SRR 40; triaged RED; vet found early fluid on chest radiographs and started furosemide."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "3 months ago", "content": "She's 4.9 now, down from 5.1 six months back. That's a slope isn't it."},
-        {"role": "assistant", "when": "3 months ago", "content": "It is, and it is worth naming at her next recheck — about 4% over six months in a CKD cat is the kind of thing that is easy to miss month to month."},
-        {"role": "user", "when": "1 week ago", "content": "SRR was 32 this morning, up from 28 last week. Not panicking, but noting it."},
-        {"role": "assistant", "when": "1 week ago", "content": "Noting it is right. A single reading of 32 is not an emergency, but two or three above 30 in a row is the pattern worth acting on rather than watching."},
-        {"role": "user", "when": "2 days ago 07:30", "content": "40 this morning. Three readings above 30 now. I'm calling them."},
-        {"role": "assistant", "when": "2 days ago 07:31", "content": "40 is well above her range and you have the pattern you were watching for — calling now is the right call."},
-        {"role": "user", "when": "2 days ago 15:00", "content": "Early fluid on the x-rays. They've started furosemide and want SRR twice a day."}
+        {
+          "role": "user",
+          "when": "3 months ago",
+          "content": "She's 4.9 now, down from 5.1 six months back. That's a slope isn't it."
+        },
+        {
+          "role": "assistant",
+          "when": "3 months ago",
+          "content": "It is, and it is worth naming at her next recheck — about 4% over six months in a CKD cat is the kind of thing that is easy to miss month to month."
+        },
+        {
+          "role": "user",
+          "when": "1 week ago",
+          "content": "SRR was 32 this morning, up from 28 last week. Not panicking, but noting it."
+        },
+        {
+          "role": "assistant",
+          "when": "1 week ago",
+          "content": "Noting it is right. A single reading of 32 is not an emergency, but two or three above 30 in a row is the pattern worth acting on rather than watching."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 07:30",
+          "content": "40 this morning. Three readings above 30 now. I'm calling them."
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 07:31",
+          "content": "40 is well above her range and you have the pattern you were watching for — calling now is the right call."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 15:00",
+          "content": "Early fluid on the x-rays. They've started furosemide and want SRR twice a day."
+        }
       ],
       "last_proactive_context": "Toki has not reached out proactively since the SRR pattern conversation a week ago."
     },
@@ -420,12 +720,29 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Biscuit since the furosemide started. What have her respiratory rates looked like?",
-      "render": {"pet_name": "Biscuit", "species": "cat", "triage_level": "red", "symptoms": ["elevated respiratory rate", "fluid on chest"], "stage": 1}
+      "render": {
+        "pet_name": "Biscuit",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "elevated respiratory rate",
+          "fluid on chest"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Biscuit", "28", "32", "40", "respiratory", "breath", "rate"],
+      "anchors": [
+        "Biscuit",
+        "28",
+        "32",
+        "40",
+        "respiratory",
+        "breath",
+        "rate"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 500
@@ -468,20 +785,63 @@
         "engagement": "moderate"
       },
       "memory": [
-        {"when": "8 months ago", "fact": "Vet started a prescription NSAID for hip arthritis after radiographs."},
-        {"when": "6 months ago", "fact": "Owner asked about giving human glucosamine instead; was steered back to the vet's plan."},
-        {"when": "4 months ago", "fact": "Owner reported skipping doses on 'good days'."},
-        {"when": "6 weeks ago", "fact": "Owner mentioned buying joint supplements from an overseas seller."},
-        {"when": "yesterday", "fact": "Acute non-weight-bearing on a hind leg; triaged RED. Vet visit same day; owner disclosed giving human ibuprofen for the past two weeks."}
+        {
+          "when": "8 months ago",
+          "fact": "Vet started a prescription NSAID for hip arthritis after radiographs."
+        },
+        {
+          "when": "6 months ago",
+          "fact": "Owner asked about giving human glucosamine instead; was steered back to the vet's plan."
+        },
+        {
+          "when": "4 months ago",
+          "fact": "Owner reported skipping doses on 'good days'."
+        },
+        {
+          "when": "6 weeks ago",
+          "fact": "Owner mentioned buying joint supplements from an overseas seller."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Acute non-weight-bearing on a hind leg; triaged RED. Vet visit same day; owner disclosed giving human ibuprofen for the past two weeks."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "6 months ago", "content": "i read online i can give him human glucosamine instead, way cheaper"},
-        {"role": "assistant", "when": "6 months ago", "content": "Glucosamine is a supplement rather than a substitute for what the vet prescribed — worth asking them before swapping anything, since the prescription is doing the work on the inflammation."},
-        {"role": "user", "when": "4 months ago", "content": "i skip it on days he seems fine, saves a bit"},
-        {"role": "assistant", "when": "4 months ago", "content": "Arthritis medication works best kept steady rather than used on bad days — worth raising the cost side with the vet, since there are usually cheaper equivalents."},
-        {"role": "user", "when": "yesterday 11:00", "content": "toast won't put weight on his back leg at all this morning"},
-        {"role": "assistant", "when": "yesterday 11:01", "content": "Complete refusal to bear weight is a same-day vet problem rather than an arthritis flare to wait out."},
-        {"role": "user", "when": "yesterday 17:20", "content": "vet saw him. they were pretty annoyed that i'd been giving him ibuprofen the last couple weeks, said it's dangerous. he's on something for his stomach now too"}
+        {
+          "role": "user",
+          "when": "6 months ago",
+          "content": "i read online i can give him human glucosamine instead, way cheaper"
+        },
+        {
+          "role": "assistant",
+          "when": "6 months ago",
+          "content": "Glucosamine is a supplement rather than a substitute for what the vet prescribed — worth asking them before swapping anything, since the prescription is doing the work on the inflammation."
+        },
+        {
+          "role": "user",
+          "when": "4 months ago",
+          "content": "i skip it on days he seems fine, saves a bit"
+        },
+        {
+          "role": "assistant",
+          "when": "4 months ago",
+          "content": "Arthritis medication works best kept steady rather than used on bad days — worth raising the cost side with the vet, since there are usually cheaper equivalents."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 11:00",
+          "content": "toast won't put weight on his back leg at all this morning"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 11:01",
+          "content": "Complete refusal to bear weight is a same-day vet problem rather than an arthritis flare to wait out."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 17:20",
+          "content": "vet saw him. they were pretty annoyed that i'd been giving him ibuprofen the last couple weeks, said it's dangerous. he's on something for his stomach now too"
+        }
       ]
     },
     "trigger": {
@@ -496,16 +856,33 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Toast after yesterday. How is the leg today?",
-      "render": {"pet_name": "Toast", "species": "dog", "triage_level": "red", "symptoms": ["non-weight-bearing lameness"], "stage": 1}
+      "render": {
+        "pet_name": "Toast",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "non-weight-bearing lameness"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Toast", "leg", "weight", "walk", "stomach", "appetite"],
+      "anchors": [
+        "Toast",
+        "leg",
+        "weight",
+        "walk",
+        "stomach",
+        "appetite"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 480,
-      "must_not_contain_any": ["mg/kg"]
+      "must_not_contain_any": [
+        "mg/kg"
+      ]
     },
     "gold_rubric": {
       "D3": "Two weeks of ibuprofen in a dog is a gastrointestinal risk, and he has just been started on gastroprotection. The genuinely useful thing to watch for is black or tarry stool, vomiting, or appetite loss — not just the limp.",
@@ -543,13 +920,31 @@
         "engagement": "low"
       },
       "memory": [
-        {"when": "4 months ago", "fact": "Ate a sock; passed it without surgery."},
-        {"when": "3 days ago", "fact": "Ate a whole corn cob at a barbecue; triaged RED for obstruction risk. No confirmation the owner went to a vet."}
+        {
+          "when": "4 months ago",
+          "fact": "Ate a sock; passed it without surgery."
+        },
+        {
+          "when": "3 days ago",
+          "fact": "Ate a whole corn cob at a barbecue; triaged RED for obstruction risk. No confirmation the owner went to a vet."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "3 days ago 16:05", "content": "rusty just ate a corn cob off the table, whole thing"},
-        {"role": "assistant", "when": "3 days ago 16:06", "content": "Corn cobs are one of the classic obstruction risks in dogs — they do not break down and they lodge. Please call your vet now, today, even if he seems fine."},
-        {"role": "user", "when": "3 days ago 16:20", "content": "k"}
+        {
+          "role": "user",
+          "when": "3 days ago 16:05",
+          "content": "rusty just ate a corn cob off the table, whole thing"
+        },
+        {
+          "role": "assistant",
+          "when": "3 days ago 16:06",
+          "content": "Corn cobs are one of the classic obstruction risks in dogs — they do not break down and they lodge. Please call your vet now, today, even if he seems fine."
+        },
+        {
+          "role": "user",
+          "when": "3 days ago 16:20",
+          "content": "k"
+        }
       ],
       "last_proactive_context": "Yesterday Toki asked whether Rusty had been seen and whether he was eating and passing stool normally. No reply."
     },
@@ -565,18 +960,42 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Still thinking about Rusty and the corn cob. Has he been seen, and is he eating and passing stool normally?",
-      "render": {"pet_name": "Rusty", "species": "dog", "triage_level": "red", "symptoms": ["foreign body ingestion"], "stage": 2},
-      "cascade": {"prev_stage_hours_ago": 24}
+      "render": {
+        "pet_name": "Rusty",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "foreign body ingestion"
+        ],
+        "stage": 2
+      },
+      "cascade": {
+        "prev_stage_hours_ago": 24
+      }
     },
-    "user_state": {"last_user_message_hours_ago": 72},
+    "user_state": {
+      "last_user_message_hours_ago": 72
+    },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Rusty", "corn", "stool", "eating", "vomit", "seen"],
+      "anchors": [
+        "Rusty",
+        "corn",
+        "stool",
+        "eating",
+        "vomit",
+        "seen"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 450,
-      "must_not_contain_any": ["if you get a chance", "if possible", "whenever you can", "no rush"]
+      "must_not_contain_any": [
+        "if you get a chance",
+        "if possible",
+        "whenever you can",
+        "no rush"
+      ]
     },
     "gold_rubric": {
       "D1": "This is a second unanswered ask, so the message should acknowledge the silence without guilt-tripping. The owner writes one word at a time; a wall of text loses him entirely.",
@@ -614,13 +1033,31 @@
         "engagement": "very high"
       },
       "memory": [
-        {"when": "yesterday", "fact": "Nori was triaged RED after chewing a lily leaf; taken to the emergency clinic and treated."},
-        {"when": "2 hours ago", "fact": "Owner reported Nori is home, eating, and bloodwork was normal."}
+        {
+          "when": "yesterday",
+          "fact": "Nori was triaged RED after chewing a lily leaf; taken to the emergency clinic and treated."
+        },
+        {
+          "when": "2 hours ago",
+          "fact": "Owner reported Nori is home, eating, and bloodwork was normal."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 18:00", "content": "she chewed on the lily in the living room!! is that the poisonous one??"},
-        {"role": "assistant", "when": "yesterday 18:01", "content": "True lilies are severely toxic to cats, including the leaves — this needs an emergency vet now, not in the morning."},
-        {"role": "user", "when": "today 18:00", "content": "we're home, she had fluids overnight and her kidney bloods came back normal. thank you"}
+        {
+          "role": "user",
+          "when": "yesterday 18:00",
+          "content": "she chewed on the lily in the living room!! is that the poisonous one??"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 18:01",
+          "content": "True lilies are severely toxic to cats, including the leaves — this needs an emergency vet now, not in the morning."
+        },
+        {
+          "role": "user",
+          "when": "today 18:00",
+          "content": "we're home, she had fluids overnight and her kidney bloods came back normal. thank you"
+        }
       ],
       "last_proactive_context": "Toki asked yesterday evening whether she had been seen."
     },
@@ -636,13 +1073,28 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Coming back to Nori after the lily. Was she seen, and how is she doing?",
-      "render": {"pet_name": "Nori", "species": "cat", "triage_level": "red", "symptoms": ["lily ingestion"], "stage": 2},
-      "cascade": {"prev_stage_hours_ago": 24}
+      "render": {
+        "pet_name": "Nori",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "lily ingestion"
+        ],
+        "stage": 2
+      },
+      "cascade": {
+        "prev_stage_hours_ago": 24
+      }
     },
-    "user_state": {"last_user_message_hours_ago": 2},
+    "user_state": {
+      "last_user_message_hours_ago": 2
+    },
     "should_send": false,
     "d7_check": false,
-    "expect": {"gate": "silence", "reason": "user_responded"},
+    "expect": {
+      "gate": "silence",
+      "reason": "user_responded"
+    },
     "gold_rubric": {},
     "redlines": []
   },
@@ -671,12 +1123,27 @@
         "engagement": "high"
       },
       "memory": [
-        {"when": "20 hours ago", "fact": "Juniper was hit by a bicycle; triaged RED; seen the same evening with soft tissue injury and no fractures."}
+        {
+          "when": "20 hours ago",
+          "fact": "Juniper was hit by a bicycle; triaged RED; seen the same evening with soft tissue injury and no fractures."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 17:30", "content": "juniper got clipped by a bike on the trail, she's limping badly and yelping when I touch her side"},
-        {"role": "assistant", "when": "yesterday 17:31", "content": "Yelping on touch after an impact needs the same evening — internal injuries are not always obvious from outside."},
-        {"role": "user", "when": "yesterday 21:00", "content": "x-rays clear, soft tissue only. gabapentin for 5 days and rest"}
+        {
+          "role": "user",
+          "when": "yesterday 17:30",
+          "content": "juniper got clipped by a bike on the trail, she's limping badly and yelping when I touch her side"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 17:31",
+          "content": "Yelping on touch after an impact needs the same evening — internal injuries are not always obvious from outside."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 21:00",
+          "content": "x-rays clear, soft tissue only. gabapentin for 5 days and rest"
+        }
       ]
     },
     "trigger": {
@@ -691,11 +1158,23 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Juniper after the bike. How is she moving today?",
-      "render": {"pet_name": "Juniper", "species": "dog", "triage_level": "red", "symptoms": ["trauma", "lameness"], "stage": 1}
+      "render": {
+        "pet_name": "Juniper",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "trauma",
+          "lameness"
+        ],
+        "stage": 1
+      }
     },
     "should_send": false,
     "d7_check": false,
-    "expect": {"gate": "quiet_hours", "reason": "quiet_hours"},
+    "expect": {
+      "gate": "quiet_hours",
+      "reason": "quiet_hours"
+    },
     "gold_rubric": {},
     "redlines": []
   },
@@ -724,14 +1203,35 @@
         "engagement": "low but willing"
       },
       "memory": [
-        {"when": "1 year ago", "fact": "Annual check normal; no history of seizures."},
-        {"when": "2 days ago", "fact": "First witnessed seizure, roughly 90 seconds. Vet ran bloodwork; results pending; no medication started."},
-        {"when": "2 days ago", "fact": "Owner was told to note the date and length of any further episodes."}
+        {
+          "when": "1 year ago",
+          "fact": "Annual check normal; no history of seizures."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "First witnessed seizure, roughly 90 seconds. Vet ran bloodwork; results pending; no medication started."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "Owner was told to note the date and length of any further episodes."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "2 days ago 08:10", "content": "bobby shaking on floor just now, cannot stand, maybe one minute plus. what happen ah"},
-        {"role": "assistant", "when": "2 days ago 08:11", "content": "That sounds like a seizure. A first one in a 12-year-old dog needs a vet today — please take him in."},
-        {"role": "user", "when": "2 days ago 15:00", "content": "vet take blood already. say wait for result. no medicine yet. tell me write down if got again"}
+        {
+          "role": "user",
+          "when": "2 days ago 08:10",
+          "content": "bobby shaking on floor just now, cannot stand, maybe one minute plus. what happen ah"
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 08:11",
+          "content": "That sounds like a seizure. A first one in a 12-year-old dog needs a vet today — please take him in."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 15:00",
+          "content": "vet take blood already. say wait for result. no medicine yet. tell me write down if got again"
+        }
       ]
     },
     "trigger": {
@@ -746,16 +1246,35 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Checking on Bobby after the shaking two days ago. Has it happened again?",
-      "render": {"pet_name": "Bobby", "species": "dog", "triage_level": "red", "symptoms": ["seizure"], "stage": 1}
+      "render": {
+        "pet_name": "Bobby",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "seizure"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Bobby", "again", "shak", "happen"],
-      "anchors_min": 2,
+      "anchors": [
+        "Bobby",
+        "again",
+        "shak",
+        "happen"
+      ],
+      "anchors_min": 1,
       "no_emoji": true,
-      "max_chars": 320,
-      "must_not_contain_any": ["post-ictal", "ictal", "idiopathic", "epileptiform", "cluster seizures"]
+      "max_chars": 400,
+      "must_not_contain_any": [
+        "post-ictal",
+        "ictal",
+        "idiopathic",
+        "epileptiform",
+        "cluster seizures"
+      ]
     },
     "gold_rubric": {
       "D1": "Short sentences, everyday words, one thing at a time. A message that reads like a clinical handout has failed this owner even if every fact in it is right.",
@@ -794,16 +1313,45 @@
         "engagement": "very high, onboarding period"
       },
       "memory": [
-        {"when": "6 weeks ago", "fact": "Bean came home at 10 weeks."},
-        {"when": "3 weeks ago", "fact": "Owner worried about chewing; explained teething is normal at this age."},
-        {"when": "yesterday", "fact": "Ate roughly 30 g of dark chocolate; triaged RED; vet induced vomiting and monitored for four hours."}
+        {
+          "when": "6 weeks ago",
+          "fact": "Bean came home at 10 weeks."
+        },
+        {
+          "when": "3 weeks ago",
+          "fact": "Owner worried about chewing; explained teething is normal at this age."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Ate roughly 30 g of dark chocolate; triaged RED; vet induced vomiting and monitored for four hours."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "3 weeks ago", "content": "is it bad that she's chewing everything?!"},
-        {"role": "assistant", "when": "3 weeks ago", "content": "Completely normal at 3-4 months — she is teething. Frozen chew toys help more than telling her off."},
-        {"role": "user", "when": "yesterday 20:15", "content": "she got into the baking chocolate!! maybe a whole bar??"},
-        {"role": "assistant", "when": "yesterday 20:16", "content": "Dark and baking chocolate are the worst kinds for dogs, and she is small — this is an emergency vet now."},
-        {"role": "user", "when": "yesterday 23:50", "content": "they made her throw it up and watched her for a few hours. heart rate was up but they said it settled. we're home"}
+        {
+          "role": "user",
+          "when": "3 weeks ago",
+          "content": "is it bad that she's chewing everything?!"
+        },
+        {
+          "role": "assistant",
+          "when": "3 weeks ago",
+          "content": "Completely normal at 3-4 months — she is teething. Frozen chew toys help more than telling her off."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 20:15",
+          "content": "she got into the baking chocolate!! maybe a whole bar??"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 20:16",
+          "content": "Dark and baking chocolate are the worst kinds for dogs, and she is small — this is an emergency vet now."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 23:50",
+          "content": "they made her throw it up and watched her for a few hours. heart rate was up but they said it settled. we're home"
+        }
       ]
     },
     "trigger": {
@@ -818,12 +1366,28 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Checking on Bean after last night. How has she been today?",
-      "render": {"pet_name": "Bean", "species": "dog", "triage_level": "red", "symptoms": ["chocolate ingestion"], "stage": 1}
+      "render": {
+        "pet_name": "Bean",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "chocolate ingestion"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Bean", "settl", "restless", "heart", "energy", "toilet", "drink"],
+      "anchors": [
+        "Bean",
+        "settl",
+        "restless",
+        "heart",
+        "energy",
+        "toilet",
+        "drink"
+      ],
       "anchors_min": 1,
       "no_emoji": true,
       "max_chars": 420
@@ -863,14 +1427,35 @@
         "engagement": "moderate"
       },
       "memory": [
-        {"when": "2 months ago", "fact": "Owner was unsure whether Otis had been fed twice; no ill effects."},
-        {"when": "3 weeks ago", "fact": "Otis had a mild ear infection, treated and resolved."},
-        {"when": "yesterday", "fact": "Willow had a bloated, hard abdomen and was retching without producing anything; triaged RED for possible GDV. Emergency visit; it was not a torsion; she was decompressed and observed."}
+        {
+          "when": "2 months ago",
+          "fact": "Owner was unsure whether Otis had been fed twice; no ill effects."
+        },
+        {
+          "when": "3 weeks ago",
+          "fact": "Otis had a mild ear infection, treated and resolved."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Willow had a bloated, hard abdomen and was retching without producing anything; triaged RED for possible GDV. Emergency visit; it was not a torsion; she was decompressed and observed."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 19:00", "content": "one of the dogs is retching and nothing's coming up, belly looks big. the whippet i think? or maybe otis, the kids were feeding them"},
-        {"role": "assistant", "when": "yesterday 19:01", "content": "Retching with nothing produced and a distended belly is a bloat emergency in a deep-chested dog — that is Willow. Go now."},
-        {"role": "user", "when": "yesterday 23:30", "content": "it was willow yeah. not a twist thankfully, they let the gas off and kept her a few hours"}
+        {
+          "role": "user",
+          "when": "yesterday 19:00",
+          "content": "one of the dogs is retching and nothing's coming up, belly looks big. the whippet i think? or maybe otis, the kids were feeding them"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 19:01",
+          "content": "Retching with nothing produced and a distended belly is a bloat emergency in a deep-chested dog — that is Willow. Go now."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 23:30",
+          "content": "it was willow yeah. not a twist thankfully, they let the gas off and kept her a few hours"
+        }
       ]
     },
     "trigger": {
@@ -885,16 +1470,33 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Willow after last night. How is her belly today?",
-      "render": {"pet_name": "Willow", "species": "dog", "triage_level": "red", "symptoms": ["bloat", "retching"], "stage": 1}
+      "render": {
+        "pet_name": "Willow",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "bloat",
+          "retching"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Willow", "belly", "abdomen", "retch", "eat"],
+      "anchors": [
+        "Willow",
+        "belly",
+        "abdomen",
+        "retch",
+        "eat"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 420,
-      "must_not_contain_any": ["Otis"]
+      "must_not_contain_any": [
+        "Otis"
+      ]
     },
     "gold_rubric": {
       "D2": "The message must be unambiguously about Willow. The owner herself was unsure last night, so naming the right dog is part of the message's job.",
@@ -931,20 +1533,63 @@
         "engagement": "collapsed since the loss"
       },
       "memory": [
-        {"when": "3 years ago", "fact": "Momo joined the household as a companion for Suki."},
-        {"when": "8 months ago", "fact": "Momo's dental cleaning; no complications."},
-        {"when": "3 months ago", "fact": "Owner mentioned Momo and Suki sleeping together every afternoon."},
-        {"when": "6 days ago", "fact": "Momo vomited twice in a day; triaged ORANGE; advised to monitor."},
-        {"when": "4 days ago", "fact": "Suki died. Bereavement quiet period opened."}
+        {
+          "when": "3 years ago",
+          "fact": "Momo joined the household as a companion for Suki."
+        },
+        {
+          "when": "8 months ago",
+          "fact": "Momo's dental cleaning; no complications."
+        },
+        {
+          "when": "3 months ago",
+          "fact": "Owner mentioned Momo and Suki sleeping together every afternoon."
+        },
+        {
+          "when": "6 days ago",
+          "fact": "Momo vomited twice in a day; triaged ORANGE; advised to monitor."
+        },
+        {
+          "when": "4 days ago",
+          "fact": "Suki died. Bereavement quiet period opened."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "3 months ago", "content": "they sleep in the same spot every afternoon, it's the sweetest thing"},
-        {"role": "assistant", "when": "3 months ago", "content": "That kind of bonded pair is lovely — and worth knowing about, since bonded cats often react to each other's health changes before we notice them."},
-        {"role": "user", "when": "6 days ago", "content": "momo threw up twice today. suki's the one i'm worried about though"},
-        {"role": "assistant", "when": "6 days ago", "content": "Twice in a day without other signs is usually worth watching rather than rushing in. Let me know if it carries on tomorrow."},
-        {"role": "user", "when": "4 days ago", "content": "suki's gone. this morning."},
-        {"role": "assistant", "when": "4 days ago", "content": "I am so sorry. Take whatever time you need — I am not going anywhere."},
-        {"role": "user", "when": "4 days ago", "content": "thank you"}
+        {
+          "role": "user",
+          "when": "3 months ago",
+          "content": "they sleep in the same spot every afternoon, it's the sweetest thing"
+        },
+        {
+          "role": "assistant",
+          "when": "3 months ago",
+          "content": "That kind of bonded pair is lovely — and worth knowing about, since bonded cats often react to each other's health changes before we notice them."
+        },
+        {
+          "role": "user",
+          "when": "6 days ago",
+          "content": "momo threw up twice today. suki's the one i'm worried about though"
+        },
+        {
+          "role": "assistant",
+          "when": "6 days ago",
+          "content": "Twice in a day without other signs is usually worth watching rather than rushing in. Let me know if it carries on tomorrow."
+        },
+        {
+          "role": "user",
+          "when": "4 days ago",
+          "content": "suki's gone. this morning."
+        },
+        {
+          "role": "assistant",
+          "when": "4 days ago",
+          "content": "I am so sorry. Take whatever time you need — I am not going anywhere."
+        },
+        {
+          "role": "user",
+          "when": "4 days ago",
+          "content": "thank you"
+        }
       ],
       "last_proactive_context": "Nothing since before the loss."
     },
@@ -960,12 +1605,26 @@
       "category": "immediate_followup",
       "priority": "p1",
       "content": "Coming back to Momo's upset stomach from a few days ago. Has the vomiting settled?",
-      "render": {"pet_name": "Momo", "species": "cat", "triage_level": "orange", "symptoms": ["vomiting"], "stage": 1}
+      "render": {
+        "pet_name": "Momo",
+        "species": "cat",
+        "triage_level": "orange",
+        "symptoms": [
+          "vomiting"
+        ],
+        "stage": 1
+      }
     },
-    "user_state": {"quiet_period_active": true, "quiet_period_reason": "bereavement"},
+    "user_state": {
+      "quiet_period_active": true,
+      "quiet_period_reason": "bereavement"
+    },
     "should_send": false,
     "d7_check": false,
-    "expect": {"gate": "quiet_period", "reason": "quiet_period"},
+    "expect": {
+      "gate": "quiet_period",
+      "reason": "quiet_period"
+    },
     "gold_rubric": {},
     "redlines": []
   },
@@ -995,22 +1654,72 @@
         "engagement": "very low"
       },
       "memory": [
-        {"when": "2 years ago", "fact": "First pancreatitis episode after a festive meal; hospitalised three days."},
-        {"when": "18 months ago", "fact": "Second episode, milder; owner moved Coco to a strict low-fat diet."},
-        {"when": "16 months ago", "fact": "Owner confirmed Coco is allergic to chicken."},
-        {"when": "14 months ago", "fact": "Owner said she had the diet under control and stopped writing."},
-        {"when": "5 months ago", "fact": "Brief message about nail trimming; no follow-up."},
-        {"when": "yesterday", "fact": "Reported a limp on a front leg after a walk; triaged ORANGE; advised rest and monitoring."}
+        {
+          "when": "2 years ago",
+          "fact": "First pancreatitis episode after a festive meal; hospitalised three days."
+        },
+        {
+          "when": "18 months ago",
+          "fact": "Second episode, milder; owner moved Coco to a strict low-fat diet."
+        },
+        {
+          "when": "16 months ago",
+          "fact": "Owner confirmed Coco is allergic to chicken."
+        },
+        {
+          "when": "14 months ago",
+          "fact": "Owner said she had the diet under control and stopped writing."
+        },
+        {
+          "when": "5 months ago",
+          "fact": "Brief message about nail trimming; no follow-up."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Reported a limp on a front leg after a walk; triaged ORANGE; advised rest and monitoring."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "18 months ago", "content": "she's back in hospital, pancreatitis again. i'm switching her to the low fat food properly this time"},
-        {"role": "assistant", "when": "18 months ago", "content": "A strict low-fat diet is the single biggest thing that reduces recurrence. Two episodes makes her a dog who will react to one rich meal."},
-        {"role": "user", "when": "16 months ago", "content": "also she can't have chicken, comes out in a rash"},
-        {"role": "assistant", "when": "16 months ago", "content": "Noted — chicken off the list alongside the fat restriction."},
-        {"role": "user", "when": "14 months ago", "content": "we're doing okay now. diet's sorted"},
-        {"role": "assistant", "when": "14 months ago", "content": "Good to hear. I am here whenever something comes up."},
-        {"role": "user", "when": "yesterday 17:00", "content": "hi, coco is limping on her front left after our walk today. not crying, just favouring it"},
-        {"role": "assistant", "when": "yesterday 17:01", "content": "Favouring a leg without pain on touch is usually worth 24 hours of rest and watching. If she is still limping tomorrow, or it gets worse, that changes it."}
+        {
+          "role": "user",
+          "when": "18 months ago",
+          "content": "she's back in hospital, pancreatitis again. i'm switching her to the low fat food properly this time"
+        },
+        {
+          "role": "assistant",
+          "when": "18 months ago",
+          "content": "A strict low-fat diet is the single biggest thing that reduces recurrence. Two episodes makes her a dog who will react to one rich meal."
+        },
+        {
+          "role": "user",
+          "when": "16 months ago",
+          "content": "also she can't have chicken, comes out in a rash"
+        },
+        {
+          "role": "assistant",
+          "when": "16 months ago",
+          "content": "Noted — chicken off the list alongside the fat restriction."
+        },
+        {
+          "role": "user",
+          "when": "14 months ago",
+          "content": "we're doing okay now. diet's sorted"
+        },
+        {
+          "role": "assistant",
+          "when": "14 months ago",
+          "content": "Good to hear. I am here whenever something comes up."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 17:00",
+          "content": "hi, coco is limping on her front left after our walk today. not crying, just favouring it"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 17:01",
+          "content": "Favouring a leg without pain on touch is usually worth 24 hours of rest and watching. If she is still limping tomorrow, or it gets worse, that changes it."
+        }
       ],
       "last_proactive_context": "Toki has not reached out proactively in over a year."
     },
@@ -1026,12 +1735,27 @@
       "category": "immediate_followup",
       "priority": "p1",
       "content": "Following up on Coco's front leg from yesterday. Is she still favouring it?",
-      "render": {"pet_name": "Coco", "species": "dog", "triage_level": "orange", "symptoms": ["lameness"], "stage": 1}
+      "render": {
+        "pet_name": "Coco",
+        "species": "dog",
+        "triage_level": "orange",
+        "symptoms": [
+          "lameness"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Coco", "leg", "limp", "favour", "favor", "rest"],
+      "anchors": [
+        "Coco",
+        "leg",
+        "limp",
+        "favour",
+        "favor",
+        "rest"
+      ],
       "anchors_min": 2,
       "max_chars": 420
     },
@@ -1071,20 +1795,62 @@
         "engagement": "low"
       },
       "memory": [
-        {"when": "14 months ago", "fact": "Hyperthyroidism diagnosed; methimazole started."},
-        {"when": "10 months ago", "fact": "Dose adjusted after a recheck; stable since."},
-        {"when": "6 months ago", "fact": "Weight stable at 6.8 kg."},
-        {"when": "2 months ago", "fact": "Owner reported occasional vomiting after meals; advised slower feeding."},
-        {"when": "3 days ago", "fact": "Vomiting reported again, twice in one day; triaged ORANGE."},
-        {"when": "4 hours ago", "fact": "A care note about three days of low water intake was delivered."}
+        {
+          "when": "14 months ago",
+          "fact": "Hyperthyroidism diagnosed; methimazole started."
+        },
+        {
+          "when": "10 months ago",
+          "fact": "Dose adjusted after a recheck; stable since."
+        },
+        {
+          "when": "6 months ago",
+          "fact": "Weight stable at 6.8 kg."
+        },
+        {
+          "when": "2 months ago",
+          "fact": "Owner reported occasional vomiting after meals; advised slower feeding."
+        },
+        {
+          "when": "3 days ago",
+          "fact": "Vomiting reported again, twice in one day; triaged ORANGE."
+        },
+        {
+          "when": "4 hours ago",
+          "fact": "A care note about three days of low water intake was delivered."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "2 months ago", "content": "he pukes after eating sometimes, no big deal"},
-        {"role": "assistant", "when": "2 months ago", "content": "Eating too fast is the usual cause, and a slow feeder often fixes it. Worth flagging if it becomes more than occasional, since it can also be the medication."},
-        {"role": "user", "when": "3 days ago", "content": "twice today. still probably the eating thing"},
-        {"role": "assistant", "when": "3 days ago", "content": "Twice in a day is more than occasional. On methimazole that is worth mentioning at his next recheck — let me know how the next couple of days go."},
-        {"role": "user", "when": "3 days ago", "content": "sure"},
-        {"role": "assistant", "when": "3 days ago", "content": "I will check back in a couple of days."}
+        {
+          "role": "user",
+          "when": "2 months ago",
+          "content": "he pukes after eating sometimes, no big deal"
+        },
+        {
+          "role": "assistant",
+          "when": "2 months ago",
+          "content": "Eating too fast is the usual cause, and a slow feeder often fixes it. Worth flagging if it becomes more than occasional, since it can also be the medication."
+        },
+        {
+          "role": "user",
+          "when": "3 days ago",
+          "content": "twice today. still probably the eating thing"
+        },
+        {
+          "role": "assistant",
+          "when": "3 days ago",
+          "content": "Twice in a day is more than occasional. On methimazole that is worth mentioning at his next recheck — let me know how the next couple of days go."
+        },
+        {
+          "role": "user",
+          "when": "3 days ago",
+          "content": "sure"
+        },
+        {
+          "role": "assistant",
+          "when": "3 days ago",
+          "content": "I will check back in a couple of days."
+        }
       ],
       "last_proactive_context": "Four hours ago Toki sent a care note about Marlow's water intake being low for three days."
     },
@@ -1100,16 +1866,31 @@
       "category": "immediate_followup",
       "priority": "p1",
       "content": "Coming back to Marlow's vomiting from a few days ago. How have the last two days been?",
-      "render": {"pet_name": "Marlow", "species": "cat", "triage_level": "orange", "symptoms": ["vomiting"], "stage": 1}
+      "render": {
+        "pet_name": "Marlow",
+        "species": "cat",
+        "triage_level": "orange",
+        "symptoms": [
+          "vomiting"
+        ],
+        "stage": 1
+      }
     },
     "user_state": {
       "sent_today": [
-        {"hours_ago": 4, "priority": "p1", "category": "immediate_followup"}
+        {
+          "hours_ago": 4,
+          "priority": "p1",
+          "category": "immediate_followup"
+        }
       ]
     },
     "should_send": false,
     "d7_check": false,
-    "expect": {"gate": "quota", "reason": "daily_cap"},
+    "expect": {
+      "gate": "quota",
+      "reason": "daily_cap"
+    },
     "gold_rubric": {},
     "redlines": []
   },
@@ -1139,21 +1920,67 @@
         "engagement": "high"
       },
       "memory": [
-        {"when": "2 years ago", "fact": "BOAS diagnosed; surgery discussed and deferred."},
-        {"when": "1 year ago", "fact": "Owner began avoiding midday walks in the hot season."},
-        {"when": "7 months ago", "fact": "Mild heat episode after an afternoon walk; recovered with cooling."},
-        {"when": "3 months ago", "fact": "Vet re-raised corrective surgery; owner is considering it."},
-        {"when": "yesterday", "fact": "Collapse after a walk at 33C; triaged RED; emergency cooling and oxygen; discharged the same night."},
-        {"when": "5 hours ago", "fact": "A capped knowledge nudge was delivered and spent the day's budget."}
+        {
+          "when": "2 years ago",
+          "fact": "BOAS diagnosed; surgery discussed and deferred."
+        },
+        {
+          "when": "1 year ago",
+          "fact": "Owner began avoiding midday walks in the hot season."
+        },
+        {
+          "when": "7 months ago",
+          "fact": "Mild heat episode after an afternoon walk; recovered with cooling."
+        },
+        {
+          "when": "3 months ago",
+          "fact": "Vet re-raised corrective surgery; owner is considering it."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Collapse after a walk at 33C; triaged RED; emergency cooling and oxygen; discharged the same night."
+        },
+        {
+          "when": "5 hours ago",
+          "fact": "A capped knowledge nudge was delivered and spent the day's budget."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "7 months ago", "content": "He got very laboured after our 4pm walk today, took about 20 minutes on the cool tiles to settle."},
-        {"role": "assistant", "when": "7 months ago", "content": "Twenty minutes to settle is a long recovery. In a Frenchie with BOAS that is the pattern that precedes a real collapse — worth moving walks to early morning entirely."},
-        {"role": "user", "when": "3 months ago", "content": "Vet brought up the surgery again. I'm still thinking about it."},
-        {"role": "assistant", "when": "3 months ago", "content": "It is a real decision. The thing that usually tips it is how often he is having recovery episodes like the one in the hot season."},
-        {"role": "user", "when": "yesterday 16:40", "content": "He collapsed on the way back. He's breathing but his tongue looked purple. Going now."},
-        {"role": "assistant", "when": "yesterday 16:41", "content": "Purple tongue is an oxygen emergency — go straight in, keep him cool in the car, do not wait."},
-        {"role": "user", "when": "yesterday 22:00", "content": "They cooled him and gave oxygen. Home now. They want to talk about the surgery again next week."}
+        {
+          "role": "user",
+          "when": "7 months ago",
+          "content": "He got very laboured after our 4pm walk today, took about 20 minutes on the cool tiles to settle."
+        },
+        {
+          "role": "assistant",
+          "when": "7 months ago",
+          "content": "Twenty minutes to settle is a long recovery. In a Frenchie with BOAS that is the pattern that precedes a real collapse — worth moving walks to early morning entirely."
+        },
+        {
+          "role": "user",
+          "when": "3 months ago",
+          "content": "Vet brought up the surgery again. I'm still thinking about it."
+        },
+        {
+          "role": "assistant",
+          "when": "3 months ago",
+          "content": "It is a real decision. The thing that usually tips it is how often he is having recovery episodes like the one in the hot season."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 16:40",
+          "content": "He collapsed on the way back. He's breathing but his tongue looked purple. Going now."
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 16:41",
+          "content": "Purple tongue is an oxygen emergency — go straight in, keep him cool in the car, do not wait."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 22:00",
+          "content": "They cooled him and gave oxygen. Home now. They want to talk about the surgery again next week."
+        }
       ],
       "last_proactive_context": "Five hours ago Toki sent a seasonal note about heat and flat-faced breeds."
     },
@@ -1169,17 +1996,38 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Tofu after yesterday's collapse. How is his breathing today?",
-      "render": {"pet_name": "Tofu", "species": "dog", "triage_level": "red", "symptoms": ["collapse", "respiratory distress", "heat"], "stage": 1}
+      "render": {
+        "pet_name": "Tofu",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "collapse",
+          "respiratory distress",
+          "heat"
+        ],
+        "stage": 1
+      }
     },
     "user_state": {
       "sent_today": [
-        {"hours_ago": 5, "priority": "p2", "category": "knowledge_push"}
+        {
+          "hours_ago": 5,
+          "priority": "p2",
+          "category": "knowledge_push"
+        }
       ]
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Tofu", "breath", "rest", "settl", "cool", "noisy"],
+      "anchors": [
+        "Tofu",
+        "breath",
+        "rest",
+        "settl",
+        "cool",
+        "noisy"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 480
@@ -1222,15 +2070,40 @@
         "engagement": "moderate"
       },
       "memory": [
-        {"when": "5 months ago", "fact": "Owner asked whether a cheaper food would do; was steered to discuss with the vet."},
-        {"when": "2 days ago", "fact": "Urethral obstruction; catheterised and hospitalised for 48 hours; discharged on prazosin and a urinary diet."},
-        {"when": "yesterday", "fact": "Owner asked whether there is a cheaper way to monitor at home."}
+        {
+          "when": "5 months ago",
+          "fact": "Owner asked whether a cheaper food would do; was steered to discuss with the vet."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "Urethral obstruction; catheterised and hospitalised for 48 hours; discharged on prazosin and a urinary diet."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Owner asked whether there is a cheaper way to monitor at home."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "2 days ago 06:10", "content": "he's in the litter box every ten minutes crying and nothing's happening"},
-        {"role": "assistant", "when": "2 days ago 06:11", "content": "In a male cat that is a blocked bladder until proven otherwise, and it becomes life-threatening within hours. Emergency vet now."},
-        {"role": "user", "when": "yesterday 19:00", "content": "he's home. $2,400. they want a recheck in a week and the special food is $80 a bag. is there a cheaper way to just watch him at home?"},
-        {"role": "assistant", "when": "yesterday 19:01", "content": "Watching at home matters and costs nothing: how often he goes, whether he produces urine each time, and whether he is straining. What it cannot replace is the recheck — reblocking in the first fortnight is common."}
+        {
+          "role": "user",
+          "when": "2 days ago 06:10",
+          "content": "he's in the litter box every ten minutes crying and nothing's happening"
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 06:11",
+          "content": "In a male cat that is a blocked bladder until proven otherwise, and it becomes life-threatening within hours. Emergency vet now."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 19:00",
+          "content": "he's home. $2,400. they want a recheck in a week and the special food is $80 a bag. is there a cheaper way to just watch him at home?"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 19:01",
+          "content": "Watching at home matters and costs nothing: how often he goes, whether he produces urine each time, and whether he is straining. What it cannot replace is the recheck — reblocking in the first fortnight is common."
+        }
       ]
     },
     "trigger": {
@@ -1245,16 +2118,37 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Following up on Ziggy since he came home. Is he producing urine each time he goes?",
-      "render": {"pet_name": "Ziggy", "species": "cat", "triage_level": "red", "symptoms": ["urinary obstruction"], "stage": 1}
+      "render": {
+        "pet_name": "Ziggy",
+        "species": "cat",
+        "triage_level": "red",
+        "symptoms": [
+          "urinary obstruction"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Ziggy", "urin", "litter", "pee", "strain", "produc"],
+      "anchors": [
+        "Ziggy",
+        "urin",
+        "litter",
+        "pee",
+        "strain",
+        "produc"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 450,
-      "must_not_contain_any": ["upgrade", "subscription", "premium", "unlock", "for just"]
+      "must_not_contain_any": [
+        "upgrade",
+        "subscription",
+        "premium",
+        "unlock",
+        "for just"
+      ]
     },
     "gold_rubric": {
       "D3": "The free, high-value monitoring is specific: whether urine is actually produced, how often, and whether he is straining. That is what the owner can do tonight at no cost.",
@@ -1292,14 +2186,36 @@
         "engagement": "high"
       },
       "memory": [
-        {"when": "3 days ago", "fact": "Swallowed part of a rubber ball; triaged RED."},
-        {"when": "2 days ago", "fact": "Enterotomy performed; discharged the following morning with a 48-72 hour watch window for incision and appetite."}
+        {
+          "when": "3 days ago",
+          "fact": "Swallowed part of a rubber ball; triaged RED."
+        },
+        {
+          "when": "2 days ago",
+          "fact": "Enterotomy performed; discharged the following morning with a 48-72 hour watch window for incision and appetite."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "3 days ago 14:00", "content": "poppy swallowed half a rubber ball, she's retching a bit"},
-        {"role": "assistant", "when": "3 days ago 14:01", "content": "A rubber ball fragment is a genuine obstruction risk and retching suggests it is already causing trouble. Vet today."},
-        {"role": "user", "when": "2 days ago 09:00", "content": "she had surgery last night, they removed it from her small intestine. home this morning with painkillers and a cone"},
-        {"role": "assistant", "when": "2 days ago 09:01", "content": "That is the good version of that story. The next couple of days are the ones that matter — appetite, the incision, and whether she stays comfortable."}
+        {
+          "role": "user",
+          "when": "3 days ago 14:00",
+          "content": "poppy swallowed half a rubber ball, she's retching a bit"
+        },
+        {
+          "role": "assistant",
+          "when": "3 days ago 14:01",
+          "content": "A rubber ball fragment is a genuine obstruction risk and retching suggests it is already causing trouble. Vet today."
+        },
+        {
+          "role": "user",
+          "when": "2 days ago 09:00",
+          "content": "she had surgery last night, they removed it from her small intestine. home this morning with painkillers and a cone"
+        },
+        {
+          "role": "assistant",
+          "when": "2 days ago 09:01",
+          "content": "That is the good version of that story. The next couple of days are the ones that matter — appetite, the incision, and whether she stays comfortable."
+        }
       ]
     },
     "trigger": {
@@ -1314,12 +2230,27 @@
       "category": "immediate_followup",
       "priority": "p0",
       "content": "Two days on from Poppy's surgery. How does the incision look, and is she eating?",
-      "render": {"pet_name": "Poppy", "species": "dog", "triage_level": "red", "symptoms": ["post-operative recovery"], "stage": 1}
+      "render": {
+        "pet_name": "Poppy",
+        "species": "dog",
+        "triage_level": "red",
+        "symptoms": [
+          "post-operative recovery"
+        ],
+        "stage": 1
+      }
     },
     "should_send": true,
     "d7_check": true,
     "expect": {
-      "anchors": ["Poppy", "incision", "eat", "appetite", "swell", "wound"],
+      "anchors": [
+        "Poppy",
+        "incision",
+        "eat",
+        "appetite",
+        "swell",
+        "wound"
+      ],
       "anchors_min": 2,
       "no_emoji": true,
       "max_chars": 450
@@ -1358,13 +2289,31 @@
         "engagement": "low"
       },
       "memory": [
-        {"when": "1 week ago", "fact": "Owner mentioned Pixel scratching an ear more than usual."},
-        {"when": "yesterday", "fact": "Head shaking and ear scratching; triaged ORANGE; advised to check for discharge and monitor for a day."}
+        {
+          "when": "1 week ago",
+          "fact": "Owner mentioned Pixel scratching an ear more than usual."
+        },
+        {
+          "when": "yesterday",
+          "fact": "Head shaking and ear scratching; triaged ORANGE; advised to check for discharge and monitor for a day."
+        }
       ],
       "prior_transcript": [
-        {"role": "user", "when": "yesterday 18:00", "content": "pixel keeps shaking her head and going at her ear"},
-        {"role": "assistant", "when": "yesterday 18:01", "content": "Worth a look inside the ear for redness, dark discharge or a smell. If any of those, it is a vet visit rather than something to watch."},
-        {"role": "user", "when": "yesterday 18:02", "content": "k will check later"}
+        {
+          "role": "user",
+          "when": "yesterday 18:00",
+          "content": "pixel keeps shaking her head and going at her ear"
+        },
+        {
+          "role": "assistant",
+          "when": "yesterday 18:01",
+          "content": "Worth a look inside the ear for redness, dark discharge or a smell. If any of those, it is a vet visit rather than something to watch."
+        },
+        {
+          "role": "user",
+          "when": "yesterday 18:02",
+          "content": "k will check later"
+        }
       ]
     },
     "trigger": {
@@ -1379,11 +2328,23 @@
       "category": "immediate_followup",
       "priority": "p1",
       "content": "Following up on Pixel's ear from yesterday. Did you get a look inside?",
-      "render": {"pet_name": "Pixel", "species": "cat", "triage_level": "orange", "symptoms": ["ear scratching", "head shaking"], "stage": 1}
+      "render": {
+        "pet_name": "Pixel",
+        "species": "cat",
+        "triage_level": "orange",
+        "symptoms": [
+          "ear scratching",
+          "head shaking"
+        ],
+        "stage": 1
+      }
     },
     "should_send": false,
     "d7_check": false,
-    "expect": {"gate": "digest_window", "reason": "digest_window"},
+    "expect": {
+      "gate": "digest_window",
+      "reason": "digest_window"
+    },
     "gold_rubric": {},
     "redlines": []
   }

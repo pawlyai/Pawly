@@ -69,6 +69,97 @@ def _iso(t: datetime | None) -> str | None:
     return None if t is None else t.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+# How a case's pet_profile block maps onto the wire profile. Scalars first,
+# then lists.
+_PROFILE_SCALARS = {
+    "breed": "breed",
+    "age": "age",
+    "sex": "sex",
+    "gender": "sex",
+    "weight": "weight",
+    "neutered": "neutered",
+    "spayed": "neutered",
+    "breed_risk": "breed_risk",
+}
+_PROFILE_LISTS = {
+    "chronic_conditions": "conditions",
+    "conditions": "conditions",
+    "medications": "medications",
+    "allergies": "allergies",
+    "baseline": "baselines",
+    "baselines": "baselines",
+}
+#: Keys a case carries for the judge's benefit that are not part of the pet's
+#: clinical picture — they are already in the scenario text and would read as
+#: noise in a prompt.
+_PROFILE_SKIP = {"name", "species"}
+
+
+def pack_to_render(pack: dict[str, Any]) -> dict[str, Any]:
+    """Turn a case's context_pack into the wire fields the renderer reads.
+
+    Anything unrecognised in `pet_profile` lands in `conditions` rather than
+    being dropped. A case author adding `care_plan: comfort care at home` is
+    stating the single most important thing about that animal, and silently
+    discarding it because the key is new would produce a nudge that suggests
+    treatment against an agreed plan — and a corpus that scored it without ever
+    showing the model why it was wrong.
+    """
+    out: dict[str, Any] = {}
+
+    profile: dict[str, Any] = {}
+    extra_conditions: list[str] = []
+    for key, value in (pack.get("pet_profile") or {}).items():
+        if key in _PROFILE_SKIP or value in (None, "", [], {}):
+            continue
+        if key in _PROFILE_SCALARS:
+            profile[_PROFILE_SCALARS[key]] = str(value)
+        elif key in _PROFILE_LISTS:
+            field = _PROFILE_LISTS[key]
+            values = value if isinstance(value, list) else [str(value)]
+            profile.setdefault(field, []).extend(str(v) for v in values)
+        else:
+            extra_conditions.append(f"{key.replace('_', ' ')}: {value}")
+    if extra_conditions:
+        profile.setdefault("conditions", []).extend(extra_conditions)
+    if profile:
+        out["profile"] = profile
+
+    memories = [
+        {"when": str(m.get("when", "")), "fact": str(m.get("fact", m))}
+        for m in (pack.get("memory") or [])
+        if (m.get("fact") if isinstance(m, dict) else m)
+    ]
+    if memories:
+        out["memories"] = memories
+
+    transcript = [
+        {
+            "role": str(t.get("role", "user")),
+            "when": str(t.get("when", "")),
+            "content": str(t.get("content", "")),
+        }
+        for t in (pack.get("prior_transcript") or [])
+        if isinstance(t, dict) and t.get("content")
+    ]
+    if transcript:
+        out["transcript"] = transcript
+
+    if last := pack.get("last_proactive_context"):
+        out["last_proactive"] = str(last)
+
+    # The persona is how this owner writes and what they need from a message —
+    # the difference between a clinical sentence and one an elderly owner with
+    # limited English can answer. It is a hint to a writer, not a field to
+    # branch on, so it travels as the prose the case wrote.
+    persona = pack.get("user_persona") or {}
+    style_bits = [str(persona[k]) for k in ("style", "engagement") if persona.get(k)]
+    if style_bits:
+        out["owner_style"] = " · ".join(style_bits)
+
+    return out
+
+
 @dataclass
 class DryRunOutcome:
     """What the service said it would do."""
@@ -116,6 +207,11 @@ class ProactiveDryRunDriver:
         render = dict(cand.get("render") or {})
         if anchor is not None and "anchor_at" not in render:
             render["anchor_at"] = _iso(anchor)
+        # The context pack is declared once per case and reaches BOTH the model
+        # and the judge. That symmetry is the point: a judge scoring relevance
+        # against background the model was never given is measuring the gap
+        # between two fixtures, not the quality of a message.
+        render.update(pack_to_render(case.get("context_pack") or {}))
         if render:
             cand["render"] = render
 
