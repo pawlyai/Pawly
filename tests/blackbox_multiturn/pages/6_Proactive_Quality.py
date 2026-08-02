@@ -30,6 +30,15 @@ st.set_page_config(page_title="Proactive Quality", page_icon="📨", layout="wid
 CASES_FILE   = REPO_ROOT / "tests" / "blackbox_proactive" / "test_data" / "proactive_quality_cases.json"
 RESULTS_DIR  = REPO_ROOT / "tests" / "blackbox_multiturn" / "results"
 
+#: Every report the History tab will list. Anchored patterns rather than a bare
+#: `proactive_*` so an unrelated file dropped in results/ does not crash the
+#: page on a schema it does not have.
+_REPORT_GLOBS = (
+    "proactive_quality_report_*.json",
+    "proactive_regression_judged_report_*.json",
+    "proactive_winback_recheck_report_*.json",
+)
+
 _DEEPSEEK_BASE_URL  = "https://api.deepseek.com/v1"
 _DEEPSEEK_MAX_TOKENS = 4000
 _JUDGE_MODELS = ["deepseek-v4-pro", "gemini-2.5-flash"]
@@ -392,7 +401,20 @@ def _load_report(path: Path) -> dict:
 
 
 def _tab_history() -> None:
-    report_files = sorted(RESULTS_DIR.glob("proactive_quality_report_*.json"), reverse=True)
+    # Two families of report live in results/: the ones this page writes
+    # (proactive_quality_report_*) and the ones the 200-case regression runner
+    # writes (proactive_regression_*, proactive_winback_*). The latter is a
+    # superset of the former's case schema — same name/status/score/threshold/
+    # reason/turns, plus a `metadata` block — so both render here, and the
+    # per-dimension detail below is drawn only when that block is present.
+    report_files = sorted(
+        {
+            f
+            for pattern in _REPORT_GLOBS
+            for f in RESULTS_DIR.glob(pattern)
+        },
+        reverse=True,
+    )
     if not report_files:
         st.info("No reports yet. Run cases in **▶ Run** tab or run `pytest tests/blackbox_proactive/`.")
         return
@@ -413,6 +435,28 @@ def _tab_history() -> None:
     m1.metric("Total cases", total)
     m2.metric("Passed", f"{passed}/{total}")
     m3.metric("Avg score", f"{avg:.2f}")
+
+    # A regression run reports the judge-independent half separately, and that
+    # is the half worth reading first: assertions and restraint can be perfect
+    # while the dimension means are nowhere near the bar.
+    means = summary.get("dimension_means") or {}
+    if means:
+        cols = st.columns(len(means) + 2)
+        for col, (key, value) in zip(cols, means.items()):
+            col.metric(key, f"{value:.2f}", delta=f"{value - 0.70:+.2f} vs bar",
+                       delta_color="normal")
+        asserts = summary.get("assertions_passed")
+        if asserts is not None:
+            cols[-2].metric("Assertions", f"{asserts}/{total}")
+        restraint = summary.get("restraint_correct")
+        if restraint is not None:
+            cols[-1].metric("Restraint", f"{restraint}/{summary.get('restraint_cases', 0)}")
+        st.caption(
+            f"judge {summary.get('judge_model', '?')} · D7 hooks "
+            f"{summary.get('d7_hooks_found', 0)} of {summary.get('d7_checked', 0)} checked"
+            + (" · D7 single-judge, a split vote cannot be detected"
+               if len(summary.get("d7_judges") or []) < 2 else "")
+        )
 
     st.divider()
 
@@ -446,6 +490,38 @@ def _tab_history() -> None:
 
         st.markdown("**Judge reason**")
         st.write(c.get("reason", ""))
+
+        # One GEval per dimension is the whole point of the scoring design — a
+        # single blended number hides the warm, well-timed, generic nudge. So
+        # show them apart, each with the prose that produced it.
+        meta = c.get("metadata") or {}
+        for dim in meta.get("dimensions") or []:
+            failed = dim.get("core") and dim.get("score", 0) < dim.get("threshold", 0.7)
+            head = (
+                f"{'🔴' if failed else '🟢' if dim.get('score', 0) >= 0.7 else '🟡'} "
+                f"{dim.get('key')} {dim.get('label')} — {dim.get('score', 0):.2f}"
+                f"{' (core, failed)' if failed else ''}"
+            )
+            with st.expander(head, expanded=failed):
+                st.write(dim.get("reason", ""))
+
+        d7 = meta.get("d7")
+        if d7:
+            votes = "; ".join(
+                f"{v.get('judge')}={'clean' if v.get('clean') else 'HOOK'}"
+                for v in d7.get("votes") or []
+            )
+            label = "D7 no-upsell — clean" if d7.get("clean") else "D7 no-upsell — HOOK FOUND"
+            if d7.get("needs_review"):
+                label = "D7 no-upsell — judges disagreed, needs review"
+            with st.expander(f"{'🟢' if d7.get('clean') else '🔴'} {label} · {votes}"):
+                for v in d7.get("votes") or []:
+                    st.markdown(f"**{v.get('judge')}**")
+                    st.write(v.get("reason", ""))
+
+        for a in (meta.get("assert_failures") or []):
+            st.error(f"assertion `{a.get('name')}` failed — {a.get('detail')}")
+
         st.divider()
 
         turns = c.get("turns", [])
