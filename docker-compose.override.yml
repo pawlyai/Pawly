@@ -8,6 +8,9 @@ services:
       # against the unreachable production host (api.pawly.app).
       NODE_ENV: development
 
-  langfuse-server:
-    environment:
-      NEXTAUTH_URL: http://localhost:3000
+  # langfuse-server's NEXTAUTH_URL override is gone: the base compose now
+  # defaults it to http://localhost:3000 anyway, so this only ever restated the
+  # default — while being the one thing that could quietly break a deployed
+  # instance. This file is labelled "not used in production", but it sits in the
+  # same checkout on the production box and `docker compose up` picks it up
+  # unless someone remembers -f. A comment is not a guard.
