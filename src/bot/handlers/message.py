@@ -19,26 +19,33 @@ from typing import Any
 
 from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from sqlalchemy import select
 
+from src.config import settings
 from src.db.engine import get_session_factory
 from src.db.models import (
     ChatSession,
     Dialogue,
-    Message as DBMessage,
+    Gender,
     MessageRole,
     MessageType,
-    Pet,
-    Species,
-    Gender,
     NeuteredStatus,
+    Pet,
     RawMessage,
+    Species,
     User,
 )
+from src.db.models import (
+    Message as DBMessage,
+)
 from src.jobs.pool import get_arq_pool
-from src.llm.orchestrator import OrchestratorResult, generate_response
+from src.llm.orchestrator import (
+    ChatActionsResult,
+    OrchestratorResult,
+    generate_chat_actions,
+    generate_response,
+)
 from src.utils.logger import get_logger
 
 router = Router(name="message")
@@ -231,7 +238,7 @@ def _parse_weight(raw: str) -> float | None:
 def parse_pet_profile(text: str) -> dict | None:
     if not text:
         return None
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
     # 1) Markdown table parsing
     for i, line in enumerate(lines):
         if "|" in line and "name" in line.lower() and "species" in line.lower():
@@ -511,6 +518,74 @@ async def enqueue_followup_check(
         logger.error("failed to enqueue followup_check", error=str(exc), user_id=user_id)
 
 
+# ── Chat-actions helpers ──────────────────────────────────────────────────────
+
+
+def _nav_actions_keyboard(nav_actions: list[dict]) -> InlineKeyboardMarkup | None:
+    """Build an inline keyboard from nav_actions (add_reminder handled separately)."""
+    rows: list[list[InlineKeyboardButton]] = []
+    base = settings.miniapp_api_url.rstrip("/")
+    for action in nav_actions:
+        action_id = action.get("action_id", "")
+        payload = action.get("payload") or {}
+        if action_id == "nearest_clinics":
+            rows.append([InlineKeyboardButton(
+                text="🏥 Find nearby vets",
+                web_app=WebAppInfo(url=f"{base}/clinics"),
+            )])
+        elif action_id == "vet_summary":
+            rows.append([InlineKeyboardButton(
+                text="📋 View vet records",
+                web_app=WebAppInfo(url=f"{base}/vet-summary"),
+            )])
+        elif action_id == "open_page":
+            target = payload.get("target", "home")
+            rows.append([InlineKeyboardButton(
+                text=f"Open {target}",
+                web_app=WebAppInfo(url=f"{base}/{target}"),
+            )])
+        elif action_id == "open_programme":
+            rows.append([InlineKeyboardButton(
+                text="📋 View programme",
+                web_app=WebAppInfo(url=f"{base}/programme"),
+            )])
+    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
+
+
+async def store_enriched_messages_chat_actions(
+    dialogue_id: uuid.UUID,
+    user_text: str,
+    result: ChatActionsResult,
+) -> None:
+    """Persist enriched user + bot Message records for the chat-actions path."""
+    from src.db.models import RiskLevel
+    factory = get_session_factory()
+    _safety_to_risk = {"red": RiskLevel.HIGH, "orange": RiskLevel.MED, "green": RiskLevel.LOW}
+    risk = _safety_to_risk.get(result.safety_level, RiskLevel.LOW)
+    bot_text = " ".join(b.get("text", "") for b in result.blocks if b.get("text"))
+    async with factory() as db:
+        user_msg = DBMessage(
+            dialogue_id=dialogue_id,
+            role=MessageRole.USER,
+            content=user_text,
+            message_type=MessageType.TEXT,
+            intent=result.intent,
+            symptom_tags=[],
+            risk_level=risk,
+            is_risk_blocked=False,
+        )
+        bot_msg = DBMessage(
+            dialogue_id=dialogue_id,
+            role=MessageRole.BOT,
+            content=bot_text,
+            message_type=MessageType.TEXT,
+            is_risk_blocked=(result.safety_level == "red"),
+        )
+        db.add(user_msg)
+        db.add(bot_msg)
+        await db.commit()
+
+
 # ── Handler ───────────────────────────────────────────────────────────────────
 
 
@@ -586,7 +661,7 @@ async def handle_message(
                 pass
 
         # Edit the form message to reflect the updated value
-        from src.bot.handlers.callbacks import _build_form_text, _build_form_keyboard
+        from src.bot.handlers.callbacks import _build_form_keyboard, _build_form_text
 
         form_msg_id = session.get("profile_form_message_id")
         if form_msg_id:
@@ -714,80 +789,188 @@ async def handle_message(
     session["current_session_id"] = str(chat_session.id)
     session["current_dialogue_id"] = str(dialogue.id)
 
-    # 3. Call LLM orchestrator
-    result = await generate_response(
-        user=user,
-        pet=active_pet,
-        dialogue_id=str(dialogue.id),
-        user_message=message.text,
-        message_type=MessageType.TEXT,
-        session=session,
-    )
+    if settings.use_chat_actions:
+        # ── 聊天办事 path (USE_CHAT_ACTIONS=true) ──────────────────────────────
 
-    # 3b. Extract [SET_REMINDER:...] from response and store in session
-    clean_text, reminder_data = _extract_reminder(result.response_text)
-    if reminder_data and not session.get("pending_reminder"):
-        session["pending_reminder"] = reminder_data
-        remind_dt = datetime.fromisoformat(reminder_data["remind_at"])
-        date_str = remind_dt.strftime("%B %d, %Y")
-        result.response_text = (
-            clean_text
-            + f'\n\n_Want me to set a reminder: "{reminder_data["content"]}" on {date_str}?'
-            " Reply **Yes** or **No**._"
-        )
-    elif clean_text != result.response_text:
-        result.response_text = clean_text
-
-    # 4. Send reply (split if > 4000 chars)
-    # RED/ORANGE use HTML (formatters inject <b>, <blockquote> etc.)
-    # GREEN uses Markdown so LLM bold/italic renders properly.
-    # Fallback to plain text if Telegram rejects the parse_mode
-    # (Gemini sometimes emits unclosed * or _ entities).
-    triage_final = (result.triage_result or {}).get("final", "green")
-    pm = "HTML" if triage_final in ("red", "orange") else "Markdown"
-    for chunk in split_message(result.response_text, max_length=4000):
-        try:
-            await message.answer(chunk, parse_mode=pm)
-        except Exception:
-            await message.answer(chunk, parse_mode=None)
-
-    # 5. Store bot reply as raw message
-    bot_raw = await store_raw_message(
-        user_id=user_id_str,
-        pet_id=pet_id_str,
-        dialogue_id=str(dialogue.id),
-        session_id=str(chat_session.id),
-        role=MessageRole.BOT,
-        raw_content=result.response_text,
-    )
-
-    # 6. Store enriched messages with triage metadata
-    await store_enriched_messages(dialogue.id, message.text, result)
-
-    # 7. Queue extraction job — fire-and-forget (never block on the job itself)
-    if active_pet:
-        await enqueue_extraction(
-            user_id=user_id_str,
-            pet_id=pet_id_str,  # type: ignore[arg-type]
+        # 3. Call chat-actions orchestrator
+        ca_result = await generate_chat_actions(
+            user=user,
+            pet=active_pet,
             dialogue_id=str(dialogue.id),
-            message_ids=[str(raw_msg.id), str(bot_raw.id)],
+            user_message=message.text,
+            message_type=MessageType.TEXT,
+            session=session,
         )
 
-    # 7b. Schedule multi-stage follow-up for RED/ORANGE if user goes silent
-    if active_pet and triage_final in ("red", "orange"):
-        delay_hours = 2 if triage_final == "red" else 4
-        await enqueue_followup_check(
-            telegram_id=user.telegram_id,
+        # 4. Send blocks sequentially
+        for block in ca_result.blocks:
+            block_text = block.get("text", "")
+            if not block_text:
+                continue
+            pm = "HTML" if (
+                ca_result.safety_level == "red"
+                or block.get("type") == "educate.redflag"
+            ) else "Markdown"
+            for chunk in split_message(block_text, max_length=4000):
+                try:
+                    await message.answer(chunk, parse_mode=pm)
+                except Exception:
+                    await message.answer(chunk, parse_mode=None)
+
+        # 4b. Process add_reminder nav action before sending the keyboard
+        add_reminder_action = next(
+            (a for a in ca_result.nav_actions if a.get("action_id") == "add_reminder"),
+            None,
+        )
+        if add_reminder_action and not session.get("pending_reminder"):
+            payload = add_reminder_action.get("payload") or {}
+            content = payload.get("content", "")
+            remind_at_str = payload.get("remind_at", "")
+            if content and remind_at_str:
+                try:
+                    remind_at = datetime.fromisoformat(remind_at_str)
+                    session["pending_reminder"] = {
+                        "content": content,
+                        "remind_at": remind_at.isoformat(),
+                    }
+                    date_str = remind_at.strftime("%B %d, %Y")
+                    await message.answer(
+                        f'_Want me to set a reminder: "{content}" on {date_str}?'
+                        " Reply **Yes** or **No**._",
+                        parse_mode="Markdown",
+                    )
+                except (ValueError, TypeError):
+                    pass
+
+        # 4c. Send nav-actions keyboard (excluding add_reminder)
+        display_nav = [
+            a for a in ca_result.nav_actions if a.get("action_id") != "add_reminder"
+        ]
+        kb = _nav_actions_keyboard(display_nav)
+        if kb:
+            await message.answer("Here are some quick actions:", reply_markup=kb)
+
+        # Log record_actions — actual DB writes are dispatched in a later phase
+        if ca_result.record_actions:
+            logger.info(
+                "chat_actions record_actions pending dispatch",
+                record_actions=ca_result.record_actions,
+                pet_id=pet_id_str,
+            )
+
+        # 5. Store bot reply as raw message
+        bot_text = " ".join(b.get("text", "") for b in ca_result.blocks if b.get("text"))
+        bot_raw = await store_raw_message(
             user_id=user_id_str,
-            pet_id=pet_id_str or "",
-            pet_name=active_pet.name or "your pet",
-            pet_species=active_pet.species.value,
-            triage_level=triage_final.upper(),
-            triage_record_id=str(raw_msg.id),
-            symptom_tags=result.symptom_tags,
-            delay_hours=delay_hours,
+            pet_id=pet_id_str,
+            dialogue_id=str(dialogue.id),
+            session_id=str(chat_session.id),
+            role=MessageRole.BOT,
+            raw_content=bot_text,
         )
 
-    # 8. Update session counters
+        # 6. Store enriched messages
+        await store_enriched_messages_chat_actions(dialogue.id, message.text, ca_result)
+
+        # 7. Queue extraction + follow-up
+        if active_pet:
+            await enqueue_extraction(
+                user_id=user_id_str,
+                pet_id=pet_id_str,  # type: ignore[arg-type]
+                dialogue_id=str(dialogue.id),
+                message_ids=[str(raw_msg.id), str(bot_raw.id)],
+            )
+        if active_pet and ca_result.safety_level in ("red", "orange"):
+            delay_hours = 2 if ca_result.safety_level == "red" else 4
+            await enqueue_followup_check(
+                telegram_id=user.telegram_id,
+                user_id=user_id_str,
+                pet_id=pet_id_str or "",
+                pet_name=active_pet.name or "your pet",
+                pet_species=active_pet.species.value,
+                triage_level=ca_result.safety_level.upper(),
+                triage_record_id=str(raw_msg.id),
+                symptom_tags=[],
+                delay_hours=delay_hours,
+            )
+
+    else:
+        # ── Classic path (USE_CHAT_ACTIONS=false, default) ─────────────────────
+
+        # 3. Call LLM orchestrator
+        result = await generate_response(
+            user=user,
+            pet=active_pet,
+            dialogue_id=str(dialogue.id),
+            user_message=message.text,
+            message_type=MessageType.TEXT,
+            session=session,
+        )
+
+        # 3b. Extract [SET_REMINDER:...] from response and store in session
+        clean_text, reminder_data = _extract_reminder(result.response_text)
+        if reminder_data and not session.get("pending_reminder"):
+            session["pending_reminder"] = reminder_data
+            remind_dt = datetime.fromisoformat(reminder_data["remind_at"])
+            date_str = remind_dt.strftime("%B %d, %Y")
+            result.response_text = (
+                clean_text
+                + f'\n\n_Want me to set a reminder: "{reminder_data["content"]}" on {date_str}?'
+                " Reply **Yes** or **No**._"
+            )
+        elif clean_text != result.response_text:
+            result.response_text = clean_text
+
+        # 4. Send reply (split if > 4000 chars)
+        # RED/ORANGE use HTML (formatters inject <b>, <blockquote> etc.)
+        # GREEN uses Markdown so LLM bold/italic renders properly.
+        # Fallback to plain text if Telegram rejects the parse_mode
+        # (Gemini sometimes emits unclosed * or _ entities).
+        triage_final = (result.triage_result or {}).get("final", "green")
+        pm = "HTML" if triage_final in ("red", "orange") else "Markdown"
+        for chunk in split_message(result.response_text, max_length=4000):
+            try:
+                await message.answer(chunk, parse_mode=pm)
+            except Exception:
+                await message.answer(chunk, parse_mode=None)
+
+        # 5. Store bot reply as raw message
+        bot_raw = await store_raw_message(
+            user_id=user_id_str,
+            pet_id=pet_id_str,
+            dialogue_id=str(dialogue.id),
+            session_id=str(chat_session.id),
+            role=MessageRole.BOT,
+            raw_content=result.response_text,
+        )
+
+        # 6. Store enriched messages with triage metadata
+        await store_enriched_messages(dialogue.id, message.text, result)
+
+        # 7. Queue extraction job — fire-and-forget (never block on the job itself)
+        if active_pet:
+            await enqueue_extraction(
+                user_id=user_id_str,
+                pet_id=pet_id_str,  # type: ignore[arg-type]
+                dialogue_id=str(dialogue.id),
+                message_ids=[str(raw_msg.id), str(bot_raw.id)],
+            )
+
+        # 7b. Schedule multi-stage follow-up for RED/ORANGE if user goes silent
+        if active_pet and triage_final in ("red", "orange"):
+            delay_hours = 2 if triage_final == "red" else 4
+            await enqueue_followup_check(
+                telegram_id=user.telegram_id,
+                user_id=user_id_str,
+                pet_id=pet_id_str or "",
+                pet_name=active_pet.name or "your pet",
+                pet_species=active_pet.species.value,
+                triage_level=triage_final.upper(),
+                triage_record_id=str(raw_msg.id),
+                symptom_tags=result.symptom_tags,
+                delay_hours=delay_hours,
+            )
+
+    # 8. Update session counters (both paths)
     session["turn_count"] = session.get("turn_count", 0) + 1
     session["last_message_at"] = time.time()
