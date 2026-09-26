@@ -937,6 +937,21 @@ async def _generate_chat_actions_classic(
         special_scenarios=format_special_rules(red_flags),
     )
 
+    # ── Pending clarify state ─────────────────────────────────────────────────
+    # When the previous turn emitted a `clarify` block, we stash it in session
+    # so this turn's LLM call knows it's replying to a specific question.
+    _pending_clarify: dict | None = (session or {}).get("pending_clarify")
+    if _pending_clarify:
+        _rounds_so_far = _pending_clarify.get("rounds_used", 0)
+        _max_rounds = _pending_clarify.get("max_rounds", 2)
+        memory_context = (
+            memory_context
+            + f"\n[PENDING CLARIFICATION — round {_rounds_so_far + 1}/{_max_rounds}]: "
+            f"You previously asked: \"{_pending_clarify['question']}\". "
+            f"The user is replying to that. If they gave the info you needed, "
+            f"answer now. Do NOT ask the same question again."
+        )
+
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]
 
@@ -985,6 +1000,30 @@ async def _generate_chat_actions_classic(
             pet_id=pet_id_str,
         )
 
+    # ── 6. UPDATE CLARIFY STATE MACHINE ──────────────────────────────────────
+    has_clarify = any(b.get("type") == "clarify" for b in result.blocks)
+    if has_clarify and session is not None:
+        _max = 2 if _pending_clarify is None else _pending_clarify.get("max_rounds", 2)
+        _used = 1 if _pending_clarify is None else _pending_clarify.get("rounds_used", 0) + 1
+        if _used >= _max:
+            # Too many clarify rounds — collapse clarify block to answer so we stop looping
+            result.blocks = [
+                {**b, "type": "answer"} if b.get("type") == "clarify" else b
+                for b in result.blocks
+            ]
+            result.violations.append("clarify_collapsed_max_rounds_exceeded")
+            result.was_fixed = True
+            session.pop("pending_clarify", None)
+        else:
+            clarify_text = next(b["text"] for b in result.blocks if b.get("type") == "clarify")
+            session["pending_clarify"] = {
+                "question": clarify_text,
+                "max_rounds": _max,
+                "rounds_used": _used,
+            }
+    elif session is not None:
+        session.pop("pending_clarify", None)
+
     update_span(
         input={"user_message": user_message},
         output={"blocks": result.blocks, "nav_actions": result.nav_actions},
@@ -996,6 +1035,7 @@ async def _generate_chat_actions_classic(
             "block_count": len(result.blocks),
             "record_action_count": len(result.record_actions),
             "nav_action_count": len(result.nav_actions),
+            "pending_clarify_active": _pending_clarify is not None,
             "chat_model_used": chat_model,
             "input_tokens": in_tok,
             "output_tokens": out_tok,
