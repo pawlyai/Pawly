@@ -370,6 +370,101 @@ class GeminiClient:
             config=config,
         )
 
+    @observe_generation(name="gemini-call-chat-actions")
+    async def _call_structured_actions(
+        self,
+        model: str,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int,
+        temperature: float,
+        response_schema: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Call Gemini with chat-actions schema (blocks + record_actions + nav_actions)."""
+        if self._sdk_mode == "genai":
+            contents = self._build_contents(messages)
+            response = await run_sync_with_retry(
+                self._sync_call_genai_structured,
+                system_prompt,
+                contents,
+                max_tokens,
+                temperature,
+                response_schema,
+                primary_model=model,
+                fallback_model=settings.fallback_model,
+                label="gemini",
+            )
+            raw = self._format_response_genai(response)
+            try:
+                parsed = json.loads(raw["text"])
+            except (json.JSONDecodeError, TypeError):
+                parsed = {}
+            parsed["input_tokens"] = raw["input_tokens"]
+            parsed["output_tokens"] = raw["output_tokens"]
+        else:
+            # Legacy SDK: plain call + manual parse (no native schema enforcement)
+            result = await self._call(model, system_prompt, messages, max_tokens, temperature)
+            try:
+                parsed = json.loads(result["text"])
+            except (json.JSONDecodeError, TypeError):
+                parsed = {}
+            parsed.setdefault("blocks", [])
+            parsed.setdefault("record_actions", [])
+            parsed.setdefault("nav_actions", [])
+            parsed["input_tokens"] = result["input_tokens"]
+            parsed["output_tokens"] = result["output_tokens"]
+
+        blocks = parsed.get("blocks") or []
+        output_text = blocks[0].get("text", "") if blocks else ""
+
+        update_generation(
+            model=model,
+            input=messages,
+            output=output_text,
+            usage_details={
+                "input": parsed.get("input_tokens", 0),
+                "output": parsed.get("output_tokens", 0),
+            },
+            metadata={
+                "intent": parsed.get("intent"),
+                "safety_level": parsed.get("safety_level"),
+                "block_count": len(blocks),
+                "record_action_count": len(parsed.get("record_actions") or []),
+                "nav_action_count": len(parsed.get("nav_actions") or []),
+            },
+        )
+        return parsed
+
+    async def chat_actions(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+        model: str | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.3,
+    ) -> dict[str, Any]:
+        """
+        Chat call with 聊天办事 structured output (blocks + record/nav actions).
+
+        Returns a dict with:
+            blocks: list[dict]          — display blocks (answer, clarify, educate.*)
+            record_actions: list[dict]  — state-mutating writes
+            nav_actions: list[dict]     — navigation / external-service calls
+            intent: str
+            safety_level: "green" | "orange" | "red"
+            input_tokens: int
+            output_tokens: int
+        """
+        from src.llm.chat_actions import CHAT_ACTION_SCHEMA
+        return await self._call_structured_actions(
+            model=model or settings.main_model,
+            system_prompt=system_prompt,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            response_schema=CHAT_ACTION_SCHEMA,
+        )
+
     async def chat(
         self,
         system_prompt: str,

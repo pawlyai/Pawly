@@ -27,6 +27,7 @@ from src.db.models import (
     TriageRecord,
     User,
 )
+from src.llm.client import get_gemini_client
 from src.llm.prompts.context import build_context_block
 from src.llm.prompts.formatters import apply_response_format, prepend_safety_banner
 from src.llm.prompts.system import build_system_prompt
@@ -791,6 +792,224 @@ async def _generate_response_classic(
         symptom_tags=symptom_tags,
         risk_level=risk_level,
         sentiment_user=sentiment,
+        input_tokens=in_tok,
+        output_tokens=out_tok,
+    )
+
+
+# ── 聊天办事: block-based orchestration path ──────────────────────────────────
+
+
+@dataclass
+class ChatActionsResult:
+    """Returned by generate_chat_actions()."""
+
+    blocks: list[dict]
+    record_actions: list[dict]
+    nav_actions: list[dict]
+    intent: str
+    safety_level: str                       # "green" | "orange" | "red"
+    was_fixed: bool = False
+    violations: list[str] = field(default_factory=list)
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
+async def generate_chat_actions(
+    user: User,
+    pet: Optional[Pet],
+    dialogue_id: str,
+    user_message: str,
+    message_type: MessageType = MessageType.TEXT,
+    session: Optional[dict[str, Any]] = None,
+    raw_message_id: Optional[str] = None,
+) -> ChatActionsResult:
+    """
+    Generate a 聊天办事 response as typed blocks + record/nav actions.
+
+    Always uses Gemini for native schema enforcement (chat_actions() requires
+    Gemini's response_schema; non-Gemini providers are not wired here yet).
+    The LangGraph pipeline is a separate experimental track; this function
+    always uses the classic sequential path.
+    """
+    return await _generate_chat_actions_classic(
+        user, pet, dialogue_id, user_message, message_type, session, raw_message_id,
+    )
+
+
+@observe_span(name="chat-actions-orchestrator")
+async def _generate_chat_actions_classic(
+    user: User,
+    pet: Optional[Pet],
+    dialogue_id: str,
+    user_message: str,
+    message_type: MessageType = MessageType.TEXT,
+    session: Optional[dict[str, Any]] = None,
+    raw_message_id: Optional[str] = None,
+) -> ChatActionsResult:
+    from src.llm.chat_actions import validate_and_fix
+
+    # ── Step 0: Human crisis / medical emergency gate ─────────────────────────
+    if detect_human_crisis(user_message):
+        return ChatActionsResult(
+            blocks=[{"type": "answer", "text": HUMAN_CRISIS_RESPONSE}],
+            record_actions=[],
+            nav_actions=[],
+            intent="human_crisis",
+            safety_level="red",
+        )
+    if detect_human_medical_emergency(user_message):
+        return ChatActionsResult(
+            blocks=[{"type": "answer", "text": HUMAN_MEDICAL_EMERGENCY_RESPONSE}],
+            record_actions=[],
+            nav_actions=[],
+            intent="human_medical_emergency",
+            safety_level="red",
+        )
+
+    tier = _tier(user)
+    pet_id_str = str(pet.id) if pet else None
+
+    update_trace(
+        user_id=str(user.id),
+        session_id=dialogue_id,
+        tags=[tier.value, "chat-actions-path"],
+        metadata={
+            "pet_id": pet_id_str,
+            "pet_name": pet.name if pet else None,
+            "subscription_tier": tier.value,
+        },
+    )
+
+    # ── 1. LOAD CONTEXT ───────────────────────────────────────────────────────
+    ctx: dict = {}
+    if pet:
+        try:
+            ctx = await load_pet_context(
+                pet_id=pet_id_str,  # type: ignore[arg-type]
+                user_id=str(user.id),
+                tier=tier,
+            )
+        except Exception as exc:
+            logger.warning("load_pet_context failed", error=str(exc))
+
+        try:
+            related = await load_related_memories(pet_id_str, user_message)  # type: ignore[arg-type]
+            existing_ids = {m.id for m in ctx.get("short_term_memories", [])}
+            ctx.setdefault("short_term_memories", []).extend(
+                m for m in related if m.id not in existing_ids
+            )
+        except Exception as exc:
+            logger.warning("load_related_memories failed", error=str(exc))
+
+    long_term = ctx.get("long_term_memories", [])
+    mid_term = ctx.get("mid_term_memories", [])
+    short_term = ctx.get("short_term_memories", [])
+    recent_turns: list[dict] = ctx.get("recent_turns", [])
+    daily_summary = ctx.get("daily_summary")
+    weekly_summary = ctx.get("weekly_summary")
+    pending = ctx.get("pending_confirmations", [])
+
+    # ── 2. BUILD SYSTEM PROMPT ────────────────────────────────────────────────
+    memory_context, pending_confirmation = build_context_block(
+        pet=pet,  # type: ignore[arg-type]
+        long_term=long_term,
+        mid_term=mid_term,
+        short_term=short_term,
+        recent_turns=recent_turns,
+        daily_summary=daily_summary,
+        pending=pending,
+        weekly_summary=weekly_summary,
+    )
+
+    retrieval_ctx = build_retrieval_context(recent_turns, user_message)
+    followups = match_followups(retrieval_ctx)
+    red_flags = match_red_flags(retrieval_ctx)
+
+    system = build_system_prompt(
+        user=user,
+        pet=pet,
+        tier=tier,
+        memory_context=memory_context,
+        pending_confirmation=pending_confirmation,
+        marketing_context=(session or {}).get("marketing_context"),
+        retrieved_followups=format_followups(followups),
+        special_scenarios=format_special_rules(red_flags),
+    )
+
+    # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
+    messages = recent_turns + [{"role": "user", "content": user_message}]
+
+    # ── 4. CALL CHAT ACTIONS (Gemini native schema enforcement) ──────────────
+    # chat_actions() uses Gemini's response_schema parameter — it is not routed
+    # through _select_chat_model() since other providers don't support this yet.
+    chat_model = settings.main_model
+    client = get_gemini_client()
+    in_tok = 0
+    out_tok = 0
+
+    try:
+        raw = await client.chat_actions(
+            system_prompt=system, messages=messages, model=chat_model
+        )
+        blocks = raw.get("blocks") or []
+        record_actions = raw.get("record_actions") or []
+        nav_actions = raw.get("nav_actions") or []
+        intent = raw.get("intent") or "general"
+        safety_level = (raw.get("safety_level") or "green").lower()
+        in_tok = raw.get("input_tokens", 0)
+        out_tok = raw.get("output_tokens", 0)
+    except Exception as exc:
+        logger.error("chat_actions call failed", error=str(exc))
+        return ChatActionsResult(
+            blocks=[{"type": "answer", "text": "I'm having trouble connecting right now. Please try again in a moment."}],
+            record_actions=[],
+            nav_actions=[],
+            intent="general",
+            safety_level="green",
+        )
+
+    # ── 5. VALIDATE AND FIX ───────────────────────────────────────────────────
+    result = validate_and_fix(
+        blocks=blocks,
+        record_actions=record_actions,
+        nav_actions=nav_actions,
+        safety_level=safety_level,
+    )
+
+    if result.violations:
+        logger.warning(
+            "chat_actions validator fired",
+            violations=result.violations,
+            was_fixed=result.was_fixed,
+            pet_id=pet_id_str,
+        )
+
+    update_span(
+        input={"user_message": user_message},
+        output={"blocks": result.blocks, "nav_actions": result.nav_actions},
+        metadata={
+            "intent": intent,
+            "safety_level": safety_level,
+            "was_fixed": result.was_fixed,
+            "violations": result.violations,
+            "block_count": len(result.blocks),
+            "record_action_count": len(result.record_actions),
+            "nav_action_count": len(result.nav_actions),
+            "chat_model_used": chat_model,
+            "input_tokens": in_tok,
+            "output_tokens": out_tok,
+        },
+    )
+
+    return ChatActionsResult(
+        blocks=result.blocks,
+        record_actions=result.record_actions,
+        nav_actions=result.nav_actions,
+        intent=intent,
+        safety_level=safety_level,
+        was_fixed=result.was_fixed,
+        violations=result.violations,
         input_tokens=in_tok,
         output_tokens=out_tok,
     )

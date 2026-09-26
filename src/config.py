@@ -1,4 +1,4 @@
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     admin_telegram_ids: str = ""
     prompt_hot_reload: bool = False
     use_langgraph: bool = False  # set True to enable LangGraph pipeline (experimental)
+    use_chat_actions: bool = False  # set True to enable 聊天办事 block-based output
     extraction_backend: str = "multiagent"  # "multiagent" (default) or "mem0" (Phase A)
     daily_summary_push_enabled: bool = False
 
