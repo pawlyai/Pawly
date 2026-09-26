@@ -922,6 +922,20 @@ async def _generate_chat_actions_classic(
         weekly_summary=weekly_summary,
     )
 
+    # ── Pending clarify state — must happen before build_system_prompt ───────
+    # Appends to memory_context so the LLM sees it in the system prompt.
+    _pending_clarify: dict | None = (session or {}).get("pending_clarify")
+    if _pending_clarify:
+        _rounds_so_far = _pending_clarify.get("rounds_used", 0)
+        _max_rounds = _pending_clarify.get("max_rounds", 2)
+        memory_context = (
+            memory_context
+            + f"\n[PENDING CLARIFICATION — round {_rounds_so_far + 1}/{_max_rounds}]: "
+            f"You previously asked: \"{_pending_clarify['question']}\". "
+            f"The user is replying to that. If they gave the info you needed, "
+            f"answer now. Do NOT ask the same question again."
+        )
+
     retrieval_ctx = build_retrieval_context(recent_turns, user_message)
     followups = match_followups(retrieval_ctx)
     red_flags = match_red_flags(retrieval_ctx)
@@ -935,22 +949,8 @@ async def _generate_chat_actions_classic(
         marketing_context=(session or {}).get("marketing_context"),
         retrieved_followups=format_followups(followups),
         special_scenarios=format_special_rules(red_flags),
+        chat_actions_mode=True,
     )
-
-    # ── Pending clarify state ─────────────────────────────────────────────────
-    # When the previous turn emitted a `clarify` block, we stash it in session
-    # so this turn's LLM call knows it's replying to a specific question.
-    _pending_clarify: dict | None = (session or {}).get("pending_clarify")
-    if _pending_clarify:
-        _rounds_so_far = _pending_clarify.get("rounds_used", 0)
-        _max_rounds = _pending_clarify.get("max_rounds", 2)
-        memory_context = (
-            memory_context
-            + f"\n[PENDING CLARIFICATION — round {_rounds_so_far + 1}/{_max_rounds}]: "
-            f"You previously asked: \"{_pending_clarify['question']}\". "
-            f"The user is replying to that. If they gave the info you needed, "
-            f"answer now. Do NOT ask the same question again."
-        )
 
     # ── 3. BUILD MESSAGES ARRAY ───────────────────────────────────────────────
     messages = recent_turns + [{"role": "user", "content": user_message}]

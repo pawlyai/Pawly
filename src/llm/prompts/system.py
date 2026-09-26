@@ -55,6 +55,67 @@ SECTION_KEYS: tuple[str, ...] = SYSTEM_PROMPT_KEYS + PROACTIVE_SECTION_KEYS
 # Langfuse prompt names match YAML keys 1:1 with the pawly_ prefix.
 _LF_PROMPT_NAMES: dict[str, str] = {key: f"pawly_{key}" for key in SECTION_KEYS}
 
+# -- Chat-actions response format (injected when chat_actions_mode=True) ------
+# Replaces <response_format> in the classic section. Keeps all health-
+# consultation logic (Steps 1-4) intact — only the output shape changes.
+
+CHAT_ACTIONS_RESPONSE_FORMAT = """\
+Output a single JSON object. Do NOT write any prose — your entire response is the JSON, nothing else. No markdown fences.
+
+Required top-level fields:
+
+"blocks" — array of display blocks rendered in order:
+  1. Exactly one of:
+       "answer"  — your main response to the user. Plain text, no markdown.
+       "clarify" — a single focused question when you still need info before assessing.
+  2. Optionally one of (after the answer/clarify):
+       "educate.redflag" — urgent health education (use when safety_level is orange or red).
+       "educate.daily"   — general tip or context (use when safety_level is green).
+     educate.redflag suppresses educate.daily — never both.
+  Max 1 answer/clarify and max 1 educate.* per turn.
+
+"record_actions" — array of state-writing actions triggered this turn (may be []):
+  Each item: {"action_id": "<id>", "payload": {…}, "requires_confirm": true|false}
+  Valid action_ids: "record.log_symptom", "record.episode_followup",
+    "record.observation", "record.update_profile", "record.allergy_add"
+  Set requires_confirm:true for anything the user should confirm before it is saved.
+
+"nav_actions" — array of navigation / service actions (may be []):
+  Each item: {"action_id": "<id>", "payload": {…}}
+  Valid action_ids: "open_page", "open_programme", "add_reminder",
+    "nearest_clinics", "vet_summary"
+  Use nearest_clinics + vet_summary when safety_level is red.
+  Use add_reminder to track future tasks (replaces the old text-tag reminder format):
+    payload: {"content": "<brief task>", "remind_at": "<YYYY-MM-DD>"}
+    Only emit when there is a clear scheduled date or timeframe.
+
+"intent" — classify the user message (one of):
+  "symptom_report", "allergy_add", "weight_concern", "breed_query",
+  "programme_request", "followup", "question", "general"
+
+"safety_level" — urgency classification (one of: "green", "orange", "red"). Never downgrade a red.
+  red    = emergency or potentially life-threatening (🔴 Urgent equivalent)
+  orange = concerning but not urgent (🟠 Worth watching equivalent)
+  green  = routine or normal (🟢 All good equivalent)
+
+Mapping health consultation steps → blocks:
+  Clarification turns (Step 1): one "clarify" block, safety_level="green".
+    Do NOT set safety_level to orange/red during clarification turns.
+  Assessment turns (Step 2-4): one "answer" block with the full assessment.
+    red/orange: add one "educate.redflag" block with the structured education content.
+    green: may add one "educate.daily" block with a prevention tip.
+  The "What's happening / What to do now" body (Step 3) goes inside the answer block text.
+  Do NOT include emoji flags (🔴/🟠/🟢) in block text — safety_level carries that signal.\
+"""
+
+# Footer instruction for add_reminder (replaces [SET_REMINDER:...] in chat_actions mode)
+_CHAT_ACTIONS_REMINDER_FOOTER = (
+    "Reminder rule: when the user mentions a specific future action (vaccine, vet appointment, "
+    "medication, deworming, grooming), include one add_reminder nav action with "
+    "payload.content = brief task label and payload.remind_at = YYYY-MM-DD. "
+    "Only emit when there is a clear scheduled date or timeframe. Omit entirely otherwise."
+)
+
 # -- Token budget guardrails (DeepSeek V4 v0 spec) ----------------------------
 
 WARN_TOKEN_BUDGET = 4000
@@ -248,6 +309,7 @@ def build_system_prompt(
     pending_confirmation: str = "",
     retrieved_followups: str = "",
     special_scenarios: str = "",
+    chat_actions_mode: bool = False,
 ) -> str:
     """Assemble the full DeepSeek V4 v0 system prompt for a given turn.
 
@@ -265,10 +327,14 @@ def build_system_prompt(
         memory_context.strip() if memory_context.strip() else MEMORY_NO_RECENT_EPISODES
     )
 
+    response_format_section = (
+        CHAT_ACTIONS_RESPONSE_FORMAT if chat_actions_mode else sections["response_format"]
+    )
+
     parts: list[str] = [
         _xml("role", sections["role"]),
         _xml("persona", sections["persona"]),
-        _xml("response_format", sections["response_format"]),
+        _xml("response_format", response_format_section),
         _xml("memory_pet_profile", pet_profile_text),
         _xml("memory_owner_profile", owner_profile_text),
         _xml("memory_recent_episodes", recent_episodes_text),
@@ -308,14 +374,17 @@ def build_system_prompt(
         )
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    parts.append(
-        f"Today's date (UTC): {today}.\n"
-        "Reminder rule: when the user mentions a specific future action (vaccine, vet "
-        "appointment, medication, deworming, grooming), append EXACTLY ONE line at the "
-        "very end of your response in this format — nothing after it: "
-        "[SET_REMINDER: <brief action> | <YYYY-MM-DD>]. "
-        "Only emit this when there is a clear scheduled date or timeframe. Omit entirely otherwise."
-    )
+    if chat_actions_mode:
+        parts.append(f"Today's date (UTC): {today}.\n{_CHAT_ACTIONS_REMINDER_FOOTER}")
+    else:
+        parts.append(
+            f"Today's date (UTC): {today}.\n"
+            "Reminder rule: when the user mentions a specific future action (vaccine, vet "
+            "appointment, medication, deworming, grooming), append EXACTLY ONE line at the "
+            "very end of your response in this format — nothing after it: "
+            "[SET_REMINDER: <brief action> | <YYYY-MM-DD>]. "
+            "Only emit this when there is a clear scheduled date or timeframe. Omit entirely otherwise."
+        )
 
     if marketing_context:
         ch = marketing_context.get("channel", "")
