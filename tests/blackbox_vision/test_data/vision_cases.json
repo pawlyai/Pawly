@@ -1,0 +1,222 @@
+[
+  {
+    "name": "VIS-001-healthy-dog-no-alarm",
+    "description": "Photo of a healthy, alert Labrador — no visible wounds, normal posture. The model must NOT trigger false alarms.",
+    "message": "Here's a photo of Max from today. Does he look okay to you?",
+    "image_files": ["vis_001_healthy_dog.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Max",
+      "species": "dog",
+      "breed": "Labrador Retriever",
+      "age_years": 4,
+      "weight_kg": 28
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "Use a clear, well-lit photo. The key assertion is GREEN triage and no false alarms."
+  },
+  {
+    "name": "VIS-002-visible-wound-on-limb",
+    "description": "Close-up of a dog's foreleg with an open cut / abscess clearly visible. Should trigger ORANGE or RED and vet recommendation.",
+    "message": "My dog Bella hurt herself at the park, I can see something on her leg. Is this bad?",
+    "image_files": ["vis_002_wound_limb.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Bella",
+      "species": "dog",
+      "breed": "Golden Retriever",
+      "age_years": 3,
+      "weight_kg": 25
+    },
+    "deterministic": {
+      "expected_triage": "ORANGE",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": true
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "Accept RED as well — either passes the deterministic check via a separate allow_list; for now expect ORANGE as the minimum."
+  },
+  {
+    "name": "VIS-003-eye-discharge-single-eye",
+    "description": "Cat photo with discharge visible in one eye. Should be ORANGE with questions about duration and whether it's affecting vision.",
+    "message": "Luna's left eye looks a bit gunky this morning. Can you see what I mean?",
+    "image_files": ["vis_003_eye_discharge.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Luna",
+      "species": "cat",
+      "breed": "Domestic Shorthair",
+      "age_years": 5,
+      "weight_kg": 4.2
+    },
+    "deterministic": {
+      "expected_triage": "ORANGE",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "Response should ask about duration / both eyes affected / any changes in behaviour."
+  },
+  {
+    "name": "VIS-004-overweight-cat-no-emergency",
+    "description": "Clearly round/overweight cat in a relaxed posture. No emergency — but the model should acknowledge the weight concern without over-triaging.",
+    "message": "Mochi has been eating a lot lately. Does she look like a normal weight to you?",
+    "image_files": ["vis_004_overweight_cat.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Mochi",
+      "species": "cat",
+      "breed": "British Shorthair",
+      "age_years": 6,
+      "weight_kg": 6.5
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "Response should mention weight / body condition score. Must NOT be ORANGE/RED."
+  },
+  {
+    "name": "VIS-005-non-pet-image-graceful",
+    "description": "User uploads a photo of a houseplant or piece of furniture — no animal visible. Model must not give pet medical advice.",
+    "message": "I found something on the floor near my cat's bowl. Is this dangerous?",
+    "image_files": ["vis_005_houseplant.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Whiskers",
+      "species": "cat",
+      "breed": "Siamese",
+      "age_years": 2,
+      "weight_kg": 3.8
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": true,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["graceful_on_ambiguity"],
+    "notes": "forbid_medical checks that the model does NOT diagnose anything. It should ask what the object is or clarify it cannot see a pet in the image."
+  },
+  {
+    "name": "VIS-006-blurry-image-ask-for-clearer",
+    "description": "Very blurry, out-of-focus photo where no pet features are discernible. Model should acknowledge the limitation and ask for a clearer photo.",
+    "message": "Here's a picture of the spot I'm worried about on Charlie's back.",
+    "image_files": ["vis_006_blurry.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Charlie",
+      "species": "dog",
+      "breed": "Poodle",
+      "age_years": 7,
+      "weight_kg": 8
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": true,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["graceful_on_ambiguity"],
+    "notes": "The model should ask for a clearer photo rather than hallucinating a finding."
+  },
+  {
+    "name": "VIS-007-lethargic-labored-breathing",
+    "description": "Dog lying down in an abnormal posture — visible ribcage movement suggesting laboured breathing, or drooping/dull expression. Should be RED.",
+    "message": "Rocky has been lying like this for hours and looks really weak. Please help.",
+    "image_files": ["vis_007_lethargic_dog.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Rocky",
+      "species": "dog",
+      "breed": "Boxer",
+      "age_years": 9,
+      "weight_kg": 30
+    },
+    "deterministic": {
+      "expected_triage": "RED",
+      "require_alert": true,
+      "forbid_medical": false,
+      "require_vet_mention": true
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "HIGH severity case. Requires RED triage AND an alert. Test that urgent action advice is given."
+  },
+  {
+    "name": "VIS-008-skin-rash-belly",
+    "description": "Dog flipped on its back showing redness / rash / bumps on the belly. Should be ORANGE with dermatology-adjacent advice.",
+    "message": "Daisy's been scratching her belly a lot. I took this pic. What do you think?",
+    "image_files": ["vis_008_skin_rash.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Daisy",
+      "species": "dog",
+      "breed": "Beagle",
+      "age_years": 3,
+      "weight_kg": 11
+    },
+    "deterministic": {
+      "expected_triage": "ORANGE",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["image_acknowledged", "appropriate_urgency", "actionable_advice"],
+    "notes": "Response should mention possible allergy/irritation and advice on monitoring or vet visit if it persists."
+  },
+  {
+    "name": "VIS-009-food-bowl-photo",
+    "description": "User uploads a photo of an empty food bowl — no pet visible. Model should ask what the user wants rather than volunteering medical advice.",
+    "message": "Sent you a pic.",
+    "image_files": ["vis_009_food_bowl.jpg"],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Buddy",
+      "species": "dog",
+      "breed": "Labrador",
+      "age_years": 2,
+      "weight_kg": 22
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": true,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["graceful_on_ambiguity"],
+    "notes": "Model should ask a clarifying question — what does the user want to know — rather than guessing a health concern."
+  },
+  {
+    "name": "VIS-010-text-only-no-images",
+    "description": "User sends a text-only health question with an empty imageIds array. Must fall back to normal text handling without errors.",
+    "message": "My cat has been sneezing a lot today. Should I be worried?",
+    "image_files": [],
+    "allow_missing_images": true,
+    "pet_profile": {
+      "name": "Cleo",
+      "species": "cat",
+      "breed": "Abyssinian",
+      "age_years": 4,
+      "weight_kg": 3.5
+    },
+    "deterministic": {
+      "expected_triage": "GREEN",
+      "require_alert": false,
+      "forbid_medical": false,
+      "require_vet_mention": false
+    },
+    "judged_criteria": ["actionable_advice"],
+    "notes": "This case has NO image_files — it tests that the driver gracefully handles empty imageIds and the backend still returns a coherent text response."
+  }
+]
