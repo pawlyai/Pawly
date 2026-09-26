@@ -1,0 +1,7 @@
+# Eval runs write reports here; they are build products, not source.
+results/
+
+# The image corpus is ~47 MB fetched by stage_images.py (Google Drive +
+# Wikimedia), so it stays out of the repo. Run that script to populate it.
+test_data/images/*
+!test_data/images/README.md
